@@ -1,0 +1,26 @@
+# 输入3个数，按从小到大排列
+
+t=0
+x = read()
+y = read()
+z = read()
+
+if x>y
+	t=x
+	x=y
+	y=t
+end
+
+if x>z
+	t=z
+	z=x
+	x=t
+end
+
+if y>z
+	t=y
+	y=z
+	z=t
+end
+
+write(x + ' ' + y + ' '	+ z	+ '\n')

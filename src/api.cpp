@@ -1,0 +1,405 @@
+/*
+	Copyright (c) 2009 Zhang li
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in
+	all copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+	THE SOFTWARE.
+
+	MIT License: http://www.opensource.org/licenses/mit-license.php
+*/
+
+/*
+	Author zhang li
+	Email zlvbvbzl@gmail.com
+*/
+
+#include "def.h"
+#include "value.h"
+#include "token.h"
+#include "error.h"
+#include "state.h"
+
+const char *PU_VERSION = "Puppy 1.2.4";
+
+extern int do_string(Pu *L, const char *str);
+extern void clear_state(Pu *L);
+extern int vm(Pu *L);
+extern const char *get_typestr(__pu_value &v);
+extern void regbuiltin(Pu *L);
+extern void set_var(Pu *L, const PuString &varname, __pu_value &new_value, Token *vart);
+#ifdef _MSC_VER
+#pragma warning(disable:4127) // 判断条件为常量，比如：while(1)
+#endif
+PUAPI const char *pu_version()
+{
+	return PU_VERSION;
+}
+
+PUAPI void pu_set_return_value(Pu *L, const pu_value v)
+{
+	L->return_value = *v;
+}
+
+PUAPI pu_value pu_get_return_value(Pu *L)
+{
+    return &L->return_value;
+}
+
+PUAPI void pu_reg_func(Pu *L, const char *funcname, 
+					   ScriptFunc pfunc)
+{
+	FuncPos fps;
+	fps.pfunc = pfunc;
+	L->funclist.push_back(fps);
+
+	__pu_value v(L);
+	v.SetType(CFUN);
+	v.numVal() = (PU_NUMBER)L->funclist.size()-1;
+    set_var(L, funcname, v, NULL);
+}
+
+PUAPI const char *pu_str(const pu_value v)
+{
+	return v->strVal().c_str();
+}
+
+PUAPI PU_NUMBER pu_num(const pu_value v)
+{
+	return v->numVal();
+}
+
+PUAPI const pu_value pu_arr(const pu_value v, int idx)
+{
+	return &(v->arr()[idx]);
+}
+
+
+PUAPI int pu_type(const pu_value v)
+{
+	return int(v->type());
+}
+
+PUAPI PURESULT pu_set_str(pu_value v, const char *str)
+{
+	if (v->createby == PU_SYSTEM)
+	{
+		return PU_FAILED;
+	}
+
+	if (v->type() == ARRAY)
+	{
+		v->arr().decref();
+	}
+
+	v->SetType(STR);
+	v->strVal() = str;
+	return PU_SUCCESS;
+}
+
+PUAPI int pu_eval(Pu *L, const char *str)
+{
+	int ret = do_string(L, str);
+	L->isquit = false;
+	L->isreturn = false;
+	return ret;
+}
+
+PUAPI PURESULT pu_set_num(pu_value v, PU_NUMBER number)
+{
+	if (v->createby == PU_SYSTEM)
+	{
+		return PU_FAILED;
+	}
+
+	if (v->type() == ARRAY)
+	{
+		v->arr().decref();
+	}
+
+	v->SetType(NUM);
+	v->numVal() = number;
+	return PU_SUCCESS;
+}
+
+PUAPI PURESULT pu_set_arr(pu_value v, 
+						  int idx, const pu_value u)
+{
+	if (v->createby == PU_SYSTEM)
+	{
+		return PU_FAILED;
+	}
+
+	if (u->type() == ARRAY)
+	{
+		return PU_FAILED;
+	}
+
+	if (v->type() != ARRAY)
+	{
+		return PU_FAILED;
+	}
+
+	if (v->arr().size() < idx+1)
+	{
+		return PU_FAILED;
+	}
+
+	v->arr()[idx] = *u;
+	return PU_SUCCESS;
+}
+
+
+PUAPI pu_value pu_new_value(Pu *L)
+{
+	__pu_value *v = new __pu_value(L);
+	v->createby = PU_USER;
+	return v;
+}
+
+PUAPI PURESULT pu_del_value(pu_value v)
+{
+	if (v->createby == PU_SYSTEM)
+	{
+		return PU_FAILED;
+	}
+	delete v;
+	return PU_SUCCESS;
+}
+
+PUAPI PURESULT pu_push_arr(pu_value varr, 
+						   const pu_value v)
+{
+	if (varr->createby == PU_SYSTEM)
+	{
+		return PU_FAILED;
+	}
+
+	varr->SetType(ARRAY);
+
+	varr->arr().push_back(*v);
+	return PU_SUCCESS;
+}
+
+PUAPI PURESULT pu_pop_arr(pu_value varr)
+{
+	if (varr->createby == PU_SYSTEM)
+	{
+		return PU_FAILED;
+	}
+
+	varr->arr().pop_back();
+	return PU_SUCCESS;
+}
+
+PUAPI int pu_len(pu_value v)
+{
+	if (v->type() == STR)
+	{
+		return v->strVal().length();
+	}
+	else if (v->type() == ARRAY)
+	{
+		return v->arr().size();
+	}
+	return -1;
+}
+
+
+PUAPI PUVALUECREATEDBY pu_value_created_by(const pu_value v)
+{
+	return v->createby;
+}
+
+extern void run_coro( Pu * L, int coro_id, __pu_value * corov );
+PUAPI void pu_run(Pu *L)
+{    
+	clear_state(L);
+	regbuiltin(L);
+	NEXT_TOKEN;
+	vm(L);
+    while (L->coros.size() > 0)
+    {
+        run_coro(L, rand() % L->coros.size(), NULL);
+    }        
+}
+
+PUAPI pu_value pu_global(Pu *L, const char *name)
+{
+	Var *pvarmap = L->varstack.bottom();
+	Var::Bucket_T *ik = pvarmap->find(name);
+	if (ik != 0)
+	{
+		return &(ik->value);
+	}
+
+	return NULL;
+}
+
+PUAPI const pu_value pu_call(Pu *L, const char *funcname, 
+							 const pu_value varr)
+{
+	L->return_value.SetType(UNKNOWN);
+	if (L->return_value.type() == ARRAY)
+	{
+		L->return_value.arr().decref();
+	}
+
+	pu_value fv = pu_global(L,funcname);
+	FuncPos &fps = L->funclist[(int)fv->numVal()];
+
+	PuVector<PuString, 4> &vArgs = fps.argnames;
+
+	if (fps.start == -1)
+	{
+		pu_value *args = NULL;
+		ValueArr  vs;
+		for (int j=0; j<varr->arr().size(); ++j)
+		{
+			vs.push_back(varr->arr()[j]);
+		}
+
+		int arg_num = vs.size();
+
+		if (arg_num > 0)
+		{
+			args = (pu_value *)malloc(arg_num * sizeof(__pu_value*));
+		}
+
+		for (int j = 0;  j < arg_num; ++j)
+		{
+			args[j] = &(vs[j]);
+		}
+
+		fps.pfunc(L, int(arg_num), args);
+
+		if (args)
+			free(args);
+	}
+	else
+	{
+		Var *newvarmap = new Var;
+		L->varstack.push(newvarmap);
+
+		for (int j=0; j<vArgs.size(); ++j)
+		{
+			__pu_value v = varr->arr()[j];
+			newvarmap->insert(vArgs[j], v);
+		}
+
+		L->callstack.push(L->cur_token); 
+		L->cur_token = fps.start; 	
+		NEXT_TOKEN;
+		vm(L);
+		L->varstack.pop();
+		delete newvarmap;
+
+		L->cur_token = L->callstack.top(); 
+		L->callstack.pop(); 
+	}
+	L->isreturn = false;
+	
+	return &(L->return_value);
+}
+
+
+PUAPI void pu_set_error_handle(Pu *L, ErrHandle func)
+{
+	L->err_handle = func;
+}
+
+PUAPI void pu_set_output_handle(Pu *L, OutputHandle func)
+{
+	L->output_handle = func;
+}
+
+#define s_WRITE_STR(s,b) \
+	strcat(b, s->strVal().c_str());
+
+
+#define s_WRITE_NUM(n,b) \
+	char num[64]={0};\
+	if (PU_INT(n->numVal()) == n->numVal())\
+		PU_SNPRINTF(num, sizeof(num), "%.lf", n->numVal());\
+	else\
+		PU_SNPRINTF(num, sizeof(num),"%lf", n->numVal());\
+	strcat(b,num);
+
+
+static void s_write_arr(const __pu_value &arr, char *b)
+{
+	strcat(b,"[");
+	ValueArr::iterator it = arr.arr().begin();
+	ValueArr::iterator ite = arr.arr().end();
+	while (it != ite)
+	{
+		__pu_value temp = *it;
+		if (temp.type() == STR)
+		{
+			strcat(b,"\'");
+			s_WRITE_STR((&temp),b);
+			strcat(b, "\'");
+		}
+		else if (temp.type() == NUM)
+		{
+			s_WRITE_NUM((&temp),b);
+		}
+		else if (temp.type() == ARRAY)
+		{
+			s_write_arr(temp,b);
+		}
+		++it;
+
+		if (it != ite)
+			strcat(b,",");
+		else
+			break;
+	}
+	strcat(b,"]");
+}
+
+PUAPI void pu_val2str(Pu *, const pu_value *p, char *b, int buffsize)
+{
+	b[0]=0;
+	const pu_value &v = *p;
+	if (v->type() == NUM)
+	{
+		s_WRITE_NUM(v,b);
+	}
+	else if (v->type() == STR)
+	{
+		s_WRITE_STR(v,b);
+	}
+	else if (v->type() == ARRAY)
+	{
+		s_write_arr(*v,b);
+	}
+    else if (v->type() == MAP)
+    {
+
+    }      
+    else if (v->type() == BOOLEANT)
+    {
+        PU_SNPRINTF(b, buffsize, "%s", (v->numVal() != 0)?"true":"false");
+    }
+	else
+	{
+		strcpy(b,get_typestr(*v));
+	}
+}
+
+
+

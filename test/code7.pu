@@ -1,0 +1,17 @@
+# 协程
+def coro1()
+    write('1-1\n')
+    coro_yield()
+    write('1-2\n')
+end
+
+def coro2()
+    write('2-1\n')
+    coro_yield()
+    write('2-2\n')
+end
+
+c1 = coro_create(coro1)
+c2 = coro_create(coro2)
+
+    

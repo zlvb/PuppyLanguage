@@ -1,0 +1,26 @@
+
+#输出素数
+#这是一个很复杂程序
+
+
+write('输入一个整数：') x=read()
+write('"'+x+'"以内所有素数\n')
+write(time())
+i=2
+while i<=x
+	k=1 is=0
+	while k*k<=i
+		if i % k == 0 && k>1
+			is=0
+			break
+		end
+		k+=1
+		is=1
+	end
+	if is
+		write(i + '\t')
+	end
+	i+=1
+end
+write('\n')
+write(time())

@@ -1,0 +1,21 @@
+# 文件读写
+o = open('code1.pu')
+w = open('hahah')
+s = read(o,'word')
+while s
+	write(s+'\n')
+	write(w,s)
+	s = read(o,'word')
+end
+
+close(w)
+close(o)
+
+w = open('hahah')
+s = read(w,'word')
+while s
+	write(s+'\n')
+	s = read(w,'word')
+end
+
+close(w)
