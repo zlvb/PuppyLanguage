@@ -170,7 +170,7 @@ PUAPI void pu_getbytecodename(char *bytecodename,
 							  const char *csource_code_name)
 {
 	size_t i = strlen(csource_code_name)-1;
-	for ( ; i >= 0; --i)
+	for ( ; i != 0; --i)
 	{
 		if (csource_code_name[i] == '.')
 			break;
@@ -213,7 +213,7 @@ PUAPI int pu_loadbytecode(Pu *L, const char *fname)
 PUAPI PURESULT pu_load(Pu *L, const char *sname)
 {
 	size_t i = strlen(sname)-1;
-	for ( ; i >= 0; --i)
+	for ( ; i != 0; --i)
 	{
 		if (sname[i] == '.')
 			break;
