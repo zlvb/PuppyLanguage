@@ -33,10 +33,11 @@
 #include "PuMap.h"
 #include "PuStack.h"
 #include "PuVector.h"
+#include "def.h"
+#include "token.h"
 typedef PuStack<int> CallStack;
-typedef PuStack<Var*> VarStack;
+typedef PuStack<VarMap*> VarStack;
 typedef PuMap<PuString, int> LabelMap;
-typedef PuVector<FuncPos> FuncList;
 struct FuncPos
 {
 	int start;
@@ -51,7 +52,7 @@ struct FuncPos
 
     }
 };
-
+typedef PuVector<FuncPos> FuncList;
 struct Pustrbuff
 {
 	Pustrbuff():pos(0),buff(0)
@@ -70,14 +71,14 @@ struct Pusource
 
 	enum __SOURCETYPE
 	{
-		BUFFER,
-		FILE
+		ST_BUFFER,
+		ST_FILE
 	};
 };
 
 struct coro
 {
-	Var		*varmap;
+	VarMap		*varmap;
 	int		begin;
 	int		cur;
 	int		end;
@@ -87,7 +88,7 @@ struct coro
 
 typedef PuVector<coro> CoroList;
 
-struct Pu
+struct Pu : public PuMemObj
 {
 	Pu()
 	:token(NULL),
@@ -104,12 +105,12 @@ struct Pu
 	cur_nup(0),
 	gclink(0)
 	{
-		varstack.push(new Var);
+		varstack.push(new VarMap);
 	}
 
 	~Pu()
 	{
-		Var *nd = varstack.bottom();
+		VarMap *nd = varstack.bottom();
 		delete nd;
 	}
 
@@ -135,7 +136,7 @@ struct Pu
 	CoroList			coros;
 	PuStack<int>		uncomdef;
 	PuStack<int>		jumpstack;
-	Var					*upvalue;
+	VarMap					*upvalue;
 	_up_value			*cur_nup;
 	_up_value			*gclink;
 };

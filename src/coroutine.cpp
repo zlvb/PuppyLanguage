@@ -29,7 +29,6 @@
 
 #include "def.h"
 #include "value.h"
-#include "token.h"
 #include "state.h"
 #include "error.h"
 
@@ -64,7 +63,7 @@ void bi_coro_create(Pu *L, int argnum, const pu_value *v)
 	}
 	else
 	{
-		Var *newvarmap = new Var;
+		VarMap *newvarmap = new VarMap;
 		
 		int i=0;
 
@@ -78,8 +77,8 @@ void bi_coro_create(Pu *L, int argnum, const pu_value *v)
 		c.cur = c.begin;
 		c.funpos = (int)v[0]->numVal();
 		c.varmap = newvarmap;
-		L->coros.push_back(c);
-        c.id = L->coros.size() - 1;
+        c.id = L->coros.size();
+		L->coros.push_back(c);        
 		__pu_value retv(L);
 		retv.SetType(CORO);
 		retv.numVal() = (PU_NUMBER)L->coros.size()-1;

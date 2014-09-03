@@ -95,7 +95,7 @@ void pu_console(Pu *L)
 {
 	regbuiltin(L);
 	printf(
-		"%s  Copyright (C) 2009 Zhang li\n"
+		"%s  Copyright (C) 2014 Zhang li\n"
 		"type \"help()\" for more infomation\n"
 		, pu_version());
 	pu_reg_func(L, "print", print);

@@ -27,19 +27,15 @@
 	Email zlvbvbzl@gmail.com
 */
 
-#include "PuMap.h"
-#include "def.h"
-#include "value.h"
-#include "token.h"
 #include "state.h"
 
-static void mark(Var *vmap)
+static void mark(VarMap *vmap)
 {
 	int ele_num = vmap->_setted.size();
 	for (int i=0; i<ele_num; ++i)
 	{
 		int k = vmap->_setted[i];
-		Var::Node_T *node = vmap->_container[k];
+		VarMap::Node_T *node = vmap->_container[k];
 		int bucket_num = node->size();
 		for (int j=0; j<bucket_num; ++j)
 		{
@@ -154,7 +150,7 @@ void force_sweep(Pu *L)
 
 void gc(Pu *L)
 {
-	Var *root = L->varstack.bottom();
+	VarMap *root = L->varstack.bottom();
 	mark(root);
 	sweep(L);	
 }

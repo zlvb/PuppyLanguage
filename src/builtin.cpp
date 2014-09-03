@@ -27,13 +27,10 @@
 	Email zlvbvbzl@gmail.com
 */
 
-#include <time.h>
-#include "def.h"
-#include "value.h"
-#include "token.h"
 #include "state.h"
 #include "error.h"
 #include "PuMath.h"
+#include <time.h>
 
 #ifdef _MSC_VER
 #include <windows.h> //for win32 Sleep

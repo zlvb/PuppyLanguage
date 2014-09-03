@@ -30,6 +30,7 @@
 #ifndef __TOKEN_H_
 #define __TOKEN_H_
 
+#include "value.h"
 
 struct Token
 {
@@ -45,15 +46,12 @@ struct Token
 	__pu_value value;
 };
 
-enum CODEFROM{
-	FROM_BYTECODE,
-	FROM_SOURCECODE
-};
+typedef PuVector<Token> TokenList;
 
 #define check_source_end(c,s)							\
 (														\
-	((s).type == Pusource::FILE && (c) == EOF)||	\
-	((s).type == Pusource::BUFFER   && (c) =='\0')		\
+	((s).type == Pusource::ST_FILE && (c) == EOF)||	\
+	((s).type == Pusource::ST_BUFFER   && (c) =='\0')		\
 )
 
 #define CHECKTOKENERROR if (L->lasterr >= 0) return

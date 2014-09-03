@@ -27,12 +27,8 @@
 	Email zlvbvbzl@gmail.com
 */
 
-#include "def.h"
-#include "value.h"
-#include "token.h"
-#include "global.h"
-#include "error.h"
 #include "state.h"
+#include "error.h"
 #include <ctype.h>
 
 #define CHECK_ADDLINES {if(c=='\n') ++L->line;}
@@ -120,7 +116,7 @@ static void pu_sscanf(Pustrbuff &s, const char *fmt, void *out)
 static int pu_getc(Pu *L)
 {
 	int c;
-	if (L->source.type == Pusource::FILE)
+	if (L->source.type == Pusource::ST_FILE)
 	{
 		c = fgetc(L->source.pf);
 	}
@@ -134,7 +130,7 @@ static int pu_getc(Pu *L)
 
 static void pu_ungetc(Pu *L, int c)
 {
-	if (L->source.type == Pusource::FILE)
+	if (L->source.type == Pusource::ST_FILE)
 	{
 		ungetc(c, L->source.pf);
 	}
@@ -147,7 +143,7 @@ static void pu_ungetc(Pu *L, int c)
 
 static void pu_scanf(Pusource &s, const char *fmt, void *out)
 {
-	if (s.type == Pusource::FILE)
+	if (s.type == Pusource::ST_FILE)
 	{
 		fscanf(s.pf,fmt,out);
 	}
@@ -484,7 +480,7 @@ void parse_include(Pu *L, const Token &filename)
 		Pusource old_s = L->source;
 		PuString fsn = filename.value.strVal() + ".pu";
 		L->source.pf = fopen(fsn.c_str(), "r");
-		L->source.type = Pusource::FILE;
+		L->source.type = Pusource::ST_FILE;
 		if (L->source.pf == NULL)
 		{
 			error(L,20);
@@ -632,6 +628,10 @@ void Token::operator=( const Token &x )
 	{
 		value = x.value;
 	}
+    else
+    {
+        value.SetType(UNKNOWN);
+    }
 }
 
 Token::Token( const Token &x )

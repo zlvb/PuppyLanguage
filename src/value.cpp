@@ -27,11 +27,9 @@
 	Email zlvbvbzl@gmail.com
 */
 
-#include "def.h"
 #include "value.h"
-#include "token.h"
 #include "error.h"
-#include "state.h"
+#include "def.h"
 
 extern void safe_decrecount(Pu *L, _up_value *n);
 

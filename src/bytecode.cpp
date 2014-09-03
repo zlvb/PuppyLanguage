@@ -27,12 +27,9 @@
 	Email zlvbvbzl@gmail.com
 */
 
+#include "state.h"
 #include <sys/stat.h>
 #include <time.h>
-#include "def.h"
-#include "value.h"
-#include "token.h"
-#include "state.h"
 
 extern void append_token(Pu *L, Token &t);
 extern void parse_include(Pu *L, const Token &filename);
@@ -232,7 +229,7 @@ PUAPI PURESULT pu_load(Pu *L, const char *sname)
 	}
 	
 	L->source.pf = fopen(sname, "r");
-	L->source.type = Pusource::FILE;
+	L->source.type = Pusource::ST_FILE;
 	if (L->source.pf == NULL)
 	{
 		return PU_FAILED;
@@ -284,7 +281,7 @@ PUAPI PURESULT pu_loadbuff(Pu *L, const char *str)
 #pragma warning(pop)
 #endif
 	L->current_filename.push_back(buffname);
-	L->source.type = Pusource::BUFFER;
+	L->source.type = Pusource::ST_BUFFER;
 	L->source.str.buff = str;
 	L->source.str.pos = 0;
 	

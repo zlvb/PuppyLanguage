@@ -46,7 +46,7 @@ struct __bucket_t
 
 
 template<class Key_T, class Value_T, int MAPSIZE=65536>
-class PuMap
+class PuMap : public PuMemObj
 {
 public:
 	typedef __bucket_t<Key_T,Value_T>	Bucket_T;

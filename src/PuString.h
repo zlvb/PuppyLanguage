@@ -30,13 +30,14 @@
 #ifndef _ZLSTR_H_
 #define _ZLSTR_H_
 
+#include "global.h"
 #include <string.h>
 #include <stdlib.h>
 
 #define FIXALI32(n) (((n) + 32-1) & ~(32-1))
 #define FIXALI8(n) (((n) + 8-1) & ~(8-1))
 
-struct PuBuffer
+struct PuBuffer : public PuMemObj
 {
 	PuBuffer(const char *s, int l=0):refc(1),count(0)
 	{
@@ -85,7 +86,7 @@ struct PuBuffer
 #define RELEASE_BUFF PuString::release_buff
 #endif
 
-struct PuString
+struct PuString : public PuMemObj
 {
 	PuString():pbuff(NULL),hash_Key(0)
 	{
@@ -172,7 +173,6 @@ struct PuString
 		hash_Key = h & 0x7FFFFFFF;
 		return hash_Key;
 	}
-
 
 #ifdef _DEBUG
 	static void release_buff(PuString &zlstr) 

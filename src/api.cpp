@@ -27,10 +27,6 @@
 	Email zlvbvbzl@gmail.com
 */
 
-#include "def.h"
-#include "value.h"
-#include "token.h"
-#include "error.h"
 #include "state.h"
 
 const char *PU_VERSION = "Puppy 1.2.4";
@@ -44,6 +40,10 @@ extern void set_var(Pu *L, const PuString &varname, __pu_value &new_value, Token
 #ifdef _MSC_VER
 #pragma warning(disable:4127) // 判断条件为常量，比如：while(1)
 #endif
+
+pumalloc g_pumalloc = malloc;
+pufree g_pufree = free;
+
 PUAPI const char *pu_version()
 {
 	return PU_VERSION;
@@ -57,6 +57,20 @@ PUAPI void pu_set_return_value(Pu *L, const pu_value v)
 PUAPI pu_value pu_get_return_value(Pu *L)
 {
     return &L->return_value;
+}
+
+PUAPI pumalloc pu_set_malloc(pumalloc fun_malloc)
+{
+    pumalloc old = g_pumalloc;
+    g_pumalloc = fun_malloc;
+    return old;
+}
+
+PUAPI pufree pu_set_free(pufree fun_free)
+{
+    pufree old = g_pufree;
+    g_pufree = fun_free;
+    return old;
 }
 
 PUAPI void pu_reg_func(Pu *L, const char *funcname, 
@@ -239,8 +253,8 @@ PUAPI void pu_run(Pu *L)
 
 PUAPI pu_value pu_global(Pu *L, const char *name)
 {
-	Var *pvarmap = L->varstack.bottom();
-	Var::Bucket_T *ik = pvarmap->find(name);
+	VarMap *pvarmap = L->varstack.bottom();
+	VarMap::Bucket_T *ik = pvarmap->find(name);
 	if (ik != 0)
 	{
 		return &(ik->value);
@@ -291,7 +305,7 @@ PUAPI const pu_value pu_call(Pu *L, const char *funcname,
 	}
 	else
 	{
-		Var *newvarmap = new Var;
+		VarMap *newvarmap = new VarMap;
 		L->varstack.push(newvarmap);
 
 		for (int j=0; j<vArgs.size(); ++j)

@@ -42,3 +42,11 @@ typedef PU_FLOAT	PU_NUMBER;
 
 #define PU_MAXVARLEN 128
 #define PU_MAXCFUNCARGNUM 32
+#define _DEBUG_MEM 1
+
+#if defined(_MSC_VER) && defined(_DEBUG) 
+#if _DEBUG_MEM == 1
+#include <crtdbg.h>
+#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#endif
+#endif

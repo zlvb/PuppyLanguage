@@ -27,6 +27,7 @@
 	Email zlvbvbzl@gmail.com
 */
 
+#include "PuMap.h"
 #include <ctype.h>
 
 // 判断字符串是否可表示为一个整数

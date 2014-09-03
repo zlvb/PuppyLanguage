@@ -27,9 +27,6 @@
 	Email zlvbvbzl@gmail.com
 */
 
-#include "def.h"
-#include "value.h"
-#include "token.h"
 #include "state.h"
 
 extern void bi_get_value_len(Pu *L, int, const pu_value *v);

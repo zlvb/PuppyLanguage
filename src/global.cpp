@@ -59,7 +59,7 @@ static int init_operator()
     OPERATORS[OPT_MOD] =   "%";//15 
     OPERATORS[OPT_LSB] =   "[";//16
     OPERATORS[OPT_RSB] =   "]";//17 
-    OPERATORS[OPT_COM] =   ";";//18 
+    OPERATORS[OPT_COM] =   ",";//18 
     OPERATORS[OPT_LBR] =   "{";//19 
     OPERATORS[OPT_RBR] =   "}";//20 
     OPERATORS[OPT_ADDS] =  "+=";//21 

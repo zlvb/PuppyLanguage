@@ -30,6 +30,9 @@
 #ifndef __GLOBAL_H_
 #define __GLOBAL_H_
 
+#include "config.h"
+#include <stddef.h>
+
 #define KEYWORDS_TYPES_LENGTH 14
 #define OPERATOR_TYPES_LENGTH 27
 #define SPACE_TYPES_LENGTH 4
@@ -70,6 +73,80 @@ enum OperatorType
     OPT_COL,
 //--------------
     OPT_COUNT,
+};
+
+
+enum PuType
+{
+    WHILE,
+    END,
+    IF,
+    ELSE,
+    BREAK,
+    GOTO,
+    FUNCTION,
+    RETURN,
+    INCLUDE,
+    CONTINUE,
+    ELIF,
+    NIL,
+    FALSEK,
+    TRUEK,
+    OP,
+    VAR,
+    //---------------
+    NUM,
+    STR,
+    ARRAY,
+    MAP,
+    CORO,
+    FILEHANDLE,
+    BOOLEANT,
+    FUN,
+    CFUN,
+    //---------------
+    LABEL,
+    FINISH,
+    UNKNOWN
+};
+
+enum CODEFROM{
+    FROM_BYTECODE,
+    FROM_SOURCECODE
+};
+
+extern "C"{
+    typedef void * (*pumalloc)(size_t _Size); 
+    typedef void   (*pufree)(void * _Memory); 
+}
+
+extern pumalloc g_pumalloc;
+extern pufree g_pufree;
+
+struct PuMemObj
+{
+    virtual ~PuMemObj(){}
+#if _DEBUG_MEM == 0
+    void *operator new(size_t size)
+    {
+        return g_pumalloc(size);
+    }
+
+    void operator delete(void *ptr)
+    {
+        g_pufree(ptr);
+    }
+
+    void *operator new[](size_t size)
+    {
+        return g_pumalloc(size);
+    }
+
+    void operator delete[](void *ptr)
+    {
+        g_pufree(ptr);
+    }
+#endif
 };
 
 #endif

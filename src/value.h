@@ -32,47 +32,14 @@
 
 #include "PuMap.h"
 #include "PuString.h"
-#include "PuVector.h"
+#include "config.h"
+
 #include <stdio.h>
 #include <assert.h>
 #ifdef _MSC_VER
 #pragma warning(disable:4127) // 判断条件为常量，比如：while(1)
 #endif
 struct Pu;
-
-enum PuType
-{
-	WHILE,
-	END,
-	IF,
-	ELSE,
-	BREAK,
-	GOTO,
-	FUNCTION,
-	RETURN,
-	INCLUDE,
-	CONTINUE,
-	ELIF,
-	NIL,
-	FALSEK,
-	TRUEK,
-	OP,
-	VAR,
-	//---------------
-	NUM,
-	STR,
-	ARRAY,
-    MAP,
-	CORO,
-	FILEHANDLE,
-	BOOLEANT,
-	FUN,
-    CFUN,
-	//---------------
-	LABEL,
-	FINISH,
-	UNKNOWN
-};
 
 #define GET_VARREF(L,name,t)									\
 (																\
@@ -142,25 +109,24 @@ void DECVMAP_REF(void *&userdata);
 	))))))														\
 )
 
-typedef PuVector<__pu_value> ValueArr;
-typedef PuMap<PuString, __pu_value, 10> Var;
-typedef PuVector<Token> TokenList;
 typedef enum PUVALUECREATEDBY{
 	PU_SYSTEM,
 	PU_USER
 }PUVALUECREATEDBY;
 
-struct _up_value
+struct __pu_value : public PuMemObj
 {
-	Var *vmap;
-	int refcount;
-	bool marked;
-	_up_value *next;
-};
+    typedef PuVector<__pu_value> ValueArr;
+    typedef PuMap<PuString, __pu_value, 10> PuValMap;
 
-struct __pu_value
-{
-    typedef Var PuValMap;
+    struct _up_value
+    {
+        PuValMap *vmap;
+        int refcount;
+        bool marked;
+        _up_value *next;
+    };
+
 	inline __pu_value(Pu *_L)
         :L(_L)
         ,createby(PU_SYSTEM)
@@ -314,7 +280,6 @@ struct __pu_value
         return _userdata;
     }
 
-private:
     void destroy()
     {
         switch (type())
@@ -330,8 +295,10 @@ private:
             break;
         default:
             break;
-        }
+        }        
     }
+
+private:
 
     void build()
     {
@@ -360,5 +327,8 @@ private:
     void *_userdata;
 };
 
+typedef __pu_value::ValueArr ValueArr;
+typedef __pu_value::PuValMap VarMap;
+typedef __pu_value::_up_value _up_value;
 
 #endif

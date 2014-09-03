@@ -27,10 +27,7 @@
 	Email zlvbvbzl@gmail.com
 */
 
-#include "def.h"
 #include "error.h"
-#include "value.h"
-#include "token.h"
 #include "state.h"
 
 void error(Pu *L, const char *s, int l)

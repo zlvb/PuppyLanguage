@@ -30,8 +30,10 @@
 #ifndef _PuVector_H_
 #define _PuVector_H_
 
+#include "global.h"
+
 template<class ValueType, int INIT_SIZE>
-struct VectorBuff
+struct VectorBuff : public PuMemObj
 {
 	VectorBuff():_vb(0),cur(-1),count(0),refc(1)
 	{}
@@ -63,7 +65,7 @@ struct VectorBuff
 };
 
 template<class ValueType, int INIT_SIZE=32>
-struct PuVector 
+struct PuVector : public PuMemObj
 {
 	typedef ValueType* iterator;
 

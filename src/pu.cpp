@@ -27,15 +27,14 @@
 	Email zlvbvbzl@gmail.com
 */
 
-#include "def.h"
-#include "value.h"
-#include "token.h"
-#include "global.h"
-#include "error.h"
-#include "state.h"
+
 #ifdef _MSC_VER
 #pragma warning(disable:4127) // 判断条件为常量，比如：while(1)
 #endif
+
+#include "state.h"
+#include "error.h"
+
 int vm(Pu *L);
 static void term(Pu *L, __pu_value &temp);
 static void factor(Pu *L, __pu_value &temp);
@@ -98,9 +97,9 @@ L->return_value.SetType(UNKNOWN);
 
 void get_var(Pu *L, const PuString &name, __pu_value &v, Token *t=0)
 {
-	Var *pvarmap = L->varstack.top();
+	VarMap *pvarmap = L->varstack.top();
 
-	Var::Bucket_T *ik = pvarmap->find(name);
+	VarMap::Bucket_T *ik = pvarmap->find(name);
 	if (ik != 0)
 	{
 		v = ik->value;
@@ -139,8 +138,8 @@ void get_var(Pu *L, const PuString &name, __pu_value &v, Token *t=0)
 void set_var(Pu *L, const PuString &varname, __pu_value &new_value, Token *vart)
 {
 	__pu_value *got=0;
-	Var *varmap = L->varstack.top();
-	Var::Bucket_T *it = varmap->find(varname);
+	VarMap *varmap = L->varstack.top();
+	VarMap::Bucket_T *it = varmap->find(varname);
 	if (it != 0)
 	{
 		it->value = new_value;
@@ -148,8 +147,8 @@ void set_var(Pu *L, const PuString &varname, __pu_value &new_value, Token *vart)
 	}
 	else 
 	{
-		Var *varmap = L->varstack.bottom();
-		Var::Bucket_T *it = varmap->find(varname);
+		VarMap *varmap = L->varstack.bottom();
+		VarMap::Bucket_T *it = varmap->find(varname);
 		if (it != 0)
 		{
 			it->value = new_value;
@@ -159,8 +158,8 @@ void set_var(Pu *L, const PuString &varname, __pu_value &new_value, Token *vart)
 
 	if (got==0)
 	{
-		Var *varmap = L->varstack.top();
-		Var::Bucket_T *ret = varmap->insert(varname, new_value);
+		VarMap *varmap = L->varstack.top();
+		VarMap::Bucket_T *ret = varmap->insert(varname, new_value);
 		if (vart)
 		{
 			vart->var = &(ret->value);
@@ -174,8 +173,8 @@ void set_var(Pu *L, const PuString &varname, __pu_value &new_value, Token *vart)
 
 static __pu_value *get_varref(Pu *L, PuString &name, Token *t)
 {
-	Var *pvarmap = L->varstack.bottom();
-	Var::Bucket_T *ik = pvarmap->find(name);
+	VarMap *pvarmap = L->varstack.bottom();
+	VarMap::Bucket_T *ik = pvarmap->find(name);
 	if (ik != 0)
 	{
 		if (t)
@@ -765,7 +764,7 @@ static void factor(Pu *L, __pu_value &temp)
 			case OPT_LB:
 				if (temp.type() == FUN || temp.type() == CFUN)
 				{
-					Var *old = L->upvalue;
+					VarMap *old = L->upvalue;
 					L->upvalue = 0;
 					if (temp.userdata())
 					{
@@ -863,7 +862,7 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
 	}
 	else
 	{
-		Var *newvarmap = new Var;
+		VarMap *newvarmap = new VarMap;
 		int i=0;
 		for (;;)// )
 		{

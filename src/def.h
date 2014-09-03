@@ -60,11 +60,6 @@ typedef enum PURESULT{
 	PU_SUCCESS// ³É¹¦
 }PURESULT;
 
-#if defined(_WIN32) && defined(_DEBUG)
-#include <crtdbg.h>
-#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#endif
-
 #ifdef _MSC_VER
 #define PU_SNPRINTF(dest, size, fmt, ...) _snprintf(dest, size, fmt, __VA_ARGS__)
 #else
