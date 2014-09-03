@@ -34,13 +34,13 @@
 #include "../puppy.h"
 
 #if defined(_WIN32) && defined(_DEBUG)
-	#include <crtdbg.h>
-	inline void EnableMemLeakCheck()
-	{
-		_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
-	}
+#include <crtdbg.h>
+inline void EnableMemLeakCheck()
+{
+    _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
+}
 
-	#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #endif
 
 void pu_console(Pu *L);
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 {
     srand((unsigned int)time(NULL));
 #if defined(_WIN32) && defined(_DEBUG)
-	EnableMemLeakCheck();
+	//EnableMemLeakCheck();
 	 //_CrtSetBreakAlloc(3331);
 #endif
 	Pu *L = pu_open();
