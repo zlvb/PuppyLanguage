@@ -81,12 +81,11 @@ void help(Pu *L, int , const pu_value *)
     bi_return_null_func(L);
 }
 
-
+bool g_bExit = false;
 // 用于退出控制台的exit函数
 void exit_program(Pu *L, int, const pu_value *)
 {
-	pu_close(L);
-	exit(0);
+	g_bExit = true;
 }
 
 #define PU_MAXINPUT	65536
@@ -102,7 +101,7 @@ void pu_console(Pu *L)
 	pu_reg_func(L, "print", print);
 	pu_reg_func(L, "help", help);
 	pu_reg_func(L, "exit", exit_program);
-	for (;;)
+	for (;!g_bExit;)
 	{
 		static char buff[PU_MAXINPUT];
 		putchar('>');
