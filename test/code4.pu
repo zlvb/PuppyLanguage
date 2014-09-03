@@ -1,14 +1,10 @@
 #闭包
 def gg(j)
-
 	a=j
-	
 	def kk(p)
 		return a+p
 	end
-	
 	return kk
-	
 end
 
 v1 = gg(1)
