@@ -6,38 +6,29 @@
 #	  make clean
 # 
 
-TARGETNAME = puppy
+TARGETNAME = bin/vm
+
+CXXFLAGS = -g -D_DEBUG -Wall
+OBJPATH = debug
+
+TARGET = $(TARGETNAME)_d
 
 ifeq ($(BUILD), release)
 	CXXFLAGS = -O3 -Wall
-	OBJPATH = Release
-	TARGET_BIN = bin/$(TARGETNAME)
-	TARGET_LIB = lib/lib$(TARGETNAME).a
-else
-	CXXFLAGS = -g -D_DEBUG -Wall
-	OBJPATH = Debug
-	TARGET_BIN = bin/$(TARGETNAME)_d
-	TARGET_LIB = lib/lib$(TARGETNAME)_d.a
+	OBJPATH = release
+	TARGET = $(TARGETNAME)
 endif
 
 
-SRCS_BIN = $(wildcard test/*.cpp)
-OBJS_BIN = $(SRCS_BIN:%.cpp=$(OBJPATH)/%.o)
-SRCS_LIB = $(wildcard *.cpp src/*.cpp)
-OBJS_LIB = $(SRCS_LIB:%.cpp=$(OBJPATH)/%.o)
+SRCS = $(wildcard *.cpp src/*.cpp test/*.cpp)
+OBJS = $(SRCS:%.cpp=$(OBJPATH)/%.o)
 
-$(TARGET_BIN) : $(OBJS_BIN) $(TARGET_LIB)
-	mkdir -p bin
+$(TARGET) : $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ 
 
-$(TARGET_LIB) : $(OBJS_LIB)
-	mkdir -p lib
-	$(AR) rc $(TARGET_LIB) $(OBJS_LIB)
-
 clean :
-	rm -rf Release
-	rm -rf Debug
-	rm -rf bin
+	rm -rf release
+	rm -rf debug
 
 $(OBJPATH)/%.o : %.cpp
 	@mkdir -p $(dir $@)
