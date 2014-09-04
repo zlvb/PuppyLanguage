@@ -64,7 +64,7 @@ void append_token(Pu *L, Token &t)
 	else if (t.type == ELIF || t.type == ELSE)
 	{
 		int startpos = L->jumpstack.top();
-		L->tokens[startpos].optype = L->tokens.size()-1;
+		L->tokens[startpos].optype = (OperatorType)(L->tokens.size()-1);
 		L->jumpstack.pop();
 		startpos = L->tokens.size()-1;
 		L->jumpstack.push(startpos);
@@ -75,7 +75,7 @@ void append_token(Pu *L, Token &t)
 		Token &p = L->tokens[startpos];
 		if (p.type != FUNCTION)
 		{
-			p.optype = L->tokens.size()-1;
+			p.optype = (OperatorType)(L->tokens.size()-1);
 		}
 		L->jumpstack.pop();
 	}
@@ -284,7 +284,7 @@ static void get_op(Pu *L, int c, Token &newToken)
 		}
 	}
 	pu_ungetc(L,c);
-	newToken.optype = check_op_type(identifier) - 1;
+	newToken.optype = (OperatorType)(check_op_type(identifier) - 1);
 }
 
 static void get_var_key(Pu *L, int c, Token &newToken)
@@ -430,9 +430,9 @@ void parse_function(Pu *L, int token_from, FILE *pbcf, TokenList *tl)
 		CHECKTOKENERROR;
 	}
 	
-	while (!(t.type == OP && t.optype == 12))// )
+	while (!(t.type == OP && t.optype == OPT_RB))// )
 	{
-		if (t.type == OP && t.optype == 18)
+		if (t.type == OP && t.optype == OPT_COM)
 		{
 			//pass
 		}
@@ -464,7 +464,7 @@ void parse_function(Pu *L, int token_from, FILE *pbcf, TokenList *tl)
 	}
 	
 	L->funclist.push_back(fps);
-	L->tokens[funckeywords_pos].optype = L->funclist.size()-1;
+	L->tokens[funckeywords_pos].optype = (OperatorType)(L->funclist.size()-1);
     L->funstack.push_back(1);
 	parse_function_body(L,L->funclist.size()-1,token_from,t,pbcf,tl);
 }

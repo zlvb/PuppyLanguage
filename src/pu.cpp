@@ -203,7 +203,7 @@ static __pu_value exp(Pu *L)
 		{
 			NEXT_TOKEN;
 			PuType tp = TOKEN.type;
-			int nv = TOKEN.optype;
+			OperatorType nv = TOKEN.optype;
 			if (tp == OP 
 				&& (nv == OPT_SET || nv == OPT_ADDS || nv == OPT_SUBS || nv == OPT_MULS || nv == OPT_DIVS))
 			{
@@ -216,7 +216,7 @@ static __pu_value exp(Pu *L)
 	}while(false);
 
 	PuType tp = TOKEN.type;
-	int nv = TOKEN.optype;
+	OperatorType nv = TOKEN.optype;
 	if (!(tp == OP 
 		&& (nv == OPT_SET || nv == OPT_ADDS || nv == OPT_SUBS || nv == OPT_MULS || nv == OPT_DIVS)))
 		return temp;
@@ -235,7 +235,7 @@ static __pu_value exp(Pu *L)
 	case OPT_SET:// =
 		SET_VAR(L, ptoken->value.strVal(), t, ptoken);
 		return t;
-	case 21:// +=
+	case OPT_ADDS:// +=
 		{
 			__pu_value *pv = GET_VARREF(L, ptoken->value.strVal(), ptoken);
 			if (pv == NULL)
@@ -283,7 +283,7 @@ static __pu_value exp(Pu *L)
 static void get_value(Pu *L, __pu_value &temp)
 {
 	PuType tp = TOKEN.type;
-	int nv = TOKEN.optype;
+	OperatorType nv = TOKEN.optype;
 	PuString &sv = TOKEN.value.strVal();
 	if (tp == VAR)
 	{
@@ -375,7 +375,7 @@ static void get_arrref(Pu *L, __pu_value &temp)
 	}
 
 	PuType tp = TOKEN.type;
-	int nv = TOKEN.optype;
+	OperatorType nv = TOKEN.optype;
 	if (tp != OP || nv != OPT_RSB)
 	{// 数组操作符必须以[开始，以]结束
 		error(L,4);
@@ -396,7 +396,7 @@ static void get_map(Pu *L, __pu_value &a)
     for (;;)
     {
         PuType tp = TOKEN.type;
-        int nv = TOKEN.optype;
+        OperatorType nv = TOKEN.optype;
         if (tp == OP && nv == OPT_COM) // ,
         {
             NEXT_TOKEN;
@@ -442,7 +442,7 @@ static void get_array(Pu *L, __pu_value &a)
 	for (;;)
 	{
 		PuType tp = TOKEN.type;
-		int nv = TOKEN.optype;
+		OperatorType nv = TOKEN.optype;
 		if (tp == OP && nv == OPT_COM) // ,
 		{
 			NEXT_TOKEN;
@@ -470,7 +470,7 @@ static void get_array(Pu *L, __pu_value &a)
 	for (;;)							\
 	{									\
 		PuType tp = TOKEN.type;		    \
-		int nv = TOKEN.optype;			\
+		OperatorType nv = TOKEN.optype;	\
 		if (tp == OP && nv == OPT_COM)	\
 		{								\
 			NEXT_TOKEN;					\
@@ -538,7 +538,7 @@ static void ift(Pu *L, Token *ptoken) //if
 static void logc(Pu *L, __pu_value &temp)
 {
 	PuType tp = TOKEN.type;
-	int nv = TOKEN.optype;
+	OperatorType nv = TOKEN.optype;
 
 	while (tp == OP) // || &&
 	{
@@ -549,8 +549,9 @@ static void logc(Pu *L, __pu_value &temp)
 				NEXT_TOKEN;	// ||				
                 __pu_value t(L);
                 CMP(L,t);
+                PU_NUMBER r = (PU_NUMBER)(temp || t);
                 temp.SetType(BOOLEANT);
-                temp.numVal() = (PU_NUMBER)(temp || t);			
+                temp.numVal() = r;
 			}
 			break;
 		case OPT_AND:
@@ -558,8 +559,9 @@ static void logc(Pu *L, __pu_value &temp)
 				NEXT_TOKEN;	// &&
                 __pu_value t(L);
                 CMP(L,t);
+                PU_NUMBER r = (PU_NUMBER)(temp && t);
                 temp.SetType(BOOLEANT);
-                temp.numVal() = (PU_NUMBER)(temp && t);	
+                temp.numVal() = r;
 			}
 			break;
 		default:
@@ -573,64 +575,70 @@ static void logc(Pu *L, __pu_value &temp)
 static void cmp(Pu *L, __pu_value &temp)
 {
 	PuType tp = TOKEN.type;
-	int nv = TOKEN.optype;
+	OperatorType nv = TOKEN.optype;
 
 	while (tp == OP)
 	{
 		switch (nv)
 		{
-		case 4:
+		case OPT_GT:
 			{
 				NEXT_TOKEN;
 				__pu_value t(L);
 				ADD(L,t);
-				temp.numVal() = (PU_NUMBER)(temp > t);
-				temp.SetType(BOOLEANT);
+                PU_NUMBER r = (PU_NUMBER)(temp > t);
+                temp.SetType(BOOLEANT);
+				temp.numVal() = r;				
 			}
 			break;
-		case 5:
+		case OPT_LT:
 			{
 				NEXT_TOKEN;
 				__pu_value t(L);
-				ADD(L,t);                
-				temp.numVal() = (PU_NUMBER)(temp < t);		
+				ADD(L,t);        
+                PU_NUMBER r = (PU_NUMBER)(temp < t);
                 temp.SetType(BOOLEANT);
+				temp.numVal() = r;	                
 			}
 			break;
-		case 7:
+		case OPT_EQ:
 			{
 				NEXT_TOKEN;
 				__pu_value t(L);
-				ADD(L,t);                
-				temp.numVal() = (PU_NUMBER)(temp == t);
+				ADD(L,t);          
+                PU_NUMBER r = (PU_NUMBER)(temp == t);
                 temp.SetType(BOOLEANT);
+				temp.numVal() = r;                
 			}
 			break;
-		case 8:
+		case OPT_GTA:
 			{
 				NEXT_TOKEN;
 				__pu_value t(L);
-				ADD(L,t);                
-				temp.numVal() = (PU_NUMBER)(temp >= t);
+				ADD(L,t);     
+                PU_NUMBER r = (PU_NUMBER)(temp >= t);
                 temp.SetType(BOOLEANT);
+				temp.numVal() = r;                
 			}
 			break;
-		case 9:
+		case OPT_LTA:
 			{
 				NEXT_TOKEN;
 				__pu_value t(L);
-				ADD(L,t);                
-				temp.numVal() = (PU_NUMBER)(temp <= t);
+				ADD(L,t);       
+                PU_NUMBER r = (PU_NUMBER)(temp <= t);
                 temp.SetType(BOOLEANT);
+				temp.numVal() = r;                
 			}
 			break;
-		case 10:
+		case OPT_NEQ:
 			{
 				NEXT_TOKEN;
 				__pu_value t(L);
-				ADD(L,t);                
-				temp.numVal() = (PU_NUMBER)(temp != t);
+				ADD(L,t);       
+                PU_NUMBER r = (PU_NUMBER)(temp <= t);
                 temp.SetType(BOOLEANT);
+				temp.numVal() = r;                
 			}
 			break;
 		default:
@@ -644,13 +652,13 @@ static void cmp(Pu *L, __pu_value &temp)
 static void add(Pu *L, __pu_value &temp)
 {
 	PuType tp = TOKEN.type;
-	int nv = TOKEN.optype;
+	OperatorType nv = TOKEN.optype;
 
 	while (tp == OP) // +-
 	{
 		switch (nv)
 		{
-		case 0:
+		case OPT_ADD:
 			{
 				NEXT_TOKEN;
 				__pu_value t(L);
@@ -658,7 +666,7 @@ static void add(Pu *L, __pu_value &temp)
 				temp += t;
 			}
 			break;
-		case 1:
+		case OPT_SUB:
 			{
 				NEXT_TOKEN;
 				__pu_value t(L);
@@ -678,7 +686,7 @@ static void add(Pu *L, __pu_value &temp)
 static void term(Pu *L, __pu_value &temp)
 {
 	PuType tp = TOKEN.type;
-	int nv = TOKEN.optype;
+	OperatorType nv = TOKEN.optype;
 
 	while (tp == OP)  // */%
 	{
@@ -721,7 +729,7 @@ static void term(Pu *L, __pu_value &temp)
 static void factor(Pu *L, __pu_value &temp)
 {
 	PuType tp = TOKEN.type;
-	int nv = TOKEN.optype;
+	OperatorType nv = TOKEN.optype;
 
 	if (tp == OP)// ( [
 	{
@@ -755,7 +763,7 @@ static void factor(Pu *L, __pu_value &temp)
 	{
 		get_value(L,temp);
 		PuType tp = TOKEN.type;
-		int nv = TOKEN.optype;
+		OperatorType nv = TOKEN.optype;
 
 		while (tp == OP)
 		{
@@ -916,7 +924,7 @@ static void gotot(Pu *L)
 	NEXT_TOKEN;
 
 	PuType tp = TOKEN.type;
-	int optype = TOKEN.optype;
+	OperatorType optype = TOKEN.optype;
 	PuString &sv = TOKEN.value.strVal();
 
 	if (tp == VAR)
@@ -934,7 +942,7 @@ static void gotot(Pu *L)
 				return;
 			}
 
-			TOKEN.optype = it->value;
+			TOKEN.optype = (OperatorType)(it->value);
 			L->cur_token = it->value;
 		}
 
@@ -948,7 +956,7 @@ static void procop(Pu *L)
 	__pu_value temp(L);
 
 	PuType tp = TOKEN.type;
-	int nv = TOKEN.optype;
+	OperatorType nv = TOKEN.optype;
 
 	if (tp == OP && nv == OPT_LB) //(
 	{
@@ -970,7 +978,7 @@ static void procop(Pu *L)
 static void whilet(Pu *L, Token *ptoken)
 {
 	int while_begin = L->cur_token;
-	int while_end = ptoken->optype;
+	OperatorType while_end = ptoken->optype;
 	for(;;)
 	{
 		NEXT_TOKEN;

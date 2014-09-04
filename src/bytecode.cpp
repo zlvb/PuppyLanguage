@@ -108,7 +108,7 @@ void get_nextbytetoken(Pu *L, FILE *pbcf, Token &t)
 			case OP:{
 				char cop = 0;
 				fread(&cop, sizeof(cop), 1, pbcf);
-				t.optype = cop;
+				t.optype = (OperatorType)cop;
 					}break;
 
 			case VAR:{

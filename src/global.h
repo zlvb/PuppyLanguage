@@ -44,6 +44,7 @@ extern const char *OPERATOR_CHARS;
 
 enum OperatorType
 {
+    OPT_UNKNOWN = -1,
     OPT_ADD,
     OPT_SUB,
     OPT_MUL,

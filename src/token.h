@@ -34,12 +34,12 @@
 
 struct Token
 {
-	Token():optype(-1),var(0),finfo(0){}
+	Token():optype(OPT_UNKNOWN),var(0),finfo(0){}
 	Token(const Token &x);
 	void operator=(const Token &x);
 	PuType type;
 	int line;
-	int optype;
+	OperatorType optype;
 	void *var;
 	void *finfo;
 	PuString filename;

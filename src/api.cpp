@@ -29,7 +29,7 @@
 
 #include "state.h"
 
-const char *PU_VERSION = "Puppy 1.2.4";
+const char *PU_VERSION = "Puppy 1.2.5";
 
 extern int do_string(Pu *L, const char *str);
 extern void clear_state(Pu *L);
