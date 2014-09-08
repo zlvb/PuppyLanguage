@@ -28,15 +28,16 @@
 */
 
 #include "state.h"
-
-const char *PU_VERSION = "Puppy 1.2.5";
+#include "error.h"
+const char *PU_VERSION = "Puppy 1.3.0";
 
 extern int do_string(Pu *L, const char *str);
 extern void clear_state(Pu *L);
 extern int vm(Pu *L);
 extern const char *get_typestr(__pu_value &v);
 extern void regbuiltin(Pu *L);
-extern void set_var(Pu *L, const PuString &varname, __pu_value &new_value, Token *vart);
+extern void set_var(Pu *L, const PuString &varname, __pu_value &new_value, __pu_value *&got);
+extern __pu_value *reg_var(Pu *L, const PuString &varname);
 #ifdef _MSC_VER
 #pragma warning(disable:4127) // 判断条件为常量，比如：while(1)
 #endif
@@ -81,9 +82,10 @@ PUAPI void pu_reg_func(Pu *L, const char *funcname,
 	L->funclist.push_back(fps);
 
 	__pu_value v(L);
-	v.SetType(CFUN);
-	v.numVal() = (PU_NUMBER)L->funclist.size()-1;
-    set_var(L, funcname, v, NULL);
+    v.SetType(CFUN);
+    v.numVal() = (PU_NUMBER)L->funclist.size()-1;
+    __pu_value *got = reg_var(L, funcname);
+    *got = v;        
 }
 
 PUAPI const char *pu_str(const pu_value v)
@@ -275,7 +277,7 @@ PUAPI const pu_value pu_call(Pu *L, const char *funcname,
 	pu_value fv = pu_global(L,funcname);
 	FuncPos &fps = L->funclist[(int)fv->numVal()];
 
-	PuVector<PuString, 4> &vArgs = fps.argnames;
+	const FunArgs &vArgs = fps.argnames;
 
 	if (fps.start == -1)
 	{
@@ -290,7 +292,7 @@ PUAPI const pu_value pu_call(Pu *L, const char *funcname,
 
 		if (arg_num > 0)
 		{
-			args = (pu_value *)malloc(arg_num * sizeof(__pu_value*));
+			args = (pu_value *)g_pumalloc(arg_num * sizeof(__pu_value*));
 		}
 
 		for (int j = 0;  j < arg_num; ++j)
@@ -301,7 +303,7 @@ PUAPI const pu_value pu_call(Pu *L, const char *funcname,
 		fps.pfunc(L, int(arg_num), args);
 
 		if (args)
-			free(args);
+			g_pufree(args);
 	}
 	else
 	{

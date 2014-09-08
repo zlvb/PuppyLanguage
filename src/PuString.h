@@ -46,9 +46,9 @@ struct PuBuffer : public PuMemObj
 		else
 			length = l;
 		count = FIXALI32(length+1);
-		buffer = (char*)malloc(count);
-		memset(buffer,0,length+1);
+		buffer = (char*)g_pumalloc(count);
 		memcpy(buffer,s, length);
+        buffer[length] = 0;
 	}
 
 	inline PuBuffer():buffer(NULL),length(0),refc(1),count(0)
@@ -57,7 +57,7 @@ struct PuBuffer : public PuMemObj
 	~PuBuffer()
 	{
 		if (buffer)
-			free(buffer);
+			g_pufree(buffer);
 	}
 
 	char *buffer;
@@ -83,7 +83,9 @@ struct PuBuffer : public PuMemObj
 }
 #define RELEASE_BUFF release_buff
 #else
-#define RELEASE_BUFF PuString::release_buff
+struct PuString;
+void release_buff(PuString &zlstr);
+#define RELEASE_BUFF release_buff
 #endif
 
 struct PuString : public PuMemObj
@@ -98,7 +100,7 @@ struct PuString : public PuMemObj
 		*this = x;
 	}
 
-	inline PuString(const PuString &x):pbuff(NULL),hash_Key(0)
+	PuString(const PuString &x):pbuff(NULL),hash_Key(0)
 	{
 		*this = x;
 	}
@@ -173,21 +175,6 @@ struct PuString : public PuMemObj
 		hash_Key = h & 0x7FFFFFFF;
 		return hash_Key;
 	}
-
-#ifdef _DEBUG
-	static void release_buff(PuString &zlstr) 
-	{
-		if (zlstr.pbuff)
-		{
-			--zlstr.pbuff->refc;
-			if (zlstr.pbuff->refc <= 0)
-			{
-				delete zlstr.pbuff;
-			}
-			zlstr.pbuff = NULL;
-		}
-	}
-#endif
 
 	PuBuffer *pbuff;
 	mutable unsigned int hash_Key;

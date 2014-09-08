@@ -49,7 +49,7 @@ void bi_coro_create(Pu *L, int argnum, const pu_value *v)
 
 	FuncPos &fps = L->funclist[(int)v[0]->numVal()];
 
-	PuVector<PuString, 4> &args = fps.argnames;
+	const FunArgs &args = fps.argnames;
 
 	if (argnum-1 != args.size())
 	{

@@ -66,8 +66,8 @@ static bool cmparr(const ValueArr *a, const ValueArr *b)
 	int l = a->size();
 	for (int i=0; i < l; ++i)
 	{
-		__pu_value &m = (*a)[i];
-		__pu_value &n = (*b)[i];
+		const __pu_value &m = (*a)[i];
+		const __pu_value &n = (*b)[i];
 
 		if (m.type() != n.type())
 			return false;
@@ -465,4 +465,6 @@ __pu_value::~__pu_value()
 			safe_decrecount(L, f);
 		}
 	}
+
+    destroy();
 }

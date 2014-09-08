@@ -34,13 +34,16 @@
 
 struct Token
 {
-	Token():optype(OPT_UNKNOWN),var(0),finfo(0){}
+	Token()
+        :type(UNKNOWN)
+        ,line(0)
+        ,optype(OPT_UNKNOWN)
+        ,finfo(0){}
 	Token(const Token &x);
 	void operator=(const Token &x);
 	PuType type;
 	int line;
 	OperatorType optype;
-	void *var;
 	void *finfo;
 	PuString filename;
 	__pu_value value;

@@ -86,6 +86,7 @@ bool g_bExit = false;
 void exit_program(Pu *L, int, const pu_value *)
 {
 	g_bExit = true;
+    bi_return_null_func(L);
 }
 
 #define PU_MAXINPUT	65536

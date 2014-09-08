@@ -36,11 +36,11 @@
 #include "error.h"
 
 int vm(Pu *L);
-static void term(Pu *L, __pu_value &temp);
-static void factor(Pu *L, __pu_value &temp);
-static void cmp(Pu *L, __pu_value &temp);
-static void logc(Pu *L, __pu_value &temp);
-static void add(Pu *L, __pu_value &temp);
+static void term(Pu *L, __pu_value *&temp);
+static void factor(Pu *L, __pu_value *&temp);
+static void cmp(Pu *L, __pu_value *&temp);
+static void logc(Pu *L, __pu_value *&temp);
+static void add(Pu *L, __pu_value *&temp);
 static void callfunction(Pu *L, FuncPos &finfo);
 
 #define _CHT PuType tp = TOKEN.type;int nv = TOKEN.optype;
@@ -53,10 +53,10 @@ static void callfunction(Pu *L, FuncPos &finfo);
 #define ADD(L,t)	factor(L,t); _TERM(L,t) _ADD(L,t)
 #define TERM(L,t)	factor(L,t); _TERM(L,t)
 #define FACTOR(L,t)	factor(L,t);
-#define DO_GC if(L->gclink != 0 && L->varstack.size() == 1){gc(L);}
+#define DO_GC clear_temp(L);if(L->gclink != 0 && L->varstack.size() == 1){gc(L);}
 
 extern void gc(Pu *L);
-
+extern void clear_temp(Pu *L);
 /*
 上面展开后：
 factor(L,t);
@@ -77,34 +77,16 @@ add(L,t);
 */
 
 #define CLEAR_RETURN							\
-switch (L->return_value.type())					\
-{												\
-	case STR:									\
-		RELEASE_BUFF(L->return_value.strVal());	\
-		break;									\
-	case ARRAY:									\
-		L->return_value.arr().decref();			\
-		break;									\
-	case FUN:									\
-		if (L->return_value.userdata() && ((_up_value*)(L->return_value.userdata()))->vmap != L->varstack.bottom())\
-		DECVMAP_REF(L->return_value.userdata());	\
-        break;\
-    default:\
-        break;\
-}												\
-L->return_value.userdata() = 0;					\
-L->return_value.SetType(UNKNOWN);
+L->return_value.SetType(NIL);
 
-void get_var(Pu *L, const PuString &name, __pu_value &v, Token *t=0)
+void get_var(Pu *L, const PuString &name, __pu_value *&v)
 {
 	VarMap *pvarmap = L->varstack.top();
 
 	VarMap::Bucket_T *ik = pvarmap->find(name);
 	if (ik != 0)
 	{
-		v = ik->value;
-		if (t)
-			t->var = &(ik->value);
+		v = &ik->value;
 		return;
 	}
 
@@ -112,9 +94,7 @@ void get_var(Pu *L, const PuString &name, __pu_value &v, Token *t=0)
 	ik = pvarmap->find(name);
 	if (ik != 0)
 	{
-		v = ik->value;
-		if (t)
-			t->var = &(ik->value);
+		v = &ik->value;
 		return;
 	}
 
@@ -124,61 +104,51 @@ void get_var(Pu *L, const PuString &name, __pu_value &v, Token *t=0)
 		ik = pvarmap->find(name);
 		if (ik != 0)
 		{
-			v = ik->value;
-			if (t)
-				t->var = &(ik->value);
+			v = &ik->value;
 			return;
 		}
 	}
 
-	v.SetType(UNKNOWN);
+    MAKE_TEMP_VALUE(v);
 	error(L,7);
 }
 
-void set_var(Pu *L, const PuString &varname, __pu_value &new_value, Token *vart)
+__pu_value *reg_var(Pu *L, const PuString &varname)
 {
-	__pu_value *got=0;
-	VarMap *varmap = L->varstack.top();
-	VarMap::Bucket_T *it = varmap->find(varname);
-	if (it != 0)
-	{
-		it->value = new_value;
-		got = &(it->value);
-	}
-	else 
-	{
-		VarMap *varmap = L->varstack.bottom();
-		VarMap::Bucket_T *it = varmap->find(varname);
-		if (it != 0)
-		{
-			it->value = new_value;
-			got = &(it->value);
-		}
-	}
+    __pu_value *got = NULL;
+    VarMap *varmap = L->varstack.top();
+    VarMap::Bucket_T *it = varmap->find(varname);
+    if (it != 0)
+    {
+        got = &(it->value);
+    }
+    else 
+    {
+        VarMap *varmap = L->varstack.bottom();
+        VarMap::Bucket_T *it = varmap->find(varname);
+        if (it != 0)
+        {
+            got = &(it->value);
+        }
+    }
 
-	if (got==0)
-	{
-		VarMap *varmap = L->varstack.top();
-		VarMap::Bucket_T *ret = varmap->insert(varname, new_value);
-		if (vart)
-		{
-			vart->var = &(ret->value);
-		}
-	}
-	else if (vart)
-	{
-		vart->var = got;
-	}
+    if (got == NULL)
+    {
+        VarMap *varmap = L->varstack.top();
+        VarMap::Bucket_T *ret = varmap->insert(varname, __pu_value(L));
+        got = &(ret->value);
+    }
+
+    return got;
 }
 
-static __pu_value *get_varref(Pu *L, PuString &name, Token *t)
+
+static __pu_value *get_varref(Pu *L, PuString &name)
 {
 	VarMap *pvarmap = L->varstack.bottom();
 	VarMap::Bucket_T *ik = pvarmap->find(name);
 	if (ik != 0)
 	{
-		if (t)
-			t->var = &(ik->value);
 		return &(ik->value);
 	}
 
@@ -186,18 +156,16 @@ static __pu_value *get_varref(Pu *L, PuString &name, Token *t)
 	ik = pvarmap->find(name);
 	if (ik != 0)
 	{
-		if (t)
-			t->var = &(ik->value);
 		return &(ik->value);
 	}
 
-	return 0;
+	return NULL;
 }
 
-static __pu_value exp(Pu *L) 
+static const __pu_value *exp(Pu *L) 
 {
 	Token *ptoken = &TOKEN;
-	__pu_value temp(L);
+	__pu_value *temp = NULL;
 	do{
 		if (ptoken->type == VAR)
 		{
@@ -213,6 +181,8 @@ static __pu_value exp(Pu *L)
 		}
 
 		LOGC(L,temp);
+        CHECK_EXP_RETURN(temp, temp);
+
 	}while(false);
 
 	PuType tp = TOKEN.type;
@@ -224,70 +194,69 @@ static __pu_value exp(Pu *L)
 	if (ptoken->type != VAR)
 	{
 		error(L,22);
-		return __pu_value(L);
+		__pu_value *result = NULL;
+        MAKE_TEMP_VALUE(result);
+        return result;
 	}
 
 	NEXT_TOKEN;
-	__pu_value t = exp(L);
+	const __pu_value *t = exp(L);
+    CHECK_EXP_RETURN(t, t);
 
-	switch (nv)
+    switch (nv)
 	{
-	case OPT_SET:// =
-		SET_VAR(L, ptoken->value.strVal(), t, ptoken);
-		return t;
+	case OPT_SET:{// =
+        __pu_value *var_value = reg_var(L, ptoken->value.strVal());
+
+        assert( !(var_value->type() == UNKNOWN && temp != NULL) );
+
+        if (temp == NULL)
+        {
+            temp = var_value;
+        }
+        
+        *temp = *t;
+        return temp;}
 	case OPT_ADDS:// +=
 		{
-			__pu_value *pv = GET_VARREF(L, ptoken->value.strVal(), ptoken);
-			if (pv == NULL)
-			{
-				error(L,7);
-				return __pu_value(L);
-			}
-			return pv->operator+=(t);
+			__pu_value *pv = get_varref(L, ptoken->value.strVal());
+            CHECK_EXP_RETURNERR(pv);
+			return &pv->operator+=(*t);
+
 		}
 	case OPT_SUBS:// -=
 		{
-			__pu_value *pv = GET_VARREF(L, ptoken->value.strVal(), ptoken);
-			if (pv == NULL)
-			{
-				error(L,7);
-				return __pu_value(L);
-			}
-			return pv->operator-=(t);
+			__pu_value *pv = get_varref(L, ptoken->value.strVal());
+            CHECK_EXP_RETURNERR(pv);
+			return &pv->operator-=(*t);
 		}
 	case OPT_MULS:// *=
 		{
-			__pu_value *pv = GET_VARREF(L, ptoken->value.strVal(), ptoken);
-			if (pv == NULL)
-			{
-				error(L,7);
-				return __pu_value(L);
-			}
-			return pv->operator*=(t);
+			__pu_value *pv = get_varref(L, ptoken->value.strVal());
+            CHECK_EXP_RETURNERR(pv);
+			return &pv->operator*=(*t);
 		}
 	case OPT_DIVS:// /=
 		{
-			__pu_value *pv = GET_VARREF(L, ptoken->value.strVal(), ptoken);
-			if (pv == NULL)
-			{
-				error(L,7);
-				return __pu_value(L);
-			}
-			return pv->operator/=(t);
+			__pu_value *pv = get_varref(L, ptoken->value.strVal());
+            CHECK_EXP_RETURNERR(pv);
+			return &pv->operator/=(*t);
 		}
 	default:
-		return t;
+		;
 	}
+
+    return t;	
 }
 
-static void get_value(Pu *L, __pu_value &temp)
+static void get_value(Pu *L, __pu_value *&temp)
 {
 	PuType tp = TOKEN.type;
 	OperatorType nv = TOKEN.optype;
 	PuString &sv = TOKEN.value.strVal();
 	if (tp == VAR)
 	{
-		GET_VAR(L,sv, temp, (&TOKEN));
+		get_var(L, sv, temp);
 		NEXT_TOKEN;
 	}
 	else if (tp == OP && ((nv == OPT_ADD) || (nv == OPT_SUB) || (nv == OPT_NOT)))
@@ -295,16 +264,18 @@ static void get_value(Pu *L, __pu_value &temp)
 		if (nv == OPT_SUB) // -
 		{
 			NEXT_TOKEN;
-			get_value(L,temp);
-			temp.numVal() *= -1;
+			get_value(L, temp);
+            CHECK_EXP(temp);
+			temp->numVal() *= -1;
 		}
 		else if (nv == OPT_NOT) // !
 		{
 			NEXT_TOKEN;
 			get_value(L,temp);
-			bool bbb = VALUE_IS_TRUE(temp);
-			temp.SetType(NUM);
-			temp.numVal() = (PU_NUMBER)(bbb?0:1);
+            CHECK_EXP(temp);
+			bool bbb = VALUE_IS_TRUE(*temp);
+			temp->SetType(NUM);
+			temp->numVal() = (PU_NUMBER)(bbb?0:1);
 		}
 		else
 		{
@@ -315,20 +286,21 @@ static void get_value(Pu *L, __pu_value &temp)
 	else
 	{
 		PuType tp = TOKEN.type;
+        MAKE_TEMP_VALUE(temp);
 		switch (tp){
-		case NIL: temp.SetType(NIL);
+		case NIL: temp->SetType(NIL);
 			break;
-		case FALSEK: temp.SetType(BOOLEANT);
-			temp.numVal() = 0;
+		case FALSEK: temp->SetType(BOOLEANT);
+			temp->numVal() = 0;
 			break;
-		case TRUEK: temp.SetType(BOOLEANT);
-			temp.numVal() = 1;
+		case TRUEK: temp->SetType(BOOLEANT);
+			temp->numVal() = 1;
 			break;
-		case NUM: temp.SetType(NUM);
-			temp.numVal() = TOKEN.value.numVal();
+		case NUM: temp->SetType(NUM);
+			temp->numVal() = TOKEN.value.numVal();
 			break;
-		case STR: temp.SetType(STR);
-			temp.strVal() = TOKEN.value.strVal();
+		case STR: temp->SetType(STR);
+			temp->strVal() = TOKEN.value.strVal();
 			break;
 		default: error(L,29);
 			return;
@@ -337,40 +309,45 @@ static void get_value(Pu *L, __pu_value &temp)
 	}
 }
 
-static void set_arrvalue(Pu *L, __pu_value &arrref, const int idx)
+static void get_arrvalue(Pu *L, __pu_value *&arrref, const int idx)
 {
-	if (arrref.type() == ARRAY)
+	if (arrref->type() == ARRAY)
 	{// 数组
-		if (idx > int(arrref.arr().size()-1) || idx<0)
+		if (idx > int(arrref->arr().size()-1) || idx<0)
 		{// 判断下标越界
 			error(L,5);
+            MAKE_TEMP_VALUE(arrref);
 			return;
 		}
 
-		arrref = arrref.arr()[idx];
+		arrref = &arrref->arr()[idx];
 	}
 	else if (idx >= 0)
 	{// 字符串
-		if (idx > int(arrref.strVal().length()-1) || idx<0)
+		if (idx > int(arrref->strVal().length()-1) || idx<0)
 		{
 			error(L,5);
+            MAKE_TEMP_VALUE(arrref);
 			return;
 		}
 
 		char buff[2] = {0};
-		buff[0] = arrref.strVal()[idx];
-		arrref.strVal() = buff;
+		buff[0] = arrref->strVal()[idx];
+        MAKE_TEMP_VALUE(arrref);
+        arrref->SetType(STR);
+		arrref->strVal() = buff;
 	}
 }
 
-static void get_arrref(Pu *L, __pu_value &temp)
+static void get_arrref(Pu *L, __pu_value *&temp)
 {
 	NEXT_TOKEN;
-	__pu_value vidx = exp(L);
-
-	if (vidx.type() != NUM)
+	const __pu_value *vidx = exp(L);
+    CHECK_EXP(vidx);
+	if (vidx->type() != NUM)
 	{// 只有数字才可以作为数组的索引
 		error(L,3);
+        MAKE_TEMP_VALUE(temp);
 		return;
 	}
 
@@ -379,19 +356,21 @@ static void get_arrref(Pu *L, __pu_value &temp)
 	if (tp != OP || nv != OPT_RSB)
 	{// 数组操作符必须以[开始，以]结束
 		error(L,4);
+        MAKE_TEMP_VALUE(temp);
 		return;
 	}
 
-	int idx = int(vidx.numVal());
-	set_arrvalue(L, temp, idx);// 获取索引指向的值
+	int idx = int(vidx->numVal());
+	get_arrvalue(L, temp, idx);// 获取索引指向的值
 }
 PUAPI void pu_val2str(Pu *, const pu_value *p, char *b, int buffsize);
-static void get_map(Pu *L, __pu_value &a)
+static void get_map(Pu *L, __pu_value *&a)
 {
     __pu_value v;
     PuType last_tp = UNKNOWN;
-    int last_nv = -1;
-    a.SetType(MAP);
+    OperatorType last_nv = OPT_UNKNOWN;
+    MAKE_TEMP_VALUE(a);
+    a->SetType(MAP);
     NEXT_TOKEN;
     for (;;)
     {
@@ -416,17 +395,18 @@ static void get_map(Pu *L, __pu_value &a)
         {
             --L->cur_token;
             NEXT_TOKEN;
-            __pu_value v0 = exp(L);
+            const __pu_value *v0 = exp(L);
+            CHECK_EXP(v0);
             if (last_tp == OP && last_nv == OPT_COL)
             {
                 char buff[256];
                 pu_value pv = &v;
                 pu_val2str(L, &pv, buff, sizeof(buff));
-                a.map().insert(buff, v0);
+                a->map().insert(buff, *v0);
             }
             else
             {
-                v = v0;
+                v = *v0;
             }
         }
 CONTINUE_NEXT:
@@ -435,9 +415,10 @@ CONTINUE_NEXT:
     }
 }
 #ifdef _DEBUG
-static void get_array(Pu *L, __pu_value &a)
+static void get_array(Pu *L, __pu_value *&a)
 {
-	a.SetType(ARRAY);
+    MAKE_TEMP_VALUE(a);
+    a->SetType(ARRAY);
 	NEXT_TOKEN;
 	for (;;)
 	{
@@ -457,15 +438,17 @@ static void get_array(Pu *L, __pu_value &a)
 		{
 			--L->cur_token;
 			NEXT_TOKEN;
-			__pu_value v = exp(L);
-			a.arr().push_back(v);
+			const __pu_value *v = exp(L);
+            CHECK_EXP(v);
+			a->arr().push_back(*v);
 		}
 	}
 }
 #else
 #define get_array(L,a)					\
 {										\
-	a.SetType(ARRAY);					\
+    MAKE_TEMP_VALUE(a);                 \
+	a->SetType(ARRAY);					\
 	NEXT_TOKEN;							\
 	for (;;)							\
 	{									\
@@ -484,8 +467,9 @@ static void get_array(Pu *L, __pu_value &a)
 		{								\
 			--L->cur_token;				\
 			NEXT_TOKEN;					\
-			__pu_value v = exp(L);		\
-			a.arr().push_back(v);		\
+			const __pu_value *v = exp(L);\
+            CHECK_EXP(v);               \
+			a->arr().push_back(*v);	    \
 		}								\
 	}									\
 }
@@ -494,8 +478,9 @@ static void get_array(Pu *L, __pu_value &a)
 static void ift(Pu *L, Token *ptoken) //if
 {
 	NEXT_TOKEN;
-	__pu_value t = exp(L);
-	bool loop = VALUE_IS_TRUE(t);
+	const __pu_value *t = exp(L);
+    CHECK_EXP(t);
+	bool loop = VALUE_IS_TRUE(*t);
 	if (loop)
 	{
 		vm(L);
@@ -535,7 +520,7 @@ static void ift(Pu *L, Token *ptoken) //if
 }
 
 
-static void logc(Pu *L, __pu_value &temp)
+static void logc(Pu *L, __pu_value *&temp)
 {
 	PuType tp = TOKEN.type;
 	OperatorType nv = TOKEN.optype;
@@ -547,21 +532,25 @@ static void logc(Pu *L, __pu_value &temp)
 		case OPT_OR:
 			{
 				NEXT_TOKEN;	// ||				
-                __pu_value t(L);
-                CMP(L,t);
-                PU_NUMBER r = (PU_NUMBER)(temp || t);
-                temp.SetType(BOOLEANT);
-                temp.numVal() = r;
+                __pu_value *t = NULL;
+                CMP(L, t);
+                CHECK_EXP(t);
+                PU_NUMBER r = (PU_NUMBER)(*temp || *t);
+                MAKE_TEMP_VALUE(temp);
+                temp->SetType(BOOLEANT);
+                temp->numVal() = r;
 			}
 			break;
 		case OPT_AND:
 			{
 				NEXT_TOKEN;	// &&
-                __pu_value t(L);
-                CMP(L,t);
-                PU_NUMBER r = (PU_NUMBER)(temp && t);
-                temp.SetType(BOOLEANT);
-                temp.numVal() = r;
+                __pu_value *t = NULL;
+                CMP(L, t);
+                CHECK_EXP(t);
+                PU_NUMBER r = (PU_NUMBER)(*temp && *t);
+                MAKE_TEMP_VALUE(temp);
+                temp->SetType(BOOLEANT);
+                temp->numVal() = r;
 			}
 			break;
 		default:
@@ -572,7 +561,7 @@ static void logc(Pu *L, __pu_value &temp)
 	}
 }
 
-static void cmp(Pu *L, __pu_value &temp)
+static void cmp(Pu *L, __pu_value *&temp)
 {
 	PuType tp = TOKEN.type;
 	OperatorType nv = TOKEN.optype;
@@ -584,61 +573,73 @@ static void cmp(Pu *L, __pu_value &temp)
 		case OPT_GT:
 			{
 				NEXT_TOKEN;
-				__pu_value t(L);
-				ADD(L,t);
-                PU_NUMBER r = (PU_NUMBER)(temp > t);
-                temp.SetType(BOOLEANT);
-				temp.numVal() = r;				
+				__pu_value *t = NULL;
+				ADD(L, t);
+                CHECK_EXP(t);
+                PU_NUMBER r = (PU_NUMBER)(*temp > *t);
+                MAKE_TEMP_VALUE(temp);
+                temp->SetType(BOOLEANT);
+				temp->numVal() = r;				
 			}
 			break;
 		case OPT_LT:
 			{
 				NEXT_TOKEN;
-				__pu_value t(L);
-				ADD(L,t);        
-                PU_NUMBER r = (PU_NUMBER)(temp < t);
-                temp.SetType(BOOLEANT);
-				temp.numVal() = r;	                
+				__pu_value *t = NULL;
+				ADD(L, t);        
+                CHECK_EXP(t);
+                PU_NUMBER r = (PU_NUMBER)(*temp < *t);
+                MAKE_TEMP_VALUE(temp);
+                temp->SetType(BOOLEANT);
+				temp->numVal() = r;	                
 			}
 			break;
 		case OPT_EQ:
 			{
 				NEXT_TOKEN;
-				__pu_value t(L);
-				ADD(L,t);          
-                PU_NUMBER r = (PU_NUMBER)(temp == t);
-                temp.SetType(BOOLEANT);
-				temp.numVal() = r;                
+				__pu_value *t = NULL;
+				ADD(L, t);          
+                CHECK_EXP(t);
+                PU_NUMBER r = (PU_NUMBER)(*temp == *t);
+                MAKE_TEMP_VALUE(temp);
+                temp->SetType(BOOLEANT);
+				temp->numVal() = r;                
 			}
 			break;
 		case OPT_GTA:
 			{
 				NEXT_TOKEN;
-				__pu_value t(L);
+				__pu_value *t = NULL;
 				ADD(L,t);     
-                PU_NUMBER r = (PU_NUMBER)(temp >= t);
-                temp.SetType(BOOLEANT);
-				temp.numVal() = r;                
+                CHECK_EXP(t);
+                PU_NUMBER r = (PU_NUMBER)(*temp >= *t);
+                MAKE_TEMP_VALUE(temp);
+                temp->SetType(BOOLEANT);
+				temp->numVal() = r;                
 			}
 			break;
 		case OPT_LTA:
 			{
 				NEXT_TOKEN;
-				__pu_value t(L);
-				ADD(L,t);       
-                PU_NUMBER r = (PU_NUMBER)(temp <= t);
-                temp.SetType(BOOLEANT);
-				temp.numVal() = r;                
+				__pu_value *t = NULL;
+				ADD(L, t);  
+                CHECK_EXP(t);
+                PU_NUMBER r = (PU_NUMBER)(*temp <= *t);
+                MAKE_TEMP_VALUE(temp);
+                temp->SetType(BOOLEANT);
+				temp->numVal() = r;                
 			}
 			break;
 		case OPT_NEQ:
 			{
 				NEXT_TOKEN;
-				__pu_value t(L);
-				ADD(L,t);       
-                PU_NUMBER r = (PU_NUMBER)(temp <= t);
-                temp.SetType(BOOLEANT);
-				temp.numVal() = r;                
+				__pu_value *t = NULL;
+				ADD(L, t);       
+                CHECK_EXP(t);
+                PU_NUMBER r = (PU_NUMBER)(*temp <= *t);
+                MAKE_TEMP_VALUE(temp);
+                temp->SetType(BOOLEANT);
+				temp->numVal() = r;                
 			}
 			break;
 		default:
@@ -649,7 +650,7 @@ static void cmp(Pu *L, __pu_value &temp)
 	}
 }
 
-static void add(Pu *L, __pu_value &temp)
+static void add(Pu *L, __pu_value *&temp)
 {
 	PuType tp = TOKEN.type;
 	OperatorType nv = TOKEN.optype;
@@ -661,17 +662,27 @@ static void add(Pu *L, __pu_value &temp)
 		case OPT_ADD:
 			{
 				NEXT_TOKEN;
-				__pu_value t(L);
-				TERM(L,t);
-				temp += t;
+				__pu_value *t = NULL;
+				TERM(L, t);
+                CHECK_EXP(t);
+                __pu_value *r = NULL;
+                MAKE_TEMP_VALUE(r);
+                r->SetType(NUM);
+				*r = *temp + *t;
+                temp = r;
 			}
 			break;
 		case OPT_SUB:
 			{
 				NEXT_TOKEN;
-				__pu_value t(L);
+				__pu_value *t = NULL;
 				TERM(L,t);
-				temp -= t;
+                CHECK_EXP(t);
+                __pu_value *r = NULL;
+                MAKE_TEMP_VALUE(r);
+                r->SetType(NUM);
+				*r = *temp - *t;
+                temp = r;
 			}
 			break;
 		default:
@@ -683,7 +694,7 @@ static void add(Pu *L, __pu_value &temp)
 	}
 }
 
-static void term(Pu *L, __pu_value &temp)
+static void term(Pu *L, __pu_value *&temp)
 {
 	PuType tp = TOKEN.type;
 	OperatorType nv = TOKEN.optype;
@@ -695,25 +706,38 @@ static void term(Pu *L, __pu_value &temp)
 		case OPT_MUL:
 			{
 				NEXT_TOKEN;
-				__pu_value t(L);
+				__pu_value *t = NULL;
 				FACTOR(L,t);
-				temp *= t;
+                CHECK_EXP(t);
+                __pu_value *r = NULL;
+                MAKE_TEMP_VALUE(r);
+                r->SetType(NUM);
+				*r = *temp * *t;
+                temp = r;
 			}
 			break;
 		case OPT_DIV:
 			{
 				NEXT_TOKEN;
-				__pu_value t(L);
+				__pu_value *t = NULL;
 				FACTOR(L,t);
-				temp /= t;
+                CHECK_EXP(t);
+                __pu_value *r = NULL;
+                MAKE_TEMP_VALUE(r);
+				*r = *temp / *t;
+                temp = r;
 			}
 			break;
 		case OPT_MOD:
 			{
 				NEXT_TOKEN;
-				__pu_value t(L);
-				FACTOR(L,t);
-				temp = temp % t;
+				__pu_value *t = NULL;
+				FACTOR(L, t);
+                CHECK_EXP(t);
+                __pu_value *r = NULL;
+                MAKE_TEMP_VALUE(r);
+				*r = *temp % *t;
+                temp = r;
 			}
 			break;
 		default:
@@ -726,7 +750,7 @@ static void term(Pu *L, __pu_value &temp)
 }
 
 
-static void factor(Pu *L, __pu_value &temp)
+static void factor(Pu *L, __pu_value *&temp)
 {
 	PuType tp = TOKEN.type;
 	OperatorType nv = TOKEN.optype;
@@ -738,7 +762,10 @@ static void factor(Pu *L, __pu_value &temp)
 		case OPT_LB:
 			{
 				NEXT_TOKEN;
-				temp = exp(L);
+				const __pu_value *exp_result = exp(L);
+                CHECK_EXP(exp_result);
+                MAKE_TEMP_VALUE(temp);
+                *temp = *exp_result;
 				PuType tp = TOKEN.type;
 				int nv = TOKEN.optype;
 				if (tp != OP || nv != OPT_RB)
@@ -750,10 +777,10 @@ static void factor(Pu *L, __pu_value &temp)
 			}
 			break;
 		case OPT_LSB:
-			get_array(L,temp);
+			get_array(L, temp);
 			break;
         case OPT_LBR:
-            get_map(L,temp);
+            get_map(L, temp);
             break;
 		default:
 			break;
@@ -761,7 +788,8 @@ static void factor(Pu *L, __pu_value &temp)
 	}
 	else
 	{
-		get_value(L,temp);
+		get_value(L, temp);
+        CHECK_EXP(temp);
 		PuType tp = TOKEN.type;
 		OperatorType nv = TOKEN.optype;
 
@@ -770,26 +798,28 @@ static void factor(Pu *L, __pu_value &temp)
 			switch (nv)
 			{
 			case OPT_LB:
-				if (temp.type() == FUN || temp.type() == CFUN)
+				if (temp->type() == FUN || temp->type() == CFUN)
 				{
 					VarMap *old = L->upvalue;
 					L->upvalue = 0;
-					if (temp.userdata())
+					if (temp->userdata())
 					{
-						L->upvalue = ((_up_value*)temp.userdata())->vmap;
+						L->upvalue = ((_up_value*)temp->userdata())->vmap;
 					}
-					callfunction(L, L->funclist[(int)temp.numVal()]);
+					callfunction(L, L->funclist[(int)temp->numVal()]);
 					L->upvalue = old;
-					temp = L->return_value;
+					MAKE_TEMP_VALUE(temp);
+                    *temp = L->return_value;                    
 					tp = TOKEN.type;
 					nv = TOKEN.optype;
 					CLEAR_RETURN;
 					break;
 				}return;
 			case OPT_LSB:
-				if (temp.type() == ARRAY || temp.type() == STR)
+				if (temp->type() == ARRAY || temp->type() == STR)
 				{
 					get_arrref(L,temp);
+                    CHECK_EXP(temp);
 					NEXT_TOKEN;
 					break;
 				}return;
@@ -801,8 +831,6 @@ static void factor(Pu *L, __pu_value &temp)
 		}
 	}
 }
-
-
 
 static void callexternfunc(Pu *L, FuncPos &ps)
 {
@@ -822,7 +850,9 @@ static void callexternfunc(Pu *L, FuncPos &ps)
 			NEXT_TOKEN;
 			continue;
 		}
-		vs.push_back(exp(L));
+        const __pu_value *expresult = exp(L);
+        CHECK_EXP(expresult);
+		vs.push_back(*expresult);
 		++i;
 	}
 
@@ -862,7 +892,7 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
 {
 	NEXT_TOKEN;
 
-	PuVector<PuString, 4> &args = funcinfo.argnames;
+	const FunArgs &args = funcinfo.argnames;
 	
 	if (funcinfo.start == -1)
 	{
@@ -884,8 +914,9 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
 				NEXT_TOKEN;
 				continue;
 			}
-			__pu_value v = exp(L);
-			newvarmap->insert(args[i++], v);
+			const __pu_value *v = exp(L);
+            CHECK_EXP(v);
+			newvarmap->insert(args[i++], *v);
 		}
 
 		_up_value *newupnode = new _up_value;
@@ -953,20 +984,22 @@ static void gotot(Pu *L)
 
 static void procop(Pu *L)
 {
-	__pu_value temp(L);
+	__pu_value *temp = NULL;
 
 	PuType tp = TOKEN.type;
 	OperatorType nv = TOKEN.optype;
 
 	if (tp == OP && nv == OPT_LB) //(
 	{
-		FACTOR(L,temp);
+		FACTOR(L, temp);
 	}
 	else if (tp == OP && (nv == 1 || nv == 0))// - +
 	{
-		temp.SetType(NUM);
-		temp.numVal() = 0;
+        MAKE_TEMP_VALUE(temp);
+		temp->SetType(NUM);
+		temp->numVal() = 0;
 		add(L,temp);
+        CHECK_EXP(temp);
 	}
 	else
 	{
@@ -982,8 +1015,9 @@ static void whilet(Pu *L, Token *ptoken)
 	for(;;)
 	{
 		NEXT_TOKEN;
-		__pu_value t = exp(L);
-		bool loop = VALUE_IS_TRUE(t); // 判断while条件是否满足
+		const __pu_value *t = exp(L);
+        CHECK_EXP(t);
+		bool loop = VALUE_IS_TRUE(*t); // 判断while条件是否满足
 
 		if (loop)
 		{
@@ -1029,7 +1063,8 @@ static void regfunc(Pu *L)
  		{
  			L->cur_nup->refcount++;
  		}
-		SET_VAR(L, TOKEN.value.strVal(), fv, (&TOKEN));
+        __pu_value *got = reg_var(L, TOKEN.value.strVal());
+        *got = fv;
 		L->cur_token = L->funclist[(int)fv.numVal()].end;
 		NEXT_TOKEN;
 		return;
@@ -1077,12 +1112,18 @@ int vm(Pu *L)
 		case FUNCTION:
 			regfunc(L);
 			break;
-		case RETURN:
+		case RETURN:{
 			NEXT_TOKEN;
 			L->isreturn = true;
-			L->return_value = exp(L);
+            const __pu_value *expresult = exp(L);
+            if (!expresult || expresult->type() == UNKNOWN)            
+            {
+                QUIT_SCRIPT;
+                break;
+            }
+			L->return_value = *expresult;
 			ret = 1;
-			goto END_VM;
+            goto END_VM;}
 		case INCLUDE:
 			NEXT_TOKEN;
 			NEXT_TOKEN;

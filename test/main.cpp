@@ -33,29 +33,17 @@
 #include <time.h>
 #include "../puppy.h"
 
-#if defined(_WIN32) && defined(_DEBUG)
-#include <crtdbg.h>
-inline void EnableMemLeakCheck()
-{
-    _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
-}
-
-#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#endif
-
 void pu_console(Pu *L);
 
 int main(int argc, char **argv)
 {
     srand((unsigned int)time(NULL));
-#if defined(_WIN32) && defined(_DEBUG)
-	//EnableMemLeakCheck();
-	 //_CrtSetBreakAlloc(3331);
-#endif
 	Pu *L = pu_open();
 	if (argc < 2)
 	{
 		pu_console(L);
+        pu_close(L);
+        L = NULL;
 	}
 	else
 	{
@@ -66,9 +54,16 @@ int main(int argc, char **argv)
 			return 0;
 		}
 
-		pu_load(L,argv[1]);
-		pu_run(L);
+		if (pu_load(L,argv[1]) == PU_SUCCESS)
+        {
+		    pu_run(L);
+        }
+        else
+        {
+            printf("%s\n", "error.");
+        }
 		pu_close(L);
+        L = NULL;
 
 #ifdef _WIN32
 		system("pause");

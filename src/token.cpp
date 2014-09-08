@@ -621,7 +621,7 @@ void Token::operator=( const Token &x )
 	type = x.type;
 	line = x.line;
 	optype = x.optype;
-	var = x.var;
+	//var = x.var;
 	finfo = x.finfo;
 	filename = x.filename;
 	if (x.type >= VAR && x.type <= LABEL)
@@ -635,13 +635,12 @@ void Token::operator=( const Token &x )
 }
 
 Token::Token( const Token &x )
+    :filename(x.filename)
 {
 	type = x.type;
 	line = x.line;
 	optype = x.optype;
-	var = x.var;
 	finfo = x.finfo;
-	filename = x.filename;
 	if (x.type >= VAR && x.type <= LABEL)
 	{
 		value = x.value;

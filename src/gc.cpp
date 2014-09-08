@@ -123,34 +123,18 @@ void safe_decrecount(Pu *L, _up_value *n)
 	}
 }
 
-void force_sweep(Pu *L)
-{
-	_up_value *p = L->gclink;
-	_up_value *prev = p;
-	while (p != 0)
-	{
-		if (p == L->gclink)
-		{
-			L->gclink = L->gclink->next;
-			prev = L->gclink;
-			delete p->vmap;
-			delete p;
-			p = L->gclink;
-		}
-		else
-		{
-			_up_value *np = p->next;
-			delete p->vmap;
-			delete p;
-			prev->next = np;
-			p = np;
-		}
-	}
-}
-
 void gc(Pu *L)
 {
 	VarMap *root = L->varstack.bottom();
 	mark(root);
 	sweep(L);	
+}
+
+void clear_temp(Pu *L)
+{
+    for (int i = 0; i < L->tempvals.size(); i++)
+    {
+        delete L->tempvals[i];
+    }
+    L->tempvals.clear();
 }

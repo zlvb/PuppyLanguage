@@ -28,9 +28,14 @@
 */
 
 #include "state.h"
-
+#if defined(_MSC_VER) && defined(_DEBUG)
+#if _DEBUG_MEM == 1
+#include <crtdbg.h>
+#endif
+#endif
 extern void bi_get_value_len(Pu *L, int, const pu_value *v);
-extern void bi_time(Pu *L, int ,const pu_value*);
+extern void bi_date(Pu *L, int ,const pu_value*);
+extern void bi_time(Pu *L, int, const pu_value*);
 extern void bi_get_value_len(Pu *L, int, const pu_value *v);
 extern void bi_write(Pu *L, int ,const pu_value *v);
 extern void bi_read(Pu *L, int ,const pu_value *v);
@@ -48,11 +53,16 @@ extern void bi_coro_create(Pu *L, int argnum, const pu_value *v);
 extern void bi_coro_resume(Pu *L, int argnum, const pu_value *v);
 extern void bi_coro_yield(Pu *L, int argnum, const pu_value *v);
 extern void bi_get_var(Pu *L, int argnum, const pu_value *v);
-extern void force_sweep(Pu *L);
 PUAPI void pu_reg_func(Pu *L, const char *funcname, ScriptFunc pfunc);
 
 PUAPI Pu *pu_open()
 {
+#if defined(_MSC_VER) && defined(_DEBUG)
+#if _DEBUG_MEM == 1
+    _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
+#endif
+#endif
+
 	Pu *L = new Pu;
 	return L;
 }
@@ -63,7 +73,8 @@ void regbuiltin(Pu *L)
 	pu_reg_func(L, "write", bi_write);
 	pu_reg_func(L, "read", bi_read);
 	pu_reg_func(L, "rand", bi_rand);
-	pu_reg_func(L, "time", bi_time);
+	pu_reg_func(L, "date", bi_date);
+    pu_reg_func(L, "time", bi_time);
 	pu_reg_func(L, "sleep", bi_sleep);
 	pu_reg_func(L, "type", bi_type);
 	pu_reg_func(L, "eval", bi_eval);
@@ -94,8 +105,7 @@ void clear_state(Pu *L)
 	L->cur_token = 0;
 	L->isquit = false;
 	L->isreturn = false;
-	L->return_value = __pu_value(L);
-	force_sweep(L);
+	L->return_value.SetType(NIL);
 }
 
 PUAPI void pu_close(Pu *L)

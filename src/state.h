@@ -38,16 +38,18 @@
 typedef PuStack<int> CallStack;
 typedef PuStack<VarMap*> VarStack;
 typedef PuMap<PuString, int> LabelMap;
+typedef PuVector<PuString, 4> FunArgs;
 struct FuncPos
 {
 	int start;
 	int end;
-	PuVector<PuString, 4> argnames;
+    PuVector<PuString, 4> argnames;
 	ScriptFunc pfunc;
 
     FuncPos()
         :start(-1)
         ,end(-1)
+        ,pfunc(NULL)
     {
 
     }
@@ -106,6 +108,7 @@ struct Pu : public PuMemObj
 	gclink(0)
 	{
 		varstack.push(new VarMap);
+        return_value.SetType(NIL);
 	}
 
 	~Pu()
@@ -136,9 +139,10 @@ struct Pu : public PuMemObj
 	CoroList			coros;
 	PuStack<int>		uncomdef;
 	PuStack<int>		jumpstack;
-	VarMap					*upvalue;
+	VarMap				*upvalue;
 	_up_value			*cur_nup;
 	_up_value			*gclink;
+    PuVector<__pu_value*> tempvals;
 };
 
 

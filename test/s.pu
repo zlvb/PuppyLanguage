@@ -1,4 +1,3 @@
-@----
 # 计算裴波那契数列前46位，算100次
 
 i=10
@@ -15,44 +14,8 @@ while i
 	end
 	i=i-1
 end
-----@
 
-@---------------------
-# 输入3个数，按从小到大排列
-
-t=0
-x = read(x)
-y = read(y)
-z = read(z)
-
-if x>y
-	t=x
-	x=y
-	y=t
-end
-
-if x>z
-	t=z
-	z=x
-	x=t
-end
-
-if y>z
-	t=y
-	y=z
-	z=t
-end
-
-write(x + ' ' + y + ' '	+ z	+ '\n')
-
----------@
-
-
-
-@------------------------
-
-# 输出素数
-write('输入一个整数：') x = read()
+x=9999
 write('"'+x+'"'+'以内所有素数\n')
 i=2
 while i<=x
@@ -72,7 +35,6 @@ while i<=x
 end
 write('\n')
 
---------------------------------@
 include code1
 include code2
 include code3
@@ -104,7 +66,6 @@ end
 
 kkk(1,2)
 
-@
 a=9
 write(1)
 if a>=9

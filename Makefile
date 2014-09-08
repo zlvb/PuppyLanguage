@@ -13,11 +13,13 @@ ifeq ($(BUILD), release)
 	OBJPATH = Release
 	TARGET_BIN = bin/$(TARGETNAME)
 	TARGET_LIB = lib/lib$(TARGETNAME).a
+	LIBS = -L./lib/ -ltcmalloc -lunwind-x86_64 -lunwind -lpthread -all-static
 else
 	CXXFLAGS = -g -D_DEBUG -Wall
 	OBJPATH = Debug
 	TARGET_BIN = bin/$(TARGETNAME)_d
 	TARGET_LIB = lib/lib$(TARGETNAME)_d.a
+	LIBS = 
 endif
 
 
@@ -28,7 +30,7 @@ OBJS_LIB = $(SRCS_LIB:%.cpp=$(OBJPATH)/%.o)
 
 $(TARGET_BIN) : $(OBJS_BIN) $(TARGET_LIB)
 	mkdir -p bin
-	$(CXX) $(CXXFLAGS) -o $@ $^ 
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
 
 $(TARGET_LIB) : $(OBJS_LIB)
 	mkdir -p lib

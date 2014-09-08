@@ -56,8 +56,8 @@ typedef void (*OutputHandle)(const char *str);
 
 // 操作结果
 typedef enum PURESULT{
-	PU_FAILED=0,// 失败
-	PU_SUCCESS// 成功
+	PU_FAILED = -1,// 失败
+	PU_SUCCESS = 0// 成功
 }PURESULT;
 
 #ifdef _MSC_VER
@@ -66,4 +66,31 @@ typedef enum PURESULT{
 #define PU_SNPRINTF(dest, size, fmt, ...) snprintf(dest, size, fmt, __VA_ARGS__)
 #endif
 
+#define MAKE_TEMP_VALUE(p) \
+    p = new __pu_value(L);\
+    p->readonly(true);\
+    L->tempvals.push_back(p);
+
+#define CHECK_EXP(v) \
+    if (!v || v->type() == UNKNOWN)\
+    {\
+        error(L, 7);\
+        return;\
+    }
+    
+#define CHECK_EXP_RETURN(v, r) \
+    if (!v || v->type() == UNKNOWN)\
+    {\
+        error(L, 7);\
+        return r;\
+    }
+
+#define CHECK_EXP_RETURNERR(v) \
+    if (!v || v->type() == UNKNOWN)\
+    {\
+        error(L, 7);\
+        __pu_value *_r = NULL;\
+        MAKE_TEMP_VALUE(_r);\
+        return _r;\
+    }
 #endif

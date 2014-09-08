@@ -41,23 +41,6 @@
 #endif
 struct Pu;
 
-#define GET_VARREF(L,name,t)									\
-(																\
-	(__pu_value*)( ((t) && (t)->var && L->varstack.size()==1)?	\
-		(t)->var												\
-	:															\
-		get_varref(L,(name),t) )								\
-)
-
-
-#define GET_VAR(L,name,v,t)					\
-{											\
-	if (t&&t->var && L->varstack.size()==1)	\
-		v=*(__pu_value*)(t->var);			\
-	else									\
-		get_var(L,(name),(v),(t));			\
-}	
-
 #ifndef _DEBUG
 #define DECVMAP_REF(userdata)						\
 if (userdata)										\
@@ -74,14 +57,6 @@ if (userdata)										\
 void DECVMAP_REF(void *&userdata);
 #endif
 
-
-#define SET_VAR(L,varname,new_value,vart)			\
-{													\
-	if (vart && vart->var && L->varstack.size()==1)	\
-		(*(__pu_value*)(vart->var) = (new_value));	\
-	else											\
-		set_var(L,(varname),(new_value),(vart));	\
-}
 
 #define VALUE_IS_TRUE(v)										\
 (																\
@@ -127,21 +102,23 @@ struct __pu_value : public PuMemObj
         _up_value *next;
     };
 
-	inline __pu_value(Pu *_L)
+	__pu_value(Pu *_L)
         :L(_L)
         ,createby(PU_SYSTEM)
         ,_type(UNKNOWN)
         ,_arr(0)
         ,_userdata(0)
+        ,_readonly(false)
 	{
 	}
 
-	inline __pu_value()
-        :L()
+	__pu_value()
+        :L(NULL)
         ,createby(PU_SYSTEM)
         ,_type(UNKNOWN)
         ,_arr(0)
         ,_userdata(0)
+        ,_readonly(false)
 	{
 	}
 
@@ -151,6 +128,7 @@ struct __pu_value : public PuMemObj
         ,_type(UNKNOWN)
         ,_arr(0)
         ,_userdata(0)
+        ,_readonly(false)
 	{
 		*this = x;
 	}
@@ -171,10 +149,10 @@ struct __pu_value : public PuMemObj
 	int operator ==(const __pu_value &x) const;
 	int operator ||(const __pu_value &x) const;
 	int operator &&(const __pu_value &x) const;
-	const __pu_value & operator +=(const __pu_value &x);
-	const __pu_value & operator -=(const __pu_value &x);
-	const __pu_value & operator *=(const __pu_value &x);
-	const __pu_value & operator /=(const __pu_value &x);
+    const __pu_value &operator +=(const __pu_value &x);
+    const __pu_value &operator -=(const __pu_value &x);
+    const __pu_value &operator *=(const __pu_value &x);
+    const __pu_value &operator /=(const __pu_value &x);
     
     Pu *L;
     PUVALUECREATEDBY createby;
@@ -286,9 +264,13 @@ struct __pu_value : public PuMemObj
         {
         case STR:
             RELEASE_BUFF(strVal());
+            delete _strVal;
+            _strVal = NULL;
             break;
         case ARRAY:
             arr().decref();
+            delete _arr;
+            _arr = NULL;
             break;
         case FUN:
             DECVMAP_REF(userdata());
@@ -297,6 +279,9 @@ struct __pu_value : public PuMemObj
             break;
         }        
     }
+
+    bool readonly() const { return _readonly; }
+    void readonly(bool val) { _readonly = val; }
 
 private:
 
@@ -325,6 +310,7 @@ private:
 	PuString *_strVal;	
     };
     void *_userdata;
+    bool _readonly;    
 };
 
 typedef __pu_value::ValueArr ValueArr;

@@ -101,8 +101,8 @@ void get_nextbytetoken(Pu *L, FILE *pbcf, Token &t)
 			switch (type)
 			{
 			case NUM:
-				fread(&(t.value.numVal()), sizeof(t.value.numVal()), 1, pbcf);
-				t.value.SetType(NUM);
+                t.value.SetType(NUM);
+				fread(&(t.value.numVal()), sizeof(t.value.numVal()), 1, pbcf);				
 				break;
 
 			case OP:{
@@ -124,12 +124,12 @@ void get_nextbytetoken(Pu *L, FILE *pbcf, Token &t)
 			case STR:{
 				size_t l = 0;
 				fread(&l,sizeof(l),1,pbcf);
-				char *c = (char*)malloc(l+1);				
+				char *c = (char*)g_pumalloc(l+1);				
 				fread(c, 1, l, pbcf);
                 c[l] = 0;
                 t.value.SetType(STR);
 				t.value.strVal() = c;	
-                free(c);
+                g_pufree(c);
 					 }break;
 			}
 			append_token(L,t);
@@ -219,13 +219,6 @@ PUAPI PURESULT pu_load(Pu *L, const char *sname)
 	if (strcmp(&(sname[i]), ".puc") == 0)
 	{
 		return (PURESULT)pu_loadbytecode(L, sname);
-	}
-	else
-	{
-		char codename[1024]={0};
-		pu_getbytecodename(codename, sname);
-		if (pu_loadbytecode(L, codename) == PU_SUCCESS)
-			return PU_SUCCESS;
 	}
 	
 	L->source.pf = fopen(sname, "r");

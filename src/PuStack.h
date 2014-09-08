@@ -37,78 +37,78 @@ template<class T>
 struct  PuStack
 {
 	inline PuStack()
-		:count(0),buff(0),cur(-1)
+		:count(0),buff(0),_size(0)
 	{
 	}
 
-	inline void push( T i )
+	void push( T i )
 	{
-		if (count <= cur+1)
+		if (count <= _size)
 			resize();
 
-		buff[++cur] = i;
+		buff[_size++] = i;
 	}
 
 	~PuStack()
 	{
 		if (buff)
-			free(buff);
+			g_pufree(buff);
 	}
 
-	inline void pop()
+	void pop()
 	{
-		--cur; 
+		--_size; 
 	}
 
-	inline void clear()
+	void clear()
 	{
-		cur = -1;
+		_size = 0;
 	}
 
-	inline bool empty() const
+	bool empty() const
 	{
 		return size() == 0;
 	}
 
-	inline int size() const
+	int size() const
 	{
-		return cur+1;
+		return _size;
 	}
 
-	inline T top() const
+	T top() const
 	{
-		return buff[cur];
+		return buff[_size-1];
 	}
 
-	inline T bottom() const
+	T bottom() const
 	{
 		return buff[0];
 	}
 
-	inline void resize()
+	void resize()
 	{
-		T *newbuff = (T*)malloc(sizeof(T)*(count+64));
+		T *newbuff = (T*)g_pumalloc(sizeof(T)*(count+64));
 		count += 64;
 		if (buff)
 		{
 			memcpy(newbuff, buff, count * sizeof(T));
-			free(buff);
+			g_pufree(buff);
 		}
 		buff = newbuff;	
 	}
 
-	inline void release()
+	void release()
 	{
 		if (buff)
-			free(buff);
+			g_pufree(buff);
 		buff = 0;
 		count = 0;
-		cur = -1;
+		_size = 0;
 	}
 
 	int count;
 	T *buff;
-	int cur;
+	int _size;
 };
 
 #endif

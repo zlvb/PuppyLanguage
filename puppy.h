@@ -52,8 +52,8 @@ typedef void (*ScriptFunc)(Pu*, int argnum, const pu_value*);
 
 // 操作结果
 typedef enum PURESULT{
-	PU_FAILED=0,// 失败
-	PU_SUCCESS// 成功
+	PU_FAILED = -1,// 失败
+	PU_SUCCESS = 0// 成功
 }PURESULT;
 
 // 值类型

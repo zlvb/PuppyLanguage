@@ -51,12 +51,12 @@ class PuMap : public PuMemObj
 public:
 	typedef __bucket_t<Key_T,Value_T>	Bucket_T;
 	typedef PuVector<Bucket_T,4>		Node_T;
-	PuVector<Node_T*,MAPSIZE>			_container;
+	Node_T*			                    _container[MAPSIZE];
 	PuVector<int>						_setted;
 
 	PuMap()
 	{
-		_container.init(0,MAPSIZE);
+		memset(_container, 0, sizeof(Node_T*) * MAPSIZE);
 	}
 
 	~PuMap()

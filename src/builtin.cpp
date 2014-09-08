@@ -39,7 +39,7 @@
 #include <unistd.h>  //for linux usleep
 #endif
 
-extern void get_var(Pu *L, const PuString &name, __pu_value &v, Token *t=0);
+extern void get_var(Pu *L, const PuString &name, __pu_value *&v);
 PUAPI{
 PURESULT pu_push_arr(pu_value varr, const pu_value v);
 PURESULT pu_loadbuff(Pu *L, const char *str);
@@ -130,6 +130,16 @@ void bi_get_value_len(Pu *L, int, const pu_value *v)
 
 void bi_time(Pu *L, int, const pu_value*)
 {
+    time_t ti = time(NULL); 
+    __pu_value t(L);
+    t.SetType(NUM);
+    t.numVal() = (PU_NUMBER)ti;
+
+    pu_set_return_value(L, &t);
+}
+
+void bi_date(Pu *L, int, const pu_value*)
+{
 	struct tm *local; 
 	time_t ti; 
 	ti=time(NULL); 
@@ -168,6 +178,7 @@ void bi_time(Pu *L, int, const pu_value*)
 void bi_quit(Pu *L, int, const pu_value *)
 {
 	L->isquit = true;
+    bi_return_null;
 }
 
 void bi_rand(Pu *L, int, const pu_value *)
@@ -325,15 +336,16 @@ void bi_write(Pu *L, int argc, const pu_value *v)
 
 void bi_get_var(Pu *L, int argn, const pu_value *v)
 {
-	__pu_value temp(L);
+	__pu_value *temp = NULL;
 	if (argn > 0)
 	{
 		if (v[0]->type() == STR)
 		{
-            get_var(L, v[0]->strVal(), temp, NULL);
+            get_var(L, v[0]->strVal(), temp);
+            CHECK_EXP(temp);
 		}
 	}
-	pu_set_return_value(L,&temp);
+	pu_set_return_value(L, temp);
 }
 
 void bi_type(Pu *L, int argn, const pu_value *v)
@@ -410,6 +422,7 @@ void bi_eval(Pu *L, int argc, const pu_value *v)
         bi_return_null;
     }
 	do_string(L, v[0]->strVal().c_str());
+    bi_return_null;
 }
  
  void bi_open(Pu *L, int argc, const pu_value *v)
@@ -445,34 +458,51 @@ void bi_eval(Pu *L, int argc, const pu_value *v)
 
  static void readfilehandle(Pu *L, const pu_value *vrr)
  {
-	 FILE *pfile = (FILE*)vrr[0]->userdata();
-	 const int BUFFSIZE = 65536;
-	 char buff[BUFFSIZE]={0};
-	 if (vrr[1]->strVal() == "max")
-	 {
-		 fread(buff,sizeof(char),BUFFSIZE,pfile); // 最大一次读64k
-	 }
-	 else if (vrr[1]->strVal() == "line")
-	 {
-		 fgets(buff, BUFFSIZE, pfile);
-	 }
-	 else if (vrr[1]->strVal() == "word")
-	 {
-		 fscanf(pfile, "%s", buff);
-	 }
+	FILE *pfile = (FILE*)vrr[0]->userdata();
 
-	 __pu_value r(L);
-	 r.SetType(STR);
-	 r.strVal() = buff;
-	 pu_set_return_value(L, &r);
+    size_t pos = ftell(pfile);
+    fseek(pfile, 0, SEEK_END);
+    size_t fsize = ftell(pfile);
+    fseek(pfile, pos, SEEK_SET);
+
+    char *buff = (char*)g_pumalloc(fsize);
+    if (vrr[1]->strVal() == "max")
+    {         
+        fread(buff, fsize, 1, pfile);   
+        buff[fsize] = 0;
+    }
+    else if (vrr[1]->strVal() == "line")
+    {
+        fgets(buff, fsize, pfile);
+        size_t len = strlen(buff);
+        if (buff[len-1] == '\n')
+        {
+            buff[ - 1] = '\0';
+        }         
+    }
+    else if (vrr[1]->strVal() == "word")
+    {
+        int n = fscanf(pfile, "%s", buff);
+        if (n == EOF)
+        {
+            buff[0] = '\0';
+        }
+    }
+
+    __pu_value r(L);
+    r.SetType(STR);
+    r.strVal() = buff;
+    pu_set_return_value(L, &r);
+    g_pufree(buff);
  }
 
 void bi_read(Pu *L, int argc, const pu_value *vrr)
 {
 	if (argc == 0)
 	{
-		char temp[1024];
-		scanf("%s", temp);
+		char temp[1024];        
+        fgets(temp, sizeof(temp), stdin);
+        temp[strlen(temp) - 1] = '\0';
 		__pu_value v(L);
 
 		if (is_int(temp))
