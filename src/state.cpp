@@ -33,26 +33,26 @@
 #include <crtdbg.h>
 #endif
 #endif
-extern void bi_get_value_len(Pu *L, int, const pu_value *v);
-extern void bi_date(Pu *L, int ,const pu_value*);
-extern void bi_time(Pu *L, int, const pu_value*);
-extern void bi_get_value_len(Pu *L, int, const pu_value *v);
-extern void bi_write(Pu *L, int ,const pu_value *v);
-extern void bi_read(Pu *L, int ,const pu_value *v);
-extern void bi_rand(Pu *L, int ,const pu_value *v);
-extern void bi_sleep(Pu *L, int, const pu_value *v);
-extern void bi_type(Pu *L, int, const pu_value *v);
-extern void bi_eval(Pu *L, int, const pu_value *v);
-extern void bi_quit(Pu *L, int, const pu_value *);
-extern void bi_read(Pu *L, int argc, const pu_value *v);
-extern void bi_open(Pu *L, int argc, const pu_value *v);
-extern void bi_close(Pu *L, int argc, const pu_value *v);
-extern void bi_str(Pu *L, int argc, const pu_value *v);
-extern void bi_num(Pu *L, int argc, const pu_value *v);
-extern void bi_coro_create(Pu *L, int argnum, const pu_value *v);
-extern void bi_coro_resume(Pu *L, int argnum, const pu_value *v);
-extern void bi_coro_yield(Pu *L, int argnum, const pu_value *v);
-extern void bi_get_var(Pu *L, int argnum, const pu_value *v);
+extern void bi_get_value_len(Pu *L, int, pu_value *v);
+extern void bi_date(Pu *L, int ,pu_value*);
+extern void bi_time(Pu *L, int, pu_value*);
+extern void bi_get_value_len(Pu *L, int, pu_value *v);
+extern void bi_write(Pu *L, int ,pu_value *v);
+extern void bi_read(Pu *L, int ,pu_value *v);
+extern void bi_rand(Pu *L, int ,pu_value *v);
+extern void bi_sleep(Pu *L, int, pu_value *v);
+extern void bi_type(Pu *L, int, pu_value *v);
+extern void bi_eval(Pu *L, int, pu_value *v);
+extern void bi_quit(Pu *L, int, pu_value *);
+extern void bi_read(Pu *L, int argc, pu_value *v);
+extern void bi_open(Pu *L, int argc, pu_value *v);
+extern void bi_close(Pu *L, int argc, pu_value *v);
+extern void bi_str(Pu *L, int argc, pu_value *v);
+extern void bi_num(Pu *L, int argc, pu_value *v);
+extern void bi_coro_create(Pu *L, int argnum, pu_value *v);
+extern void bi_coro_resume(Pu *L, int argnum, pu_value *v);
+extern void bi_coro_yield(Pu *L, int argnum, pu_value *v);
+extern void bi_get_var(Pu *L, int argnum, pu_value *v);
 PUAPI void pu_reg_func(Pu *L, const char *funcname, ScriptFunc pfunc);
 
 PUAPI Pu *pu_open()
@@ -69,6 +69,11 @@ PUAPI Pu *pu_open()
 
 void regbuiltin(Pu *L)
 {
+    if (L->builtinreg)
+    {
+        return;
+    }
+    L->builtinreg = true;
 	pu_reg_func(L, "len", bi_get_value_len);
 	pu_reg_func(L, "write", bi_write);
 	pu_reg_func(L, "read", bi_read);
@@ -87,7 +92,7 @@ void regbuiltin(Pu *L)
 	pu_reg_func(L, "close", bi_close);
 	pu_reg_func(L, "str", bi_str);
 	pu_reg_func(L, "num", bi_num);
-	pu_reg_func(L, "get_var", bi_get_var);
+	pu_reg_func(L, "get_var", bi_get_var);    
 }
 
 void clear_state(Pu *L)

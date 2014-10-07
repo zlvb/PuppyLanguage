@@ -384,7 +384,7 @@ int __pu_value::operator ==(const __pu_value &x) const
 	{
 		return 0;
 	}
-	else if (type() == NUM || type() == BOOLEANT)
+	else if (type() == NUM || type() == BOOLEANT || type() == CPTR)
 	{
 		return (numVal() == x.numVal())?1:0;
 	}
@@ -417,7 +417,7 @@ void __pu_value::operator =(const __pu_value &x)
 {
 	switch (x.type())
 	{
-	case CORO: case NUM: case BOOLEANT: case CFUN:
+    case CORO: case NUM: case BOOLEANT: case CFUN: case CPTR:
 		{			
             SetType(x.type());
             numVal() = x.numVal();

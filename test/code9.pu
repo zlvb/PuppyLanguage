@@ -1,0 +1,11 @@
+def fffff(b)
+	a='ssssss\n'
+	c = b + a
+	return c * 100
+end
+
+idx = 10
+while idx > 0
+write(fffff('rr'))
+idx = idx - 1
+end

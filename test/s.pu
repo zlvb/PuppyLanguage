@@ -100,7 +100,7 @@ while s
 	s = read(w,'word')
 end
 
-close(w)@
+close(w)
 
 def gg(j)
 

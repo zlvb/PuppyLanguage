@@ -1,0 +1,12 @@
+*.psess
+*.user
+*.suo
+*.lib
+*.tlog
+*.obj
+*.log
+*.idb
+*.pdb
+*.lastbuildstate
+*.data
+*.old

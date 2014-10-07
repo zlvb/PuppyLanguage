@@ -32,15 +32,9 @@
 #ifndef __Pu_H__
 #define __Pu_H__
 
-#define USE_PUDOUBLE
 
-#ifdef USE_PUDOUBLE
-	typedef long long	PU_INT;
-	typedef double		PU_FLOAT;
-#else
-	typedef int			PU_INT;
-	typedef float		PU_FLOAT;
-#endif
+typedef long long	PU_INT;
+typedef double		PU_FLOAT;
 typedef PU_FLOAT	PU_NUMBER;
 
 typedef struct Pu Pu;
@@ -48,7 +42,7 @@ typedef struct __pu_value __pu_value;
 typedef __pu_value* pu_value;
 
 // 可以让脚本调用的函数类型
-typedef void (*ScriptFunc)(Pu*, int argnum, const pu_value*);
+typedef void (*ScriptFunc)(Pu*, int argnum, pu_value*);
 
 // 操作结果
 typedef enum PURESULT{
@@ -66,7 +60,8 @@ typedef enum PUVALUETYPE{
 	CORO,		// 协程对象
 	FILEHANDLE,	// 文件句柄
 	BOOLEANT,		// 布尔
-	FUN			// 函数
+	FUN,			// 函数
+    CPTR = 27       // 指针
 }PUVALUETYPE;
 
 // 值是由脚本系统创建的，还是用户调用pu_new_value创建的
@@ -177,7 +172,7 @@ void pu_reg_func(Pu *L, const char *funcname, ScriptFunc pfunc);
 *	值所代表的字符串
 *
 */
-const char *pu_str(const pu_value v);
+const char *pu_str(pu_value v);
 
 /**
 *
@@ -188,7 +183,18 @@ const char *pu_str(const pu_value v);
 *	值所代表的整数
 *
 */
-PU_NUMBER pu_num(const pu_value v);
+PU_NUMBER pu_num(pu_value v);
+
+/**
+*
+*	把值转化成指针
+*	参数：	
+*	const pu_value v 与脚本交互的值类型的对象
+*	返回：
+*	值所代表的指针
+*
+*/
+void *pu_ptr(pu_value v);
 
 /**
 *
@@ -200,7 +206,7 @@ PU_NUMBER pu_num(const pu_value v);
 *	数组成员
 *
 */
-const pu_value pu_arr(const pu_value v, int idx);
+pu_value pu_arr(pu_value v, int idx);
 
 /**
 *
@@ -211,7 +217,7 @@ const pu_value pu_arr(const pu_value v, int idx);
 *	类型
 *
 */
-PUVALUETYPE pu_type(const pu_value v);
+PUVALUETYPE pu_type(pu_value v);
 
 /**
 *
@@ -235,19 +241,29 @@ PURESULT pu_set_num(pu_value v, PU_NUMBER num);
 
 /**
 *
+*	把值设置为指针
+*	参数：	
+*	const pu_value v 与脚本交互的值类型的对象
+*	void *ptr 要设置的指针
+*
+*/
+PURESULT pu_set_ptr(pu_value v, void *ptr);
+
+/**
+*
 *	把值设置为数组
 *	参数：	
 *	const pu_value v 与脚本交互的值类型的对象
 *	const int num 要设置的数字
 *
 */
-PURESULT pu_set_arr(pu_value varr, int idx, const pu_value v);
+PURESULT pu_set_arr(pu_value varr, int idx, pu_value v);
 
 // 值是由脚本系统创建的，还是用户调用pu_new_value创建的
-PUVALUECREATEDBY pu_value_created_by(const pu_value v);
+PUVALUECREATEDBY pu_value_created_by(pu_value v);
 
 // 在数组的最后插入值
-PURESULT pu_push_arr(pu_value varr, const pu_value v);
+PURESULT pu_push_arr(pu_value varr, pu_value v);
 
 
 // 在数组的最后删除值
@@ -286,7 +302,7 @@ PURESULT pu_del_value(pu_value v);
 *	const pu_value varr 参数数组
 *
 */
-const pu_value pu_call(Pu *L, const char *function_name, const pu_value varr);
+pu_value pu_call(Pu *L, const char *function_name, pu_value varr);
 
 /**
 *
@@ -310,7 +326,7 @@ int pu_eval(Pu *L, const char *str);
 /*
  *	得到一个值的字符串形式
  */
-void pu_val2str(Pu *L, const pu_value *v, char *buff, int buffsize);
+void pu_val2str(Pu *L, pu_value *v, char *buff, int buffsize);
 
 /*
  * 设置自定义malloc函数

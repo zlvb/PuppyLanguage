@@ -41,7 +41,7 @@ struct FuncPos;
 #define PUAPI extern "C"
 
 // 可以让脚本调用的函数类型
-typedef void (*ScriptFunc)(Pu*, int arg_num, const pu_value*);
+typedef void (*ScriptFunc)(Pu*, int arg_num, pu_value*);
 
 // 错误处理回调
 typedef void (*ErrHandle)(int err, const char *err_str);
@@ -67,8 +67,15 @@ typedef enum PURESULT{
 #endif
 
 #define MAKE_TEMP_VALUE(p) \
-    p = new __pu_value(L);\
-    p->readonly(true);\
+    if (L->tempool.size() > 0)\
+    {\
+        p = L->tempool.back();\
+        L->tempool.pop_back();\
+    }\
+    else\
+    {\
+        p = new __pu_value(L);\
+    }    \
     L->tempvals.push_back(p);
 
 #define CHECK_EXP(v) \

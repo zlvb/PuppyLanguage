@@ -95,19 +95,18 @@ enum PuType
     TRUEK,
     OP,
     VAR,
-    //---------------
-    NUM,
-    STR,
-    ARRAY,
-    MAP,
-    CORO,
-    FILEHANDLE,
-    BOOLEANT,
-    FUN,
-    CFUN,
-    //---------------
+    NUM, //
+    STR, //
+    ARRAY, //
+    MAP, //
+    CORO, //
+    FILEHANDLE, //
+    BOOLEANT, //
+    FUN, //
+    CFUN, //
     LABEL,
     FINISH,
+    CPTR, //
     UNKNOWN
 };
 

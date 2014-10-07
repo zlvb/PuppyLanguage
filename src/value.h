@@ -65,7 +65,10 @@ void DECVMAP_REF(void *&userdata);
 																\
 	:(((v).type() == NUM)?										\
 		((v).numVal() != 0)										\
-																\
+                                                                \
+	:(((v).type() == CPTR)?                                     \
+        (*(PU_INT*)&(v).numVal() != 0)		                    \
+                                                                \
 	:(((v).type() == STR)?										\
 		((v).strVal().length() != 0)							\
 																\
@@ -81,7 +84,7 @@ void DECVMAP_REF(void *&userdata);
 	:(((v).type() == FUNCTION)?									\
 		(true):(false)											\
 																\
-	))))))														\
+	)))))))														\
 )
 
 typedef enum PUVALUECREATEDBY{
@@ -108,7 +111,6 @@ struct __pu_value : public PuMemObj
         ,_type(UNKNOWN)
         ,_arr(0)
         ,_userdata(0)
-        ,_readonly(false)
 	{
 	}
 
@@ -118,7 +120,6 @@ struct __pu_value : public PuMemObj
         ,_type(UNKNOWN)
         ,_arr(0)
         ,_userdata(0)
-        ,_readonly(false)
 	{
 	}
 
@@ -128,7 +129,6 @@ struct __pu_value : public PuMemObj
         ,_type(UNKNOWN)
         ,_arr(0)
         ,_userdata(0)
-        ,_readonly(false)
 	{
 		*this = x;
 	}
@@ -149,10 +149,10 @@ struct __pu_value : public PuMemObj
 	int operator ==(const __pu_value &x) const;
 	int operator ||(const __pu_value &x) const;
 	int operator &&(const __pu_value &x) const;
-    const __pu_value &operator +=(const __pu_value &x);
-    const __pu_value &operator -=(const __pu_value &x);
-    const __pu_value &operator *=(const __pu_value &x);
-    const __pu_value &operator /=(const __pu_value &x);
+	const __pu_value &operator +=(const __pu_value &x);
+	const __pu_value &operator -=(const __pu_value &x);
+	const __pu_value &operator *=(const __pu_value &x);
+	const __pu_value &operator /=(const __pu_value &x);
     
     Pu *L;
     PUVALUECREATEDBY createby;
@@ -240,7 +240,7 @@ struct __pu_value : public PuMemObj
     const PU_NUMBER& numVal() const
     {
 #ifdef _DEBUG
-        if (type() != FUN && type() != BOOLEANT && type() != NUM && type() != CORO && type() != CFUN)
+        if (type() != FUN && type() != BOOLEANT && type() != NUM && type() != CORO && type() != CFUN && type() != CPTR)
         {
             assert(!"number get value failed");
         }
@@ -263,12 +263,10 @@ struct __pu_value : public PuMemObj
         switch (type())
         {
         case STR:
-            RELEASE_BUFF(strVal());
             delete _strVal;
             _strVal = NULL;
             break;
         case ARRAY:
-            arr().decref();
             delete _arr;
             _arr = NULL;
             break;
@@ -279,9 +277,6 @@ struct __pu_value : public PuMemObj
             break;
         }        
     }
-
-    bool readonly() const { return _readonly; }
-    void readonly(bool val) { _readonly = val; }
 
 private:
 
@@ -309,8 +304,7 @@ private:
     PuValMap *_map;			
 	PuString *_strVal;	
     };
-    void *_userdata;
-    bool _readonly;    
+    void *_userdata;  
 };
 
 typedef __pu_value::ValueArr ValueArr;

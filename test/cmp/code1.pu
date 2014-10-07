@@ -1,0 +1,17 @@
+start = time()
+i=2000000
+while i
+	k=46
+	a=1
+	b=1
+	while k > 1
+        #write(a + '\n')
+		c=b
+		b=a+b
+		a=c
+		k=k-1
+	end
+	i=i-1
+end
+write(time() - start + '\n')
+write(a + '\n')

@@ -43,16 +43,18 @@ struct FuncPos
 {
 	int start;
 	int end;
-    PuVector<PuString, 4> argnames;
+	PuVector<PuString, 4> argnames;
 	ScriptFunc pfunc;
+	VarMap *newvarmap;
 
-    FuncPos()
+	FuncPos()
         :start(-1)
         ,end(-1)
         ,pfunc(NULL)
-    {
+	,newvarmap(NULL)
+	{
 
-    }
+	}
 };
 typedef PuVector<FuncPos> FuncList;
 struct Pustrbuff
@@ -102,17 +104,26 @@ struct Pu : public PuMemObj
 	err_handle(0),	
 	output_handle(0),	
 	lasterr(-1),
-    isyield(false),
+	isyield(false),
 	upvalue(0),
 	cur_nup(0),
-	gclink(0)
+	gclink(0),
+	builtinreg(false)
 	{
 		varstack.push(new VarMap);
-        return_value.SetType(NIL);
+		return_value.SetType(NIL);
 	}
 
 	~Pu()
 	{
+		for (int i = 0; i < funclist.size(); i++)
+		{
+			FuncPos &info = funclist[i];
+			if (info.newvarmap)
+			{
+				delete info.newvarmap;
+			}
+		}
 		VarMap *nd = varstack.bottom();
 		delete nd;
 	}
@@ -142,7 +153,9 @@ struct Pu : public PuMemObj
 	VarMap				*upvalue;
 	_up_value			*cur_nup;
 	_up_value			*gclink;
+    PuVector<__pu_value*> tempool;
     PuVector<__pu_value*> tempvals;
+    bool                builtinreg;
 };
 
 

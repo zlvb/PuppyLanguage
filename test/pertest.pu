@@ -1,0 +1,12 @@
+start = time()
+def func(x,y,z)
+    return x*y/z
+end
+n = 3000000
+while n > 0
+    a = func(n, n/2, n)
+    n = n-1
+end
+
+write(time() - start + '\n')
+

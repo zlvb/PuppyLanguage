@@ -1,0 +1,17 @@
+s="12345"
+slen=len(s)
+idx=0
+while idx < slen
+    if s[idx]=="3"
+        write(idx)
+        break
+    end
+    idx = idx + 1
+end
+
+@
+if 1==2
+    write(123)
+end
+write(333)
+@

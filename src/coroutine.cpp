@@ -32,10 +32,10 @@
 #include "state.h"
 #include "error.h"
 
-PUAPI void pu_set_return_value(Pu *L, const pu_value v);
+PUAPI void pu_set_return_value(Pu *L, pu_value v);
 extern int vm(Pu *L);
 extern void bi_return_num( Pu * L, int v );
-void bi_coro_create(Pu *L, int argnum, const pu_value *v)
+void bi_coro_create(Pu *L, int argnum, pu_value *v)
 {
 	if (argnum == 0)
 	{
@@ -88,7 +88,7 @@ void bi_coro_create(Pu *L, int argnum, const pu_value *v)
 
 void run_coro( Pu * L, int coro_id, __pu_value * corov );
 
-void bi_coro_resume(Pu *L, int argnum, const pu_value *v)
+void bi_coro_resume(Pu *L, int argnum, pu_value *v)
 {
     int coro_id = 0;
     __pu_value *corov = NULL;
@@ -116,7 +116,7 @@ void bi_coro_resume(Pu *L, int argnum, const pu_value *v)
     return;
 }
 
-void bi_coro_yield(Pu *L, int, const pu_value *)
+void bi_coro_yield(Pu *L, int, pu_value *)
 {
 	L->isyield = true;
 }

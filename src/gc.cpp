@@ -71,14 +71,14 @@ static void sweep(Pu *L)
 			{
 				L->gclink = L->gclink->next;
 				prev = L->gclink;
-				delete p->vmap;
+				//delete p->vmap;
 				delete p;
 				p = L->gclink;
 			}
 			else
 			{
 				_up_value *np = p->next;
-				delete p->vmap;
+				//delete p->vmap;
 				delete p;
 				prev->next = np;
 				p = np;
@@ -109,13 +109,13 @@ void safe_decrecount(Pu *L, _up_value *n)
 		{
 			L->gclink = L->gclink->next;
 			prev = L->gclink;
-			delete p->vmap;
+			//delete p->vmap;
 			delete p;
 		}
 		else
 		{
 			_up_value *np = p->next;
-			delete p->vmap;
+			//delete p->vmap;
 			delete p;
 			prev->next = np;
 		}
@@ -134,7 +134,7 @@ void clear_temp(Pu *L)
 {
     for (int i = 0; i < L->tempvals.size(); i++)
     {
-        delete L->tempvals[i];
+        L->tempool.push_back(L->tempvals[i]);
     }
     L->tempvals.clear();
 }

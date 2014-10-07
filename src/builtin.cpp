@@ -85,7 +85,7 @@ const char *get_typestr(__pu_value &v)
 	return type_string[(int)v.type()-NIL];
 }
 
-void bi_sleep(Pu *L, int, const pu_value *v)
+void bi_sleep(Pu *L, int, pu_value *v)
 {
 	if (v == NULL || v[0]->type() != NUM)
 	{
@@ -103,7 +103,7 @@ void bi_sleep(Pu *L, int, const pu_value *v)
     bi_return_null;
 }
 
-void bi_get_value_len(Pu *L, int, const pu_value *v)
+void bi_get_value_len(Pu *L, int, pu_value *v)
 {
 	if (v == NULL)
 	{
@@ -128,7 +128,7 @@ void bi_get_value_len(Pu *L, int, const pu_value *v)
 	pu_set_return_value(L,&r);
 }
 
-void bi_time(Pu *L, int, const pu_value*)
+void bi_time(Pu *L, int, pu_value*)
 {
     time_t ti = time(NULL); 
     __pu_value t(L);
@@ -138,7 +138,7 @@ void bi_time(Pu *L, int, const pu_value*)
     pu_set_return_value(L, &t);
 }
 
-void bi_date(Pu *L, int, const pu_value*)
+void bi_date(Pu *L, int, pu_value*)
 {
 	struct tm *local; 
 	time_t ti; 
@@ -175,13 +175,13 @@ void bi_date(Pu *L, int, const pu_value*)
 	pu_set_return_value(L, &r);
 }
 
-void bi_quit(Pu *L, int, const pu_value *)
+void bi_quit(Pu *L, int, pu_value *)
 {
 	L->isquit = true;
     bi_return_null;
 }
 
-void bi_rand(Pu *L, int, const pu_value *)
+void bi_rand(Pu *L, int, pu_value *)
 {
 	__pu_value r(L);
 
@@ -236,7 +236,7 @@ static void write_arr(const __pu_value &arr)
 	printf("]");
 }
 
-void bi_str(Pu *L, int argc, const pu_value *v)
+void bi_str(Pu *L, int argc, pu_value *v)
 {
 	if (argc == 0)
 	{
@@ -258,7 +258,7 @@ void bi_str(Pu *L, int argc, const pu_value *v)
 	}
 }
 
-void bi_num(Pu *L, int argc, const pu_value *v)
+void bi_num(Pu *L, int argc, pu_value *v)
 {
 	if (argc == 0 || v[0]->type() != STR)
 	{
@@ -281,7 +281,7 @@ void bi_num(Pu *L, int argc, const pu_value *v)
 	}
 }
 
-static void writefilehandle(Pu *L, int argc, const pu_value *v)
+static void writefilehandle(Pu *L, int argc, pu_value *v)
 {
 	FILE *pfile = (FILE*)v[0]->userdata();
 	for (int i=1; i<argc; ++i)
@@ -293,7 +293,7 @@ static void writefilehandle(Pu *L, int argc, const pu_value *v)
 	}
 }
 
-void bi_write(Pu *L, int argc, const pu_value *v)
+void bi_write(Pu *L, int argc, pu_value *v)
 {
 	if (v == 0)
 	{
@@ -334,7 +334,7 @@ void bi_write(Pu *L, int argc, const pu_value *v)
 }
 
 
-void bi_get_var(Pu *L, int argn, const pu_value *v)
+void bi_get_var(Pu *L, int argn, pu_value *v)
 {
 	__pu_value *temp = NULL;
 	if (argn > 0)
@@ -348,7 +348,7 @@ void bi_get_var(Pu *L, int argn, const pu_value *v)
 	pu_set_return_value(L, temp);
 }
 
-void bi_type(Pu *L, int argn, const pu_value *v)
+void bi_type(Pu *L, int argn, pu_value *v)
 {
 	__pu_value o(L);
 	o.SetType(STR);
@@ -415,7 +415,7 @@ int do_string(Pu *L, const char *str)
 	}
 }
 
-void bi_eval(Pu *L, int argc, const pu_value *v)
+void bi_eval(Pu *L, int argc, pu_value *v)
 {
 	if (argc==0)
     {
@@ -425,7 +425,7 @@ void bi_eval(Pu *L, int argc, const pu_value *v)
     bi_return_null;
 }
  
- void bi_open(Pu *L, int argc, const pu_value *v)
+ void bi_open(Pu *L, int argc, pu_value *v)
  {     
  	if (argc==0)
     {
@@ -446,7 +446,7 @@ void bi_eval(Pu *L, int argc, const pu_value *v)
  	pu_set_return_value(L, &r);
  }
  
- void bi_close(Pu *L, int argc, const pu_value *v)
+ void bi_close(Pu *L, int argc, pu_value *v)
  {
  	if (argc==0) return;
  	if (v[0]->userdata())
@@ -456,7 +456,7 @@ void bi_eval(Pu *L, int argc, const pu_value *v)
     bi_return_null;
  }
 
- static void readfilehandle(Pu *L, const pu_value *vrr)
+ static void readfilehandle(Pu *L, pu_value *vrr)
  {
 	FILE *pfile = (FILE*)vrr[0]->userdata();
 
@@ -496,7 +496,7 @@ void bi_eval(Pu *L, int argc, const pu_value *v)
     g_pufree(buff);
  }
 
-void bi_read(Pu *L, int argc, const pu_value *vrr)
+void bi_read(Pu *L, int argc, pu_value *vrr)
 {
 	if (argc == 0)
 	{

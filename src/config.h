@@ -27,26 +27,24 @@
 	Email zlvbvbzl@gmail.com
 */
 
-#define USE_PUDOUBLE
-
-#ifdef USE_PUDOUBLE
-	typedef long long	PU_INT;
-	typedef double		PU_FLOAT;
-#else
-	typedef int			PU_INT;
-	typedef float		PU_FLOAT;
-	
-#endif
+typedef long long	PU_INT;
+typedef double		PU_FLOAT;
 
 typedef PU_FLOAT	PU_NUMBER;
 
-#define PU_MAXVARLEN 128
+#define PU_MAXVARLEN 1024
 #define PU_MAXCFUNCARGNUM 32
 #define _DEBUG_MEM 1
 
-#if defined(_MSC_VER) && defined(_DEBUG) 
+
+#if defined(_MSC_VER) 
+#define GC_LEVEL 1
+#if defined(_DEBUG) 
 #if _DEBUG_MEM == 1
 #include <crtdbg.h>
 #define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #endif
+#endif
+#else
+#define GC_LEVEL 1024
 #endif

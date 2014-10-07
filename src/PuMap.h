@@ -95,6 +95,14 @@ public:
 		Bucket_T newb = {key,value};
 		if (p)
 		{
+			for (int i = 0; i < p->size(); i++)
+			{
+				if ((*p)[i].key == key)
+				{
+					(*p)[i].value = value;
+					return &(*p)[i];
+				}
+			}
 			p->push_back(newb);
 			return &(*p)[p->size()-1];
 		}

@@ -29,7 +29,7 @@
 
 #include "state.h"
 #include "error.h"
-const char *PU_VERSION = "Puppy 1.3.0";
+const char *PU_VERSION = "Puppy 1.5.1";
 
 extern int do_string(Pu *L, const char *str);
 extern void clear_state(Pu *L);
@@ -50,7 +50,7 @@ PUAPI const char *pu_version()
 	return PU_VERSION;
 }
 
-PUAPI void pu_set_return_value(Pu *L, const pu_value v)
+PUAPI void pu_set_return_value(Pu *L, pu_value v)
 {
 	L->return_value = *v;
 }
@@ -88,23 +88,28 @@ PUAPI void pu_reg_func(Pu *L, const char *funcname,
     *got = v;        
 }
 
-PUAPI const char *pu_str(const pu_value v)
+PUAPI const char *pu_str(pu_value v)
 {
 	return v->strVal().c_str();
 }
 
-PUAPI PU_NUMBER pu_num(const pu_value v)
+PUAPI PU_NUMBER pu_num(pu_value v)
 {
 	return v->numVal();
 }
 
-PUAPI const pu_value pu_arr(const pu_value v, int idx)
+PUAPI pu_value pu_arr(pu_value v, int idx)
 {
 	return &(v->arr()[idx]);
 }
 
+PUAPI void *pu_ptr(pu_value v)
+{
+    PU_NUMBER n = v->numVal();
+    return (void*)*(PU_INT*)&n;
+}
 
-PUAPI int pu_type(const pu_value v)
+PUAPI int pu_type(pu_value v)
 {
 	return int(v->type());
 }
@@ -116,10 +121,10 @@ PUAPI PURESULT pu_set_str(pu_value v, const char *str)
 		return PU_FAILED;
 	}
 
-	if (v->type() == ARRAY)
-	{
-		v->arr().decref();
-	}
+// 	if (v->type() == ARRAY)
+// 	{
+// 		v->arr().decref();
+// 	}
 
 	v->SetType(STR);
 	v->strVal() = str;
@@ -141,18 +146,31 @@ PUAPI PURESULT pu_set_num(pu_value v, PU_NUMBER number)
 		return PU_FAILED;
 	}
 
-	if (v->type() == ARRAY)
-	{
-		v->arr().decref();
-	}
+// 	if (v->type() == ARRAY)
+// 	{
+// 		v->arr().decref();
+// 	}
 
 	v->SetType(NUM);
 	v->numVal() = number;
 	return PU_SUCCESS;
 }
 
+PUAPI PURESULT pu_set_ptr(pu_value v, void *ptr)
+{
+    if (v->createby == PU_SYSTEM)
+    {
+        return PU_FAILED;
+    }
+
+    v->SetType(CPTR);
+    PU_INT n = (PU_INT)ptr;
+    v->numVal() = *(PU_NUMBER*)&n;
+    return PU_SUCCESS;
+}
+
 PUAPI PURESULT pu_set_arr(pu_value v, 
-						  int idx, const pu_value u)
+						  int idx, pu_value u)
 {
 	if (v->createby == PU_SYSTEM)
 	{
@@ -197,7 +215,7 @@ PUAPI PURESULT pu_del_value(pu_value v)
 }
 
 PUAPI PURESULT pu_push_arr(pu_value varr, 
-						   const pu_value v)
+						   pu_value v)
 {
 	if (varr->createby == PU_SYSTEM)
 	{
@@ -235,7 +253,7 @@ PUAPI int pu_len(pu_value v)
 }
 
 
-PUAPI PUVALUECREATEDBY pu_value_created_by(const pu_value v)
+PUAPI PUVALUECREATEDBY pu_value_created_by(pu_value v)
 {
 	return v->createby;
 }
@@ -265,14 +283,14 @@ PUAPI pu_value pu_global(Pu *L, const char *name)
 	return NULL;
 }
 
-PUAPI const pu_value pu_call(Pu *L, const char *funcname, 
-							 const pu_value varr)
+PUAPI pu_value pu_call(Pu *L, const char *funcname, 
+							 pu_value varr)
 {
 	L->return_value.SetType(UNKNOWN);
-	if (L->return_value.type() == ARRAY)
-	{
-		L->return_value.arr().decref();
-	}
+// 	if (L->return_value.type() == ARRAY)
+// 	{
+// 		L->return_value.arr().decref();
+// 	}
 
 	pu_value fv = pu_global(L,funcname);
 	FuncPos &fps = L->funclist[(int)fv->numVal()];
@@ -387,10 +405,10 @@ static void s_write_arr(const __pu_value &arr, char *b)
 	strcat(b,"]");
 }
 
-PUAPI void pu_val2str(Pu *, const pu_value *p, char *b, int buffsize)
+PUAPI void pu_val2str(Pu *, pu_value *p, char *b, int buffsize)
 {
 	b[0]=0;
-	const pu_value &v = *p;
+	pu_value &v = *p;
 	if (v->type() == NUM)
 	{
 		s_WRITE_NUM(v,b);
@@ -413,7 +431,7 @@ PUAPI void pu_val2str(Pu *, const pu_value *p, char *b, int buffsize)
     }
 	else
 	{
-		strcpy(b,get_typestr(*v));
+		strncpy(b, get_typestr(*v), buffsize);
 	}
 }
 

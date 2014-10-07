@@ -81,18 +81,6 @@ void append_token(Pu *L, Token &t)
 	}
 }
 
-
-static char *toLowerString(char *szSource)  
-{  
-	char *szString = szSource;  
-	while (*szString)  
-	{  
-		*szString = (char)tolower(*szString);  
-		szString++;
-	}  
-	return szSource;  
-}   
-
 static int pu_sgetc(Pustrbuff &s)
 {
 	return s.buff[s.pos++];
@@ -191,11 +179,7 @@ static void get_num(Pu *L, int c, Token &newToken)
 {
 	pu_ungetc(L,c);
 	PU_NUMBER number;
-#ifdef USE_PUDOUBLE
 	pu_scanf(L->source, "%lf", &number);
-#else
-	pu_scanf(L->source, "%f", &number);
-#endif
 	newToken.type = NUM;
 	newToken.value.numVal() = number;
 	newToken.value.SetType(NUM);
@@ -285,6 +269,10 @@ static void get_op(Pu *L, int c, Token &newToken)
 	}
 	pu_ungetc(L,c);
 	newToken.optype = (OperatorType)(check_op_type(identifier) - 1);
+    if (newToken.type == OP)
+    {
+        assert(newToken.optype != -1);
+    }    
 }
 
 static void get_var_key(Pu *L, int c, Token &newToken)
@@ -303,18 +291,12 @@ static void get_var_key(Pu *L, int c, Token &newToken)
 		c = pu_getc(L);
 	}
 	pu_ungetc(L,c);
-	for (int j=0; j <=i; ++j)
-	{
-		if (identifier[j] >= 65 && identifier[j] <=90)
-		{
-			identifier[j] = identifier[j]+32;
-		}
-	}
+
 	newToken.type = check_token_type(identifier);
 	if (newToken.type == VAR)
 	{
         newToken.value.SetType(STR);
-		newToken.value.strVal() = toLowerString(identifier);		
+		newToken.value.strVal() = identifier;		
 		newToken.value.L = L;
 	}	
 }
@@ -346,7 +328,7 @@ static void get_label(Pu *L, Token &newToken)
 	newToken.type = LABEL;
 	char label[PU_MAXVARLEN]={0};
 	pu_scanf(L->source, "%s", label);
-	L->labelmap.insert(toLowerString(label), int(L->cur_token));
+	L->labelmap.insert(label, int(L->cur_token));
 }
 
 // 返回一个函数是否分析完
@@ -621,8 +603,6 @@ void Token::operator=( const Token &x )
 	type = x.type;
 	line = x.line;
 	optype = x.optype;
-	//var = x.var;
-	finfo = x.finfo;
 	filename = x.filename;
 	if (x.type >= VAR && x.type <= LABEL)
 	{
@@ -640,7 +620,6 @@ Token::Token( const Token &x )
 	type = x.type;
 	line = x.line;
 	optype = x.optype;
-	finfo = x.finfo;
 	if (x.type >= VAR && x.type <= LABEL)
 	{
 		value = x.value;

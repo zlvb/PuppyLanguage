@@ -38,19 +38,18 @@ struct Token
         :type(UNKNOWN)
         ,line(0)
         ,optype(OPT_UNKNOWN)
-        ,finfo(0){}
+        ,regvar(NULL){}
 	Token(const Token &x);
 	void operator=(const Token &x);
 	PuType type;
 	int line;
 	OperatorType optype;
-	void *finfo;
 	PuString filename;
 	__pu_value value;
+    __pu_value *regvar;
 };
 
 typedef PuVector<Token> TokenList;
-
 #define check_source_end(c,s)							\
 (														\
 	((s).type == Pusource::ST_FILE && (c) == EOF)||	\
