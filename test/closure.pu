@@ -1,0 +1,11 @@
+def foo()
+    a = 100
+    def closure(x)
+        return a + x
+    end
+    
+end
+
+c = foo()
+
+write(c(200))

@@ -9,8 +9,11 @@
 *.pdb
 *.lastbuildstate
 *.data
+*.puc
 *.old
 test/hahah
+output/
+bin/
 hahah
 lib/libpuppy.a
 lib/libpuppy_d.a
