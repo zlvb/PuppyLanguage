@@ -349,7 +349,7 @@ int __pu_value::operator !=(const __pu_value &x) const
 	{
 		return 1;
 	}
-	else if (type() == NUM || type() == BOOLEANT)
+    else if (type() == NUM || type() == NUM)
 	{
 		return (numVal() != x.numVal())?1:0;
 	}

@@ -267,7 +267,7 @@ PUAPI void pu_run(Pu *L)
 	vm(L);
     while (L->coros.size() > 0)
     {
-        run_coro(L, rand() % L->coros.size(), NULL);
+        run_coro(L, 0, NULL);
     }        
 }
 

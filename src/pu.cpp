@@ -135,19 +135,31 @@ void get_var(Pu *L, const PuString &name, __pu_value *&v)
 __pu_value *reg_var(Pu *L, const PuString &varname)
 {
     __pu_value *got = NULL;
-    VarMap *varmap = L->varstack.top();
-    VarMap::Bucket_T *it = varmap->find(varname);
+    VarMap *top_varmap = L->varstack.top();
+    VarMap::Bucket_T *it = top_varmap->find(varname);
     if (it != 0)
     {
         got = &(it->value);
     }
     else 
     {
-        VarMap *varmap = L->varstack.bottom();
-        VarMap::Bucket_T *it = varmap->find(varname);
+        VarMap *global_varmap = L->varstack.bottom();
+        it = global_varmap->find(varname);
         if (it != 0)
         {
             got = &(it->value);
+        }
+        else
+        {
+            if (L->upvalue && L->upvalue != top_varmap)
+            {
+                VarMap *up_varmap = L->upvalue;
+                it = up_varmap->find(varname);
+                if (it != 0)
+                {
+                    got = &(it->value);
+                }
+            }
         }
     }
 
@@ -648,7 +660,7 @@ static void cmp(Pu *L, __pu_value *&temp)
 				__pu_value *t = NULL;
 				ADD(L, t);       
                 CHECK_EXP(t);
-                PU_NUMBER r = (PU_NUMBER)(*temp <= *t);
+                PU_NUMBER r = (PU_NUMBER)(*temp != *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
 				temp->numVal() = r;                

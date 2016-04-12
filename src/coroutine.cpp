@@ -121,7 +121,7 @@ void bi_coro_yield(Pu *L, int, pu_value *)
 	L->isyield = true;
 }
 
-void run_coro( Pu * L, int coro_id, __pu_value * corov )
+void run_coro( Pu *L, int coro_id, __pu_value *corov )
 {
     coro &c = L->coros[coro_id];
 
@@ -153,6 +153,9 @@ void run_coro( Pu * L, int coro_id, __pu_value * corov )
     if (L->isyield)
     {
         r.numVal() = 1;
+        coro cbak = L->coros[coro_id];
+        L->coros[coro_id] = L->coros.back();
+        L->coros.back() = cbak;
     }
     else
     {
