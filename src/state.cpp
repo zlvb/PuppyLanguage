@@ -56,6 +56,28 @@ extern void bi_coro_yield(Pu *L, int argnum, pu_value *v);
 extern void bi_get_var(Pu *L, int argnum, pu_value *v);
 PUAPI void pu_reg_func(Pu *L, const char *funcname, ScriptFunc pfunc);
 
+Pu::Pu()
+	:token(NULL),
+	cur_token(0),
+	line(1),
+	isquit(false),
+    mode(0),
+	err_handle(0),	
+	output_handle(0),	
+	lasterr(-1),
+	isyield(false),
+	upvalue(0),
+	cur_nup(0),
+	gclink(0),
+	builtinreg(false),
+    tail_optimize(false)
+{
+    VarMap *global_scop = new VarMap;
+    varstack.push(global_scop);
+    return_value.SetType(NIL);
+    debug("Global scop = %p", global_scop);
+}
+
 PUAPI Pu *pu_open()
 {
 #if defined(_MSC_VER) && defined(_DEBUG)

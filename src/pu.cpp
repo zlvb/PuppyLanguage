@@ -170,6 +170,7 @@ __pu_value *reg_var(Pu *L, const PuString &varname)
         VarMap *varmap = L->varstack.top();
         VarMap::Bucket_T *ret = varmap->insert(varname, __pu_value(L));
         got = &(ret->value);
+        debug("reg %s in %p", varname.c_str(), varmap);
     }
 
     return got;
@@ -979,7 +980,6 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
         if (!funcinfo.newvarmap && !L->tail_optimize)
         {
             funcinfo.newvarmap = new VarMap;
-            L->varstack.push(funcinfo.newvarmap);
         }
         else
         {
@@ -997,6 +997,7 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
             NEXT_TOKEN;
             CLEAR_RETURN;
             funcinfo.newvarmap = 0;
+            debug("start tail call");
             return;
         }
 
@@ -1008,6 +1009,7 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
         _up_value *oldcur = L->cur_nup;
         L->cur_nup = newupnode;
         L->varstack.push(funcinfo.newvarmap);
+        debug("cur_scop = %p", L->varstack.top());
         L->callstack.push(L->cur_token);
         L->isreturn.push(false);
         L->cur_token = funcinfo.start;
@@ -1017,7 +1019,7 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
 		L->cur_token = L->callstack.top();
 		L->callstack.pop(); 
 		L->varstack.pop();
-		
+		debug("cur_scop = %p", L->varstack.top());
 		L->cur_nup = oldcur;
 		newupnode->refcount -= 1;
 		if (newupnode->refcount == 0)	
@@ -1150,6 +1152,7 @@ static void regfunc(Pu *L)
  		{
  			L->cur_nup->refcount++;
  		}
+
         __pu_value *got = reg_var(L, TOKEN.value.strVal());
         TOKEN.regvar = got;
         *got = fv;

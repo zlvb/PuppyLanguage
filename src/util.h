@@ -40,6 +40,7 @@ Email zlvbvbzl@gmail.com
 template<typename... Args>
 void debug(Args&&... args)
 {
+    printf("[DEBUG] ");
     printf(std::forward<Args>(args)...);
     putchar('\n');
 }

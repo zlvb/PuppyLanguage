@@ -8,4 +8,20 @@ end
 
 c = foo()
 
-write(c(200))
+# write(c(200))
+
+def ccc()
+    write('ccc')
+    #write(x1)
+end
+    
+def xxx()
+    write('xxx')
+    x1 = 1
+    ccc()
+end
+
+xxx()
+
+def yyy()
+end

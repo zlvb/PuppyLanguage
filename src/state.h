@@ -94,26 +94,7 @@ typedef PuVector<coro> CoroList;
 
 struct Pu : public PuMemObj
 {
-	Pu()
-	:token(NULL),
-	cur_token(0),
-	line(1),
-	isquit(false),
-    mode(0),
-	err_handle(0),	
-	output_handle(0),	
-	lasterr(-1),
-	isyield(false),
-	upvalue(0),
-	cur_nup(0),
-	gclink(0),
-	builtinreg(false),
-    tail_optimize(false)
-	{
-		varstack.push(new VarMap);
-		return_value.SetType(NIL);
-	}
-
+	Pu();
 	~Pu()
 	{
 		for (int i = 0; i < funclist.size(); i++)
