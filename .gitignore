@@ -20,3 +20,5 @@ lib/libpuppy_d.a
 test/cmp/pb.lua
 test/cmp/yp.py
 *.sdf
+*.opendb
+*.VC.db
