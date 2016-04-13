@@ -29,7 +29,7 @@
 
 
 #ifdef _MSC_VER
-#pragma warning(disable:4127) // ÅÐ¶ÏÌõ¼þÎª³£Á¿£¬±ÈÈç£ºwhile(1)
+#pragma warning(disable:4127) // ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ç£ºwhile(1)
 #endif
 
 #include "state.h"
@@ -60,7 +60,7 @@ static void callfunction(Pu *L, FuncPos &finfo);
 extern void gc(Pu *L);
 extern void clear_temp(Pu *L);
 /*
-ÉÏÃæÕ¹¿ªºó£º
+ï¿½ï¿½ï¿½ï¿½Õ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 factor(L,t);
 {
 TokenType tp = TOKEN.type();
@@ -342,9 +342,9 @@ static void get_value(Pu *L, __pu_value *&temp)
 static void get_arrvalue(Pu *L, __pu_value *&arrref, const int idx)
 {
 	if (arrref->type() == ARRAY)
-	{// Êý×é
+	{// ï¿½ï¿½ï¿½ï¿½
 		if (idx > int(arrref->arr().size()-1) || idx<0)
-		{// ÅÐ¶ÏÏÂ±êÔ½½ç
+		{// ï¿½Ð¶ï¿½ï¿½Â±ï¿½Ô½ï¿½ï¿½
 			error(L,5);
             MAKE_TEMP_VALUE(arrref);
 			return;
@@ -353,7 +353,7 @@ static void get_arrvalue(Pu *L, __pu_value *&arrref, const int idx)
 		arrref = &arrref->arr()[idx];
 	}
 	else if (idx >= 0)
-	{// ×Ö·û´®
+	{// ï¿½Ö·ï¿½ï¿½ï¿½
 		if (idx > int(arrref->strVal().length()-1) || idx<0)
 		{
 			error(L,5);
@@ -375,7 +375,7 @@ static void get_arrref(Pu *L, __pu_value *&temp)
 	const __pu_value *vidx = exp(L);
     CHECK_EXP(vidx);
 	if (vidx->type() != NUM)
-	{// Ö»ÓÐÊý×Ö²Å¿ÉÒÔ×÷ÎªÊý×éµÄË÷Òý
+	{// Ö»ï¿½ï¿½ï¿½ï¿½ï¿½Ö²Å¿ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		error(L,3);
         MAKE_TEMP_VALUE(temp);
 		return;
@@ -384,14 +384,14 @@ static void get_arrref(Pu *L, __pu_value *&temp)
 	PuType tp = TOKEN.type;
 	OperatorType nv = TOKEN.optype;
 	if (tp != OP || nv != OPT_RSB)
-	{// Êý×é²Ù×÷·û±ØÐëÒÔ[¿ªÊ¼£¬ÒÔ]½áÊø
+	{// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½]ï¿½ï¿½ï¿½ï¿½
 		error(L,4);
         MAKE_TEMP_VALUE(temp);
 		return;
 	}
 
 	int idx = int(vidx->numVal());
-	get_arrvalue(L, temp, idx);// »ñÈ¡Ë÷ÒýÖ¸ÏòµÄÖµ
+	get_arrvalue(L, temp, idx);// ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½Öµ
 }
 PUAPI void pu_val2str(Pu *, const pu_value *p, char *b, int buffsize);
 static void get_map(Pu *L, __pu_value *&a)
@@ -948,7 +948,7 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
         }
         NEXT_TOKEN_N(3);
 		int i=0;
-        std::vector<std::pair<const PuString*, const __pu_value*> > arg_tmp_cnt;
+        PuVector<std::pair<const PuString*, const __pu_value*>, 8> arg_tmp_cnt;
 		for (;;) // find )
 		{
 			PuType tp = TOKEN.type;
@@ -1102,7 +1102,7 @@ static void whilet(Pu *L, Token *ptoken)
 		NEXT_TOKEN;
 		const __pu_value *t = exp(L);
         CHECK_EXP(t);
-		bool loop = VALUE_IS_TRUE(*t); // ÅÐ¶ÏwhileÌõ¼þÊÇ·ñÂú×ã
+		bool loop = VALUE_IS_TRUE(*t); // ï¿½Ð¶ï¿½whileï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½
 
 		if (loop)
 		{

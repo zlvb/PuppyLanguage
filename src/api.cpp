@@ -39,7 +39,7 @@ extern void regbuiltin(Pu *L);
 extern void set_var(Pu *L, const PuString &varname, __pu_value &new_value, __pu_value *&got);
 extern __pu_value *reg_var(Pu *L, const PuString &varname);
 #ifdef _MSC_VER
-#pragma warning(disable:4127) // ÅÐ¶ÏÌõ¼þÎª³£Á¿£¬±ÈÈç£ºwhile(1)
+#pragma warning(disable:4127) // ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ç£ºwhile(1)
 #endif
 
 pumalloc g_pumalloc = malloc;

@@ -3,7 +3,7 @@ def foo()
     def closure(x)
         return a + x
     end
-    
+    return closure
 end
 
 c = foo()

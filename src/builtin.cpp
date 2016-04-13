@@ -34,7 +34,7 @@
 
 #ifdef _MSC_VER
 #include <windows.h> //for win32 Sleep
-#pragma warning(disable:4127) // ÅÐ¶ÏÌõ¼þÎª³£Á¿£¬±ÈÈç£ºwhile(1)
+#pragma warning(disable:4127) // ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ç£ºwhile(1)
 #else
 #include <unistd.h>  //for linux usleep
 #endif
@@ -326,7 +326,7 @@ void bi_write(Pu *L, int argc, pu_value *v)
             }
 			else
 			{
-				printf(get_typestr(*v[i]));
+				printf("%s", get_typestr(*v[i]));
 			}
 		}
 	}
@@ -363,7 +363,7 @@ void bi_type(Pu *L, int argn, pu_value *v)
 	pu_set_return_value(L,&o);
 }
 
-// É¾³ýÎ²²¿µÄ·Ï´úÂë
+// É¾ï¿½ï¿½Î²ï¿½ï¿½ï¿½Ä·Ï´ï¿½ï¿½ï¿½
 static void clear_tailcode(Pu *L, int evstart)
 {
 	L->cur_token = L->callstack.top();
@@ -396,7 +396,7 @@ int do_string(Pu *L, const char *str)
 	
 	if (!check_complete(L))
 	{
-		// ´úÂëÎ´½áÎ²£¬È¥µô×îºóµÄFINISH
+		// ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½Î²ï¿½ï¿½È¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½FINISH
 		L->tokens.pop_back();
 		L->cur_token = L->callstack.top();
 		L->callstack.pop();
