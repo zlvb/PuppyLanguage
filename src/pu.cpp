@@ -34,6 +34,8 @@
 
 #include "state.h"
 #include "error.h"
+#include "util.h"
+#include <vector>
 
 int vm(Pu *L);
 static void term(Pu *L, __pu_value *&temp);
@@ -217,13 +219,12 @@ static const __pu_value *exp(Pu *L)
     switch (nv)
 	{
 	case OPT_SET:{// =
-	if (!ptoken->regvar)
-	{
-		ptoken->regvar = reg_var(L, ptoken->value.strVal());
-	}
+	    if (!ptoken->regvar)
+	    {
+		    ptoken->regvar = reg_var(L, ptoken->value.strVal());
+	    }
         __pu_value *var_value = ptoken->regvar;
-	//__pu_value *var_value = reg_var(L, ptoken->value.strVal());
-	assert( !(var_value->type() == UNKNOWN && temp != NULL) );
+        assert( !(var_value->type() == UNKNOWN && temp != NULL) );
 
         if (temp == NULL)
         {
@@ -280,7 +281,6 @@ static void get_value(Pu *L, __pu_value *&temp)
             get_var(L, sv, TOKEN.regvar);            
         }
 		temp = TOKEN.regvar;
-		//get_var(L, sv, temp);
 		NEXT_TOKEN;
 	}
 	else if (tp == OP && ((nv == OPT_ADD) || (nv == OPT_SUB) || (nv == OPT_NOT)))
@@ -309,7 +309,7 @@ static void get_value(Pu *L, __pu_value *&temp)
 	}
 	else
 	{
-		PuType tp = TOKEN.type;
+		tp = TOKEN.type;
         MAKE_TEMP_VALUE(temp);
 		switch (tp){
 		case NIL: temp->SetType(NIL);
@@ -326,7 +326,13 @@ static void get_value(Pu *L, __pu_value *&temp)
 		case STR: temp->SetType(STR);
 			temp->strVal() = TOKEN.value.strVal();
 			break;
-		default: error(L,29);
+		default: 
+            if (L->isreturn.top())
+            {
+                temp->SetType(NIL);
+                break;
+            }
+            error(L,29);
 			return;
 		}
 		NEXT_TOKEN;	
@@ -508,7 +514,7 @@ static void ift(Pu *L, Token *ptoken) //if
 	if (loop)
 	{
 		vm(L);
-		if (L->isreturn || L->isquit || L->isyield)
+		if (L->isreturn.top() || L->isquit || L->isyield)
 			return;
 
 		PuType putp = TOKEN.type;
@@ -546,12 +552,12 @@ static void ift(Pu *L, Token *ptoken) //if
 
 static void logc(Pu *L, __pu_value *&temp)
 {
-	PuType tp = TOKEN.type;
-	OperatorType nv = TOKEN.optype;
+	PuType token_type = TOKEN.type;
+	OperatorType op_type = TOKEN.optype;
 
-	while (tp == OP) // || &&
+	while (token_type == OP) // || &&
 	{
-		switch (nv)
+		switch (op_type)
 		{
 		case OPT_OR:
 			{
@@ -580,19 +586,19 @@ static void logc(Pu *L, __pu_value *&temp)
 		default:
 			return;
 		}
-		tp = TOKEN.type;
-		nv = TOKEN.optype;
+		token_type = TOKEN.type;
+		op_type = TOKEN.optype;
 	}
 }
 
 static void cmp(Pu *L, __pu_value *&temp)
 {
-	PuType tp = TOKEN.type;
-	OperatorType nv = TOKEN.optype;
+	PuType token_type = TOKEN.type;
+	OperatorType op_type = TOKEN.optype;
 
-	while (tp == OP)
+	while (token_type == OP)
 	{
-		switch (nv)
+		switch (op_type)
 		{
 		case OPT_GT:
 			{
@@ -669,19 +675,19 @@ static void cmp(Pu *L, __pu_value *&temp)
 		default:
 			return;
 		}
-		tp = TOKEN.type;
-		nv = TOKEN.optype;
+		token_type = TOKEN.type;
+		op_type = TOKEN.optype;
 	}
 }
 
 static void add(Pu *L, __pu_value *&temp)
 {
-	PuType tp = TOKEN.type;
-	OperatorType nv = TOKEN.optype;
+	PuType token_type = TOKEN.type;
+	OperatorType op_type = TOKEN.optype;
 
-	while (tp == OP) // +-
+	while (token_type == OP) // +-
 	{
-		switch (nv)
+		switch (op_type)
 		{
 		case OPT_ADD:
 			{
@@ -704,7 +710,6 @@ static void add(Pu *L, __pu_value *&temp)
                 CHECK_EXP(t);
                 __pu_value *r = NULL;
                 MAKE_TEMP_VALUE(r);
-                //r->SetType(NUM);
 				*r = *temp - *t;
                 temp = r;
 			}
@@ -713,8 +718,8 @@ static void add(Pu *L, __pu_value *&temp)
 			return;
 		}
 
-		tp = TOKEN.type;
-		nv = TOKEN.optype;
+		token_type = TOKEN.type;
+		op_type = TOKEN.optype;
 	}
 }
 
@@ -735,7 +740,6 @@ static void term(Pu *L, __pu_value *&temp)
                 CHECK_EXP(t);
                 __pu_value *r = NULL;
                 MAKE_TEMP_VALUE(r);
-                //r->SetType(NUM);
 				*r = *temp * *t;
                 temp = r;
 			}
@@ -790,8 +794,8 @@ static void factor(Pu *L, __pu_value *&temp)
                 CHECK_EXP(exp_result);
                 MAKE_TEMP_VALUE(temp);
                 *temp = *exp_result;
-				PuType tp = TOKEN.type;
-				int nv = TOKEN.optype;
+				tp = TOKEN.type;
+				nv = TOKEN.optype;
 				if (tp != OP || nv != OPT_RB)
 				{
 					error(L,1);
@@ -816,8 +820,8 @@ static void factor(Pu *L, __pu_value *&temp)
 	{
 		get_value(L, temp);
         CHECK_EXP(temp);
-		PuType tp = TOKEN.type;
-		OperatorType nv = TOKEN.optype;
+		tp = TOKEN.type;
+		nv = TOKEN.optype;
 
 		while (tp == OP)
 		{
@@ -832,6 +836,7 @@ static void factor(Pu *L, __pu_value *&temp)
 					{
 						L->upvalue = ((_up_value*)temp->userdata())->vmap;
 					}
+                    
 					callfunction(L, L->funclist[(int)temp->numVal()]);
 					L->upvalue = old;
 					MAKE_TEMP_VALUE(temp);
@@ -840,7 +845,12 @@ static void factor(Pu *L, __pu_value *&temp)
 					nv = TOKEN.optype;
 					CLEAR_RETURN;
 					break;
-				}return;
+				}
+				else
+				{
+					// TODO: error
+				}
+				return;
 			case OPT_LSB:
 				if (temp->type() == ARRAY || temp->type() == STR)
 				{
@@ -848,7 +858,12 @@ static void factor(Pu *L, __pu_value *&temp)
                     CHECK_EXP(temp);
 					NEXT_TOKEN;
 					break;
-				}return;
+				}
+				else
+				{
+					// TODO: error
+				}
+				return;
 			default:
 				return;
 			}
@@ -916,51 +931,89 @@ static void link_to_gc(Pu *L, _up_value *node)
 
 static void callfunction(Pu *L, FuncPos &funcinfo)
 {
-	NEXT_TOKEN;
-
 	const FunArgs &args = funcinfo.argnames;
 	
 	if (funcinfo.start == -1)
 	{
+        NEXT_TOKEN;
 		callexternfunc(L, funcinfo);
 	}
 	else
 	{
-		if (!funcinfo.newvarmap)
-		{
-			funcinfo.newvarmap = new VarMap;
-		}
+        L->tail_optimize = false;
+        PREV_TOKEN_N(2);
+        if (L->token->type == RETURN)
+        {
+            L->tail_optimize = true;
+        }
+        NEXT_TOKEN_N(3);
 		int i=0;
-		for (;;)// )
+        std::vector<std::pair<const PuString*, const __pu_value*> > arg_tmp_cnt;
+		for (;;) // find )
 		{
 			PuType tp = TOKEN.type;
 			int nv = TOKEN.optype;
 
-			if (tp == OP && nv == OPT_RB)break;
+            if (tp == OP && nv == OPT_RB) // )
+            {
+                break;
+            }
 
-			if (tp == OP && nv == OPT_COM)
+			if (tp == OP && nv == OPT_COM) // ,
 			{
 				NEXT_TOKEN;
 				continue;
 			}
 			const __pu_value *v = exp(L);
 			CHECK_EXP(v);
-			funcinfo.newvarmap->insert(args[i++], *v);
+            arg_tmp_cnt.push_back(std::make_pair(&args[i++], v));
 		}
 
-		_up_value *newupnode = new _up_value;
-		newupnode->refcount = 1;
-		link_to_gc(L,newupnode);
-		newupnode->next = 0;
-		newupnode->vmap = funcinfo.newvarmap;
-		_up_value *oldcur = L->cur_nup;
-		L->cur_nup = newupnode;
+        NEXT_TOKEN;
+        if (TOKEN.type != END)
+        {
+            L->tail_optimize = false;
+        }
+        PREV_TOKEN;
 
-		L->varstack.push(funcinfo.newvarmap);
-		L->callstack.push(L->cur_token); 
-		L->cur_token = funcinfo.start; 	
-		NEXT_TOKEN;
-		vm(L);
+        if (!funcinfo.newvarmap && !L->tail_optimize)
+        {
+            funcinfo.newvarmap = new VarMap;
+            L->varstack.push(funcinfo.newvarmap);
+        }
+        else
+        {
+            funcinfo.newvarmap = L->varstack.top();
+        }
+
+        for (auto &p : arg_tmp_cnt)
+        {
+            funcinfo.newvarmap->insert(*p.first, *p.second);
+        }
+		
+        if (L->tail_optimize)
+        {
+            L->cur_token = funcinfo.start;
+            NEXT_TOKEN;
+            CLEAR_RETURN;
+            funcinfo.newvarmap = 0;
+            return;
+        }
+
+        _up_value *newupnode = new _up_value;
+        newupnode->refcount = 1;
+        link_to_gc(L, newupnode);
+        newupnode->next = 0;
+        newupnode->vmap = funcinfo.newvarmap;
+        _up_value *oldcur = L->cur_nup;
+        L->cur_nup = newupnode;
+        L->varstack.push(funcinfo.newvarmap);
+        L->callstack.push(L->cur_token);
+        L->isreturn.push(false);
+        L->cur_token = funcinfo.start;
+        NEXT_TOKEN;        
+        vm(L);
+        L->isreturn.pop();
 		L->cur_token = L->callstack.top();
 		L->callstack.pop(); 
 		L->varstack.pop();
@@ -973,7 +1026,6 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
 		}
 	}
 
-	L->isreturn = false;
 	NEXT_TOKEN;
 }
 
@@ -1056,8 +1108,10 @@ static void whilet(Pu *L, Token *ptoken)
 		{
 			vm(L);
 
-			if (L->isreturn || L->isquit || L->isyield)
-				return;
+            if (L->isreturn.top() || L->isquit || L->isyield)
+            {
+                return;
+            }
 
 			PuType putp = TOKEN.type;
 			switch (putp)
@@ -1129,6 +1183,13 @@ int vm(Pu *L)
 			ret = -1;
 			break;
 		}
+
+        if (!L->isreturn.empty() && L->isreturn.top())
+        {
+            ret = -3;
+            break;
+        }
+
 		switch (tp)
 		{
 		case WHILE:
@@ -1148,8 +1209,14 @@ int vm(Pu *L)
 			break;
 		case RETURN:{
 			NEXT_TOKEN;
-			L->isreturn = true;
+			L->isreturn.top() = true;            
             const __pu_value *expresult = exp(L);
+            if (L->tail_optimize)
+            {
+                L->tail_optimize = false;
+                L->isreturn.top() = false;
+                continue;
+            }
             if (!expresult || expresult->type() == UNKNOWN)            
             {
                 QUIT_SCRIPT;

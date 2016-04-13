@@ -124,7 +124,8 @@ PUAPI PURESULT pu_set_str(pu_value v, const char *str)
 // 	if (v->type() == ARRAY)
 // 	{
 // 		v->arr().decref();
-// 	}
+// 	}
+
 
 	v->SetType(STR);
 	v->strVal() = str;
@@ -135,7 +136,7 @@ PUAPI int pu_eval(Pu *L, const char *str)
 {
 	int ret = do_string(L, str);
 	L->isquit = false;
-	L->isreturn = false;
+    L->isreturn.clear();
 	return ret;
 }
 
@@ -149,7 +150,8 @@ PUAPI PURESULT pu_set_num(pu_value v, PU_NUMBER number)
 // 	if (v->type() == ARRAY)
 // 	{
 // 		v->arr().decref();
-// 	}
+// 	}
+
 
 	v->SetType(NUM);
 	v->numVal() = number;
@@ -287,16 +289,11 @@ PUAPI pu_value pu_call(Pu *L, const char *funcname,
 							 pu_value varr)
 {
 	L->return_value.SetType(UNKNOWN);
-// 	if (L->return_value.type() == ARRAY)
-// 	{
-// 		L->return_value.arr().decref();
-// 	}
-
 	pu_value fv = pu_global(L,funcname);
 	FuncPos &fps = L->funclist[(int)fv->numVal()];
 
 	const FunArgs &vArgs = fps.argnames;
-
+    L->isreturn.push(false);
 	if (fps.start == -1)
 	{
 		pu_value *args = NULL;
@@ -344,7 +341,7 @@ PUAPI pu_value pu_call(Pu *L, const char *funcname,
 		L->cur_token = L->callstack.top(); 
 		L->callstack.pop(); 
 	}
-	L->isreturn = false;
+    L->isreturn.pop();
 	
 	return &(L->return_value);
 }

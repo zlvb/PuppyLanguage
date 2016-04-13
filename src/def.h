@@ -52,7 +52,9 @@ typedef void (*OutputHandle)(const char *str);
 #define QUIT_SCRIPT			{L->isquit=true; L->cur_token = L->tokens.size() - 1;NEXT_TOKEN}
 #define TOKEN				(*(L->token))
 #define NEXT_TOKEN			{L->token = &(L->tokens[L->cur_token++]);}
+#define NEXT_TOKEN_N(n)		assert(n!=0);{L->token = &(L->tokens[L->cur_token+n-1]);L->cur_token+=n;}
 #define PREV_TOKEN			{L->cur_token-=2;NEXT_TOKEN;}
+#define PREV_TOKEN_N(n)		{L->cur_token-=1+n;NEXT_TOKEN;}
 
 // ²Ù×÷½á¹û
 typedef enum PURESULT{

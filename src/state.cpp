@@ -28,6 +28,7 @@
 */
 
 #include "state.h"
+#include "util.h"
 #if defined(_MSC_VER) && defined(_DEBUG)
 #if _DEBUG_MEM == 1
 #include <crtdbg.h>
@@ -109,7 +110,7 @@ void clear_state(Pu *L)
 	L->callstack.clear();
 	L->cur_token = 0;
 	L->isquit = false;
-	L->isreturn = false;
+    L->isreturn.clear();
 	L->return_value.SetType(NIL);
 }
 

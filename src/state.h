@@ -98,7 +98,6 @@ struct Pu : public PuMemObj
 	:token(NULL),
 	cur_token(0),
 	line(1),
-	isreturn(false),
 	isquit(false),
     mode(0),
 	err_handle(0),	
@@ -108,7 +107,8 @@ struct Pu : public PuMemObj
 	upvalue(0),
 	cur_nup(0),
 	gclink(0),
-	builtinreg(false)
+	builtinreg(false),
+    tail_optimize(false)
 	{
 		varstack.push(new VarMap);
 		return_value.SetType(NIL);
@@ -131,7 +131,7 @@ struct Pu : public PuMemObj
 	Token				*token;
 	int					cur_token;
 	int					line;
-	bool				isreturn;
+    PuStack<bool>		isreturn;
 	bool				isquit;
 	int					mode;
     PuVector<int>       funstack;
@@ -156,6 +156,7 @@ struct Pu : public PuMemObj
     PuVector<__pu_value*> tempool;
     PuVector<__pu_value*> tempvals;
     bool                builtinreg;
+    bool                tail_optimize;
 };
 
 

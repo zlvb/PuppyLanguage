@@ -35,7 +35,7 @@
 template<class ValueType>
 struct VectorBuff : public PuMemObj
 {
-	VectorBuff():_vb(0),size(0),capacity(0),refcount(1)
+	VectorBuff():_vb(0),size_(0),capacity(0),refcount(1)
 	{}
 
 	~VectorBuff()
@@ -59,7 +59,7 @@ struct VectorBuff : public PuMemObj
 	}
 
 	ValueType *_vb;
-	int size;
+	int size_;
 	int capacity;
 	int refcount;
 };
@@ -90,12 +90,12 @@ struct PuVector : public PuMemObj
 
 	int size() const
 	{
-		return (buff)? buff->size : 0;
+		return (buff)? buff->size_ : 0;
 	}
 
 	void pop_back()
 	{
-		--buff->size;
+		--buff->size_;
 	}
 
 	const ValueType &operator[](int idx) const
@@ -115,12 +115,12 @@ struct PuVector : public PuMemObj
 
 	ValueType *end() const
 	{
-		return (buff)? &(buff->_vb[buff->size]) : 0;
+		return (buff)? &(buff->_vb[buff->size_]) : 0;
 	}
 
     ValueType &back()
     {
-        return buff->_vb[buff->size - 1];
+        return buff->_vb[buff->size_ - 1];
     }
 
 	void incref()
@@ -153,7 +153,7 @@ struct PuVector : public PuMemObj
 		{
 			push_back(v);
 		}
-		buff->size = 0;
+		buff->size_ = 0;
 	}
 
 	void push_back(const ValueType &v)
@@ -170,7 +170,7 @@ struct PuVector : public PuMemObj
 			buff = new VectorBuff<ValueType>;
 			buff->expand(INIT_SIZE);
 		}
-		buff->_vb[buff->size++] = v;
+		buff->_vb[buff->size_++] = v;
 	}
 
     void erase(int idx)

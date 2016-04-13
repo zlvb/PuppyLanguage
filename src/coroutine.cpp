@@ -133,6 +133,7 @@ void run_coro( Pu *L, int coro_id, __pu_value *corov )
 
     L->varstack.push(c.varmap);
     L->callstack.push(L->cur_token); 
+    L->isreturn.push(false);
     L->cur_token = c.cur;
     NEXT_TOKEN;
 
@@ -146,7 +147,7 @@ void run_coro( Pu *L, int coro_id, __pu_value *corov )
     c.cur = L->cur_token;
     L->cur_token = L->callstack.top(); 
     L->callstack.pop(); 
-    L->isreturn = false;
+    L->isreturn.pop();
 
     __pu_value r = __pu_value(L);
     r.SetType(NUM);

@@ -80,6 +80,11 @@ struct  PuStack
 		return buff[_size-1];
 	}
 
+    T &top()
+    {
+        return buff[_size - 1];
+    }
+
 	T bottom() const
 	{
 		return buff[0];
