@@ -1,0 +1,28 @@
+def fb(a,b)
+    write(b + '\n')
+    return fb(b, a+b)
+end
+
+#fb(1,1)
+
+def kk(a)
+    return 1
+end
+
+def ll(a)
+    return 1
+end
+
+def gg()
+    write('GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG\n');
+    return kk(343+ 34) + ll(kk(23+45)+3535)
+end
+
+def pp()
+    write('PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP\n');
+    return kk(123+33)
+end
+
+gg()
+gg()
+pp()

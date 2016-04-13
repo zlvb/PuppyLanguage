@@ -57,6 +57,9 @@
     <ClCompile Include="src\PuString.cpp">
       <Filter>utl</Filter>
     </ClCompile>
+    <ClCompile Include="src\travel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\config.h">
@@ -99,6 +102,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\travel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

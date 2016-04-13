@@ -29,19 +29,20 @@
 
 
 #ifdef _MSC_VER
-#pragma warning(disable:4127) // �ж�����Ϊ���������磺while(1)
+#pragma warning(disable:4127) // while(1)
 #endif
 
 #include "state.h"
 #include "error.h"
 #include "util.h"
+#include "travel.h"
 #include <vector>
 
 int vm(Pu *L);
 static void term(Pu *L, __pu_value *&temp);
 static void factor(Pu *L, __pu_value *&temp);
 static void cmp(Pu *L, __pu_value *&temp);
-static void logc(Pu *L, __pu_value *&temp);
+static void logic(Pu *L, __pu_value *&temp);
 static void add(Pu *L, __pu_value *&temp);
 static void callfunction(Pu *L, FuncPos &finfo);
 
@@ -49,7 +50,7 @@ static void callfunction(Pu *L, FuncPos &finfo);
 #define _TERM(L,t)	{_CHT if(tp == OP && (nv==OPT_MUL||nv==OPT_DIV||nv==OPT_MOD))term(L,t);}
 #define _ADD(L,t)	{_CHT if(tp == OP && (nv==OPT_ADD||nv==OPT_SUB))add(L,t);}
 #define _CMP(L,t)	{_CHT if(tp == OP && (nv==OPT_GT||nv==OPT_LT||nv==OPT_EQ||nv==OPT_GTA||nv==OPT_LTA||nv==OPT_NEQ))cmp(L,t);}
-#define _LOGC(L,t)	{_CHT if(tp == OP && (nv==OPT_OR||nv==OPT_AND))logc(L,t); }
+#define _LOGC(L,t)	{_CHT if(tp == OP && (nv==OPT_OR||nv==OPT_AND))logic(L,t); }
 #define LOGC(L,t)	factor(L,t); _TERM(L,t) _ADD(L,t) _CMP(L,t) _LOGC(L,t)
 #define CMP(L,t)	factor(L,t); _TERM(L,t) _ADD(L,t) _CMP(L,t)
 #define ADD(L,t)	factor(L,t); _TERM(L,t) _ADD(L,t)
@@ -60,7 +61,6 @@ static void callfunction(Pu *L, FuncPos &finfo);
 extern void gc(Pu *L);
 extern void clear_temp(Pu *L);
 /*
-����չ������
 factor(L,t);
 {
 TokenType tp = TOKEN.type();
@@ -343,9 +343,9 @@ static void get_value(Pu *L, __pu_value *&temp)
 static void get_arrvalue(Pu *L, __pu_value *&arrref, const int idx)
 {
 	if (arrref->type() == ARRAY)
-	{// ����
+	{// arr
 		if (idx > int(arrref->arr().size()-1) || idx<0)
-		{// �ж��±�Խ��
+		{// idx over bound
 			error(L,5);
             MAKE_TEMP_VALUE(arrref);
 			return;
@@ -354,7 +354,7 @@ static void get_arrvalue(Pu *L, __pu_value *&arrref, const int idx)
 		arrref = &arrref->arr()[idx];
 	}
 	else if (idx >= 0)
-	{// �ַ���
+	{// str
 		if (idx > int(arrref->strVal().length()-1) || idx<0)
 		{
 			error(L,5);
@@ -376,7 +376,7 @@ static void get_arrref(Pu *L, __pu_value *&temp)
 	const __pu_value *vidx = exp(L);
     CHECK_EXP(vidx);
 	if (vidx->type() != NUM)
-	{// ֻ�����ֲſ�����Ϊ����������
+	{// only num can be idx
 		error(L,3);
         MAKE_TEMP_VALUE(temp);
 		return;
@@ -385,14 +385,14 @@ static void get_arrref(Pu *L, __pu_value *&temp)
 	PuType tp = TOKEN.type;
 	OperatorType nv = TOKEN.optype;
 	if (tp != OP || nv != OPT_RSB)
-	{// ����������������[��ʼ����]����
+	{// array op must start with [ end with ]
 		error(L,4);
         MAKE_TEMP_VALUE(temp);
 		return;
 	}
 
 	int idx = int(vidx->numVal());
-	get_arrvalue(L, temp, idx);// ��ȡ����ָ����ֵ
+	get_arrvalue(L, temp, idx);// get value by idx
 }
 PUAPI void pu_val2str(Pu *, const pu_value *p, char *b, int buffsize);
 static void get_map(Pu *L, __pu_value *&a)
@@ -445,7 +445,7 @@ CONTINUE_NEXT:
         last_nv = nv;
     }
 }
-#ifdef _DEBUG
+
 static void get_array(Pu *L, __pu_value *&a)
 {
     MAKE_TEMP_VALUE(a);
@@ -475,36 +475,6 @@ static void get_array(Pu *L, __pu_value *&a)
 		}
 	}
 }
-#else
-#define get_array(L,a)					\
-{										\
-    MAKE_TEMP_VALUE(a);                 \
-	a->SetType(ARRAY);					\
-	NEXT_TOKEN;							\
-	for (;;)							\
-	{									\
-		PuType tp = TOKEN.type;		    \
-		OperatorType nv = TOKEN.optype;	\
-		if (tp == OP && nv == OPT_COM)	\
-		{								\
-			NEXT_TOKEN;					\
-			continue;					\
-		}								\
-		else if (tp == OP && nv == OPT_RSB)	\
-		{								\
-			NEXT_TOKEN; break;			\
-		}								\
-		else							\
-		{								\
-			--L->cur_token;				\
-			NEXT_TOKEN;					\
-			const __pu_value *v = exp(L);\
-            CHECK_EXP(v);               \
-			a->arr().push_back(*v);	    \
-		}								\
-	}									\
-}
-#endif
 
 static void ift(Pu *L, Token *ptoken) //if
 {
@@ -515,8 +485,10 @@ static void ift(Pu *L, Token *ptoken) //if
 	if (loop)
 	{
 		vm(L);
-		if (L->isreturn.top() || L->isquit || L->isyield)
-			return;
+        if (L->isreturn.top() || L->isquit || L->isyield)
+        {
+            return;
+        }			
 
 		PuType putp = TOKEN.type;
 		if (putp == BREAK || putp == CONTINUE)
@@ -551,7 +523,7 @@ static void ift(Pu *L, Token *ptoken) //if
 }
 
 
-static void logc(Pu *L, __pu_value *&temp)
+static void logic(Pu *L, __pu_value *&temp)
 {
 	PuType token_type = TOKEN.type;
 	OperatorType op_type = TOKEN.optype;
@@ -610,31 +582,31 @@ static void cmp(Pu *L, __pu_value *&temp)
                 PU_NUMBER r = (PU_NUMBER)(*temp > *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-				temp->numVal() = r;				
+                temp->numVal() = r;
 			}
 			break;
 		case OPT_LT:
 			{
 				NEXT_TOKEN;
 				__pu_value *t = NULL;
-				ADD(L, t);        
+				ADD(L, t);       
                 CHECK_EXP(t);
                 PU_NUMBER r = (PU_NUMBER)(*temp < *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-				temp->numVal() = r;	                
+                temp->numVal() = r;
 			}
 			break;
 		case OPT_EQ:
 			{
 				NEXT_TOKEN;
 				__pu_value *t = NULL;
-				ADD(L, t);          
+				ADD(L, t);      
                 CHECK_EXP(t);
                 PU_NUMBER r = (PU_NUMBER)(*temp == *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-				temp->numVal() = r;                
+                temp->numVal() = r;
 			}
 			break;
 		case OPT_GTA:
@@ -646,7 +618,7 @@ static void cmp(Pu *L, __pu_value *&temp)
                 PU_NUMBER r = (PU_NUMBER)(*temp >= *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-				temp->numVal() = r;                
+                temp->numVal() = r;
 			}
 			break;
 		case OPT_LTA:
@@ -658,19 +630,19 @@ static void cmp(Pu *L, __pu_value *&temp)
                 PU_NUMBER r = (PU_NUMBER)(*temp <= *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-				temp->numVal() = r;                
+                temp->numVal() = r;
 			}
 			break;
 		case OPT_NEQ:
 			{
 				NEXT_TOKEN;
 				__pu_value *t = NULL;
-				ADD(L, t);       
+				ADD(L, t);      
                 CHECK_EXP(t);
                 PU_NUMBER r = (PU_NUMBER)(*temp != *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-				temp->numVal() = r;                
+                temp->numVal() = r;
 			}
 			break;
 		default:
@@ -698,8 +670,7 @@ static void add(Pu *L, __pu_value *&temp)
                 CHECK_EXP(t);
                 __pu_value *r = NULL;
                 MAKE_TEMP_VALUE(r);
-                //r->SetType(NUM);
-				*r = *temp + *t;
+                *r = *temp + *t;
                 temp = r;
 			}
 			break;
@@ -711,7 +682,7 @@ static void add(Pu *L, __pu_value *&temp)
                 CHECK_EXP(t);
                 __pu_value *r = NULL;
                 MAKE_TEMP_VALUE(r);
-				*r = *temp - *t;
+                *r = *temp - *t;
                 temp = r;
 			}
 			break;
@@ -741,7 +712,7 @@ static void term(Pu *L, __pu_value *&temp)
                 CHECK_EXP(t);
                 __pu_value *r = NULL;
                 MAKE_TEMP_VALUE(r);
-				*r = *temp * *t;
+                *r = *temp * *t;
                 temp = r;
 			}
 			break;
@@ -753,7 +724,7 @@ static void term(Pu *L, __pu_value *&temp)
                 CHECK_EXP(t);
                 __pu_value *r = NULL;
                 MAKE_TEMP_VALUE(r);
-				*r = *temp / *t;
+                *r = *temp / *t;
                 temp = r;
 			}
 			break;
@@ -765,7 +736,7 @@ static void term(Pu *L, __pu_value *&temp)
                 CHECK_EXP(t);
                 __pu_value *r = NULL;
                 MAKE_TEMP_VALUE(r);
-				*r = *temp % *t;
+                *r = *temp % *t;
                 temp = r;
 			}
 			break;
@@ -777,7 +748,6 @@ static void term(Pu *L, __pu_value *&temp)
 		nv = TOKEN.optype;
 	}
 }
-
 
 static void factor(Pu *L, __pu_value *&temp)
 {
@@ -791,17 +761,17 @@ static void factor(Pu *L, __pu_value *&temp)
 		case OPT_LB:
 			{
 				NEXT_TOKEN;
-				const __pu_value *exp_result = exp(L);
+                const __pu_value *exp_result = exp(L);
                 CHECK_EXP(exp_result);
                 MAKE_TEMP_VALUE(temp);
                 *temp = *exp_result;
-				tp = TOKEN.type;
-				nv = TOKEN.optype;
-				if (tp != OP || nv != OPT_RB)
-				{
-					error(L,1);
-					return;
-				}
+                tp = TOKEN.type;
+                nv = TOKEN.optype;
+                if (tp != OP || nv != OPT_RB)
+                {
+                    error(L, 1);
+                    return;
+                }
 				NEXT_TOKEN;
 			}
 			break;
@@ -940,14 +910,25 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
 		callexternfunc(L, funcinfo);
 	}
 	else
-	{
-        L->tail_optimize = false;
-        PREV_TOKEN_N(2);
-        if (L->token->type == RETURN)
-        {
-            L->tail_optimize = true;
-        }
-        NEXT_TOKEN_N(3);
+	{        
+		int return_end = -1;
+		if (!L->isreturn.empty())
+		{
+			int return_pos = L->isreturn.top();			
+			if (return_pos > 0)
+			{
+				const Token &return_token = L->tokens[return_pos];
+				PuVector<CONTROL_PATH> &trvel_path = (*return_token.control_flow)[0];
+				CONTROL_PATH eLastStep = trvel_path[trvel_path.size() - 3];
+				if (return_token.exp_end != -1 && eLastStep == CP_CALL)
+				{
+					return_end = return_token.exp_end;
+				}
+			}
+
+		}
+		NEXT_TOKEN;
+
 		int i=0;
         PuVector<std::pair<const PuString*, const __pu_value*>, 8> arg_tmp_cnt;
 		for (;;) // find )
@@ -970,12 +951,11 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
             arg_tmp_cnt.push_back(std::make_pair(&args[i++], v));
 		}
 
-        NEXT_TOKEN;
-        if (TOKEN.type != END)
-        {
-            L->tail_optimize = false;
-        }
-        PREV_TOKEN;
+		L->tail_optimize = return_end == L->cur_token + 1;
+		if (L->tail_optimize)
+		{
+			debug("%s", "tail optimize");
+		}
 
         if (!funcinfo.newvarmap && !L->tail_optimize)
         {
@@ -1011,7 +991,7 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
         L->varstack.push(funcinfo.newvarmap);
         debug("cur_scop = %p", L->varstack.top());
         L->callstack.push(L->cur_token);
-        L->isreturn.push(false);
+        L->isreturn.push(0);
         L->cur_token = funcinfo.start;
         NEXT_TOKEN;        
         vm(L);
@@ -1104,7 +1084,7 @@ static void whilet(Pu *L, Token *ptoken)
 		NEXT_TOKEN;
 		const __pu_value *t = exp(L);
         CHECK_EXP(t);
-		bool loop = VALUE_IS_TRUE(*t); // �ж�while�����Ƿ�����
+		bool loop = VALUE_IS_TRUE(*t);
 
 		if (loop)
 		{
@@ -1211,13 +1191,26 @@ int vm(Pu *L)
 			regfunc(L);
 			break;
 		case RETURN:{
-			NEXT_TOKEN;
-			L->isreturn.top() = true;            
+ 			L->isreturn.top() = L->cur_token - 1;
+ 			Token *return_token = &L->tokens[L->cur_token - 1];
+			NEXT_TOKEN;			      
+ 			if (return_token->exp_end == -1)
+ 			{
+				Token *old_token = L->token;
+ 				int old = L->cur_token;						
+ 				exp_control_flow_analyze(L);	
+				return_token->control_flow = L->control_flow;
+				L->control_flow = NULL;
+ 				int exp_end = L->cur_token;
+ 				L->cur_token = old;
+ 				return_token->exp_end = exp_end;
+				L->token = old_token;
+ 			}
             const __pu_value *expresult = exp(L);
             if (L->tail_optimize)
             {
                 L->tail_optimize = false;
-                L->isreturn.top() = false;
+                L->isreturn.top() = 0;
                 continue;
             }
             if (!expresult || expresult->type() == UNKNOWN)            

@@ -133,7 +133,7 @@ void run_coro( Pu *L, int coro_id, __pu_value *corov )
 
     L->varstack.push(c.varmap);
     L->callstack.push(L->cur_token); 
-    L->isreturn.push(false);
+    L->isreturn.push(0);
     L->cur_token = c.cur;
     NEXT_TOKEN;
 

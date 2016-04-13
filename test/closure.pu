@@ -7,7 +7,7 @@ def foo()
 end
 
 c = foo()
-
+write(c(4))
 # write(c(200))
 
 def ccc()
@@ -18,7 +18,7 @@ end
 def xxx()
     write('xxx')
     x1 = 1
-    ccc()
+    return ccc()
 end
 
 xxx()

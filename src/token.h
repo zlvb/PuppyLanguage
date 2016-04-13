@@ -31,22 +31,30 @@
 #define __TOKEN_H_
 
 #include "value.h"
+#include "travel.h"
 
 struct Token
 {
 	Token()
-        :type(UNKNOWN)
+        :regvar(NULL)
+        ,type(UNKNOWN)
         ,line(0)
+        ,exp_end(-1)
+		,exp_stack(-1)
         ,optype(OPT_UNKNOWN)
-        ,regvar(NULL){}
+		,control_flow(NULL)
+        {}
 	Token(const Token &x);
 	void operator=(const Token &x);
-	PuType type;
-	int line;
-	OperatorType optype;
-	PuString filename;
-	__pu_value value;
+    PuString filename;
+    __pu_value value;
     __pu_value *regvar;
+    int line;
+    int exp_end;
+	short exp_stack;
+	PuType type;	
+	OperatorType optype;
+	PuVector<PuVector<CONTROL_PATH> > *control_flow;
 };
 
 typedef PuVector<Token> TokenList;

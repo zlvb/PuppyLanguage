@@ -78,6 +78,20 @@ Pu::Pu()
     debug("Global scop = %p", global_scop);
 }
 
+Pu::~Pu()
+{
+	for (int i = 0; i < funclist.size(); i++)
+	{
+		FuncPos &info = funclist[i];
+		if (info.newvarmap)
+		{
+			delete info.newvarmap;
+		}
+	}
+	VarMap *nd = varstack.bottom();
+	delete nd;
+}
+
 PUAPI Pu *pu_open()
 {
 #if defined(_MSC_VER) && defined(_DEBUG)

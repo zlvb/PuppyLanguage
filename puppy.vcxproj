@@ -15,13 +15,13 @@
     <ProjectGuid>{E3E77AEA-990A-45D8-880E-3E1A8D01B565}</ProjectGuid>
     <RootNamespace>vm</RootNamespace>
     <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -82,15 +82,8 @@ copy /y $(SolutionDir)puppy.h $(SolutionDir)output\include\
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <Optimization>Full</Optimization>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <StringPooling>true</StringPooling>
       <ExceptionHandling />
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <PrecompiledHeader />
@@ -119,6 +112,7 @@ copy /y $(SolutionDir)puppy.h $(SolutionDir)output\include\
     <ClCompile Include="src\pu.cpp" />
     <ClCompile Include="src\state.cpp" />
     <ClCompile Include="src\token.cpp" />
+    <ClCompile Include="src\travel.cpp" />
     <ClCompile Include="src\value.cpp" />
     <ClCompile Include="src\PuMath.cpp" />
     <ClCompile Include="src\PuString.cpp" />
@@ -130,6 +124,7 @@ copy /y $(SolutionDir)puppy.h $(SolutionDir)output\include\
     <ClInclude Include="src\global.h" />
     <ClInclude Include="src\state.h" />
     <ClInclude Include="src\token.h" />
+    <ClInclude Include="src\travel.h" />
     <ClInclude Include="src\util.h" />
     <ClInclude Include="src\value.h" />
     <ClInclude Include="src\PuMap.h" />

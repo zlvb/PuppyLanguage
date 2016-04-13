@@ -35,6 +35,7 @@
 #include "PuVector.h"
 #include "def.h"
 #include "token.h"
+
 typedef PuStack<int> CallStack;
 typedef PuStack<VarMap*> VarStack;
 typedef PuMap<PuString, int> LabelMap;
@@ -95,24 +96,12 @@ typedef PuVector<coro> CoroList;
 struct Pu : public PuMemObj
 {
 	Pu();
-	~Pu()
-	{
-		for (int i = 0; i < funclist.size(); i++)
-		{
-			FuncPos &info = funclist[i];
-			if (info.newvarmap)
-			{
-				delete info.newvarmap;
-			}
-		}
-		VarMap *nd = varstack.bottom();
-		delete nd;
-	}
+	~Pu();
 
 	Token				*token;
 	int					cur_token;
 	int					line;
-    PuStack<bool>		isreturn;
+    PuStack<int>		isreturn;
 	bool				isquit;
 	int					mode;
     PuVector<int>       funstack;
@@ -138,6 +127,7 @@ struct Pu : public PuMemObj
     PuVector<__pu_value*> tempvals;
     bool                builtinreg;
     bool                tail_optimize;
+	PuVector<PuVector<CONTROL_PATH> > *control_flow;
 };
 
 

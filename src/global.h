@@ -53,24 +53,24 @@ enum OperatorType
     OPT_SET,
     OPT_EQ,
     OPT_GTA,
-    OPT_LTA,
-    OPT_NEQ,
-    OPT_LB,
-    OPT_RB,
+    OPT_LTA, // <=
+    OPT_NEQ, // !=
+    OPT_LB,  // (
+    OPT_RB,  // )
     OPT_OR,
     OPT_AND,
     OPT_MOD,
-    OPT_LSB,
-    OPT_RSB,
-    OPT_COM,
-    OPT_LBR, 
-    OPT_RBR,
+    OPT_LSB, // [
+    OPT_RSB, // ]
+    OPT_COM, // ,
+    OPT_LBR, // {
+    OPT_RBR, // }
     OPT_ADDS,
     OPT_SUBS,
     OPT_NOT,
     OPT_MULS,
     OPT_DIVS,
-    OPT_COL,
+    OPT_COL, // :
 //--------------
     OPT_COUNT,
     OPT_UNKNOWN = -1,

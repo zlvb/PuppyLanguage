@@ -293,7 +293,7 @@ PUAPI pu_value pu_call(Pu *L, const char *funcname,
 	FuncPos &fps = L->funclist[(int)fv->numVal()];
 
 	const FunArgs &vArgs = fps.argnames;
-    L->isreturn.push(false);
+    L->isreturn.push(0);
 	if (fps.start == -1)
 	{
 		pu_value *args = NULL;
