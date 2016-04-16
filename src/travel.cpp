@@ -103,15 +103,15 @@ void _doexp_trvel(Pu * L)
 
 void _exp_trvel(Pu *L)
 {
-    L->control_flow->push_back(PuVector<CONTROL_PATH>());
+    L->control_flow->push_back(std::vector<CONTROL_PATH>());
     _doexp_trvel(L);
     L->control_flow->pop_back();
 }
 
 void exp_control_flow_analyze(Pu *L)
 {
-    L->control_flow = new PuVector<PuVector<CONTROL_PATH> >();
-    L->control_flow->push_back(PuVector<CONTROL_PATH>());
+    L->control_flow = new std::vector<std::vector<CONTROL_PATH> >();
+    L->control_flow->push_back(std::vector<CONTROL_PATH>());
     _doexp_trvel(L);    
 }
 

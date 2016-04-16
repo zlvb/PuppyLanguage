@@ -37,7 +37,7 @@
 #define FIXALI32(n) (((n) + 32-1) & ~(32-1))
 #define FIXALI8(n) (((n) + 8-1) & ~(8-1))
 
-struct PuBuffer : public PuMemObj
+struct PuBuffer
 {
     PuBuffer(const char *s, int l=0):refc(1),count(0)
     {
@@ -46,7 +46,7 @@ struct PuBuffer : public PuMemObj
         else
             length = l;
         count = FIXALI32(length+1);
-        buffer = (char*)g_pumalloc(count);
+        buffer = (char*)malloc(count);
         memcpy(buffer,s, length);
         buffer[length] = 0;
     }
@@ -57,7 +57,7 @@ struct PuBuffer : public PuMemObj
     ~PuBuffer()
     {
         if (buffer)
-            g_pufree(buffer);
+            free(buffer);
     }
 
     char *buffer;
@@ -88,7 +88,7 @@ void release_buff(PuString &zlstr);
 #define RELEASE_BUFF release_buff
 #endif
 
-struct PuString : public PuMemObj
+struct PuString
 {
     PuString():pbuff(NULL),hash_Key(0)
     {

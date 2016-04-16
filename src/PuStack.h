@@ -52,7 +52,7 @@ struct  PuStack
     ~PuStack()
     {
         if (buff)
-            g_pufree(buff);
+            free(buff);
     }
 
     void pop()
@@ -92,12 +92,12 @@ struct  PuStack
 
     void resize()
     {
-        T *newbuff = (T*)g_pumalloc(sizeof(T)*(count+64));
+        T *newbuff = (T*)malloc(sizeof(T)*(count+64));
         count += 64;
         if (buff)
         {
             memcpy(newbuff, buff, count * sizeof(T));
-            g_pufree(buff);
+            free(buff);
         }
         buff = newbuff;    
     }
@@ -105,7 +105,7 @@ struct  PuStack
     void release()
     {
         if (buff)
-            g_pufree(buff);
+            free(buff);
         buff = 0;
         count = 0;
         _size = 0;

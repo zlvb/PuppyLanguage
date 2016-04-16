@@ -95,7 +95,7 @@ typedef enum PUVALUECREATEDBY{
     PU_USER
 }PUVALUECREATEDBY;
 
-struct __pu_value : public PuMemObj
+struct __pu_value
 {
     typedef PuVector<__pu_value> ValueArr;
     typedef PuMap<__pu_value, __pu_value, 10> PuCommMap;

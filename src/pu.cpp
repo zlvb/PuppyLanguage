@@ -1000,7 +1000,7 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
             if (return_pos > 0)
             {
                 const Token &return_token = L->tokens[return_pos];
-                PuVector<CONTROL_PATH> &trvel_path = (*return_token.control_flow)[0];
+                std::vector<CONTROL_PATH> &trvel_path = (*return_token.control_flow)[0];
                 CONTROL_PATH eLastStep = trvel_path[trvel_path.size() - 3];
                 if (return_token.exp_end != -1 && eLastStep == CP_CALL)
                 {
@@ -1012,7 +1012,7 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
         NEXT_TOKEN;
 
         int i=0;
-        PuVector<std::pair<const PuString*, const __pu_value*>, 8> arg_tmp_cnt;
+        std::vector<std::pair<const PuString*, const __pu_value*> > arg_tmp_cnt;
         for (;;) // find )
         {
             PuType tp = TOKEN.type;

@@ -462,6 +462,11 @@ void __pu_value::operator =(const __pu_value &x)
             SetType(x.type());
             arr() = x.arr();
         }break;
+    case MAP:
+    {
+        SetType(x.type());
+        map() = x.map();
+    }break;
     default:
         SetType(x.type());
         break;

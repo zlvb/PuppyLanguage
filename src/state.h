@@ -39,12 +39,12 @@
 typedef PuStack<int> CallStack;
 typedef PuStack<StrKeyMap*> VarStack;
 typedef PuMap<PuString, int> LabelMap;
-typedef PuVector<PuString, 4> FunArgs;
+typedef std::vector<PuString> FunArgs;
 struct FuncPos
 {
     int start;
     int end;
-    PuVector<PuString, 4> argnames;
+    std::vector<PuString> argnames;
     ScriptFunc pfunc;
     StrKeyMap *newvarmap;
 
@@ -57,7 +57,7 @@ struct FuncPos
 
     }
 };
-typedef PuVector<FuncPos> FuncList;
+typedef std::vector<FuncPos> FuncList;
 struct Pustrbuff
 {
     Pustrbuff():pos(0),buff(0)
@@ -91,9 +91,9 @@ struct coro
     int       id;
 };
 
-typedef PuVector<coro> CoroList;
+typedef std::vector<coro> CoroList;
 
-struct Pu : public PuMemObj
+struct Pu
 {
     Pu();
     ~Pu();
@@ -104,7 +104,7 @@ struct Pu : public PuMemObj
     PuStack<int>        isreturn;
     bool                isquit;
     int                    mode;
-    PuVector<int>       funstack;
+    std::vector<int>       funstack;
     ErrHandle            err_handle;
     OutputHandle        output_handle;
     int                    lasterr;
@@ -116,18 +116,18 @@ struct Pu : public PuMemObj
     VarStack            varstack;
     CallStack            callstack;
     __pu_value            return_value;
-    PuVector<PuString>    current_filename;
+    std::vector<PuString>    current_filename;
     CoroList            coros;
     PuStack<int>        uncomdef;
     PuStack<int>        jumpstack;
     StrKeyMap                *upvalue;
     _up_value            *cur_nup;
     _up_value            *gclink;
-    PuVector<__pu_value*> tempool;
-    PuVector<__pu_value*> tempvals;
+    std::vector<__pu_value*> tempool;
+    std::vector<__pu_value*> tempvals;
     bool                builtinreg;
     bool                tail_optimize;
-    PuVector<PuVector<CONTROL_PATH> > *control_flow;
+    std::vector<std::vector<CONTROL_PATH> > *control_flow;
 };
 
 

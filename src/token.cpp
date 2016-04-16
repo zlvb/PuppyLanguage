@@ -303,8 +303,8 @@ static void get_var_key(Pu *L, int c, Token &newToken)
 
 static void check_include(Pu *L, const char *fname)
 {
-    PuVector<PuString>::iterator it = L->current_filename.begin();
-    PuVector<PuString>::iterator ite = L->current_filename.end();
+    auto it = L->current_filename.begin();
+    auto ite = L->current_filename.end();
 
     while (it != ite)
     {
@@ -615,7 +615,11 @@ void Token::operator=( const Token &x )
 }
 
 Token::Token( const Token &x )
-    :filename(x.filename)
+    : filename(x.filename)
+    , regvar(NULL)
+    , exp_end(-1)
+    , exp_stack(-1)
+    , control_flow(NULL)
 {
     type = x.type;
     line = x.line;

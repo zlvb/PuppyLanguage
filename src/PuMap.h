@@ -42,13 +42,13 @@ struct __bucket_t
 
 
 template<class Key_T, class Value_T, int MAPSIZE=65536>
-class PuMap : public PuMemObj
+class PuMap
 {
 public:
     typedef __bucket_t<Key_T,Value_T>   Bucket_T;
-    typedef PuVector<Bucket_T,4>        Node_T;
+    typedef std::vector<Bucket_T>        Node_T;
     Node_T*                             _container[MAPSIZE];
-    PuVector<int>                       _setted;
+    std::vector<int>                       _setted;
     int                                 size_;
 
     PuMap():size_(0)

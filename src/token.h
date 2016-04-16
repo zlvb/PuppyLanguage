@@ -54,10 +54,10 @@ struct Token
     short exp_stack;
     PuType type;    
     OperatorType optype;
-    PuVector<PuVector<CONTROL_PATH> > *control_flow;
+    std::vector<std::vector<CONTROL_PATH> > *control_flow;
 };
 
-typedef PuVector<Token> TokenList;
+typedef std::vector<Token> TokenList;
 #define check_source_end(c,s)                            \
 (                                                        \
     ((s).type == Pusource::ST_FILE && (c) == EOF)||    \

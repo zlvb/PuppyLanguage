@@ -167,7 +167,7 @@ void run_coro( Pu *L, int coro_id, __pu_value *corov )
         }
         delete c.varmap;
         c.varmap = NULL;
-        L->coros.erase(coro_id);
+        L->coros.erase(L->coros.begin() + coro_id);
     }    
     pu_set_return_value(L, &r);
     L->isyield = false;

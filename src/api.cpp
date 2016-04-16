@@ -42,8 +42,6 @@ extern __pu_value *reg_var(Pu *L, const PuString &varname);
 #pragma warning(disable:4127) // �ж�����Ϊ���������磺while(1)
 #endif
 
-pumalloc g_pumalloc = malloc;
-pufree g_pufree = free;
 
 PUAPI const char *pu_version()
 {
@@ -58,20 +56,6 @@ PUAPI void pu_set_return_value(Pu *L, pu_value v)
 PUAPI pu_value pu_get_return_value(Pu *L)
 {
     return &L->return_value;
-}
-
-PUAPI pumalloc pu_set_malloc(pumalloc fun_malloc)
-{
-    pumalloc old = g_pumalloc;
-    g_pumalloc = fun_malloc;
-    return old;
-}
-
-PUAPI pufree pu_set_free(pufree fun_free)
-{
-    pufree old = g_pufree;
-    g_pufree = fun_free;
-    return old;
 }
 
 PUAPI void pu_reg_func(Pu *L, const char *funcname, 
@@ -298,7 +282,7 @@ PUAPI pu_value pu_call(Pu *L, const char *funcname,
     {
         pu_value *args = NULL;
         ValueArr  vs;
-        for (int j=0; j<varr->arr().size(); ++j)
+        for (int j = 0; j < varr->arr().size(); ++j)
         {
             vs.push_back(varr->arr()[j]);
         }
@@ -307,10 +291,10 @@ PUAPI pu_value pu_call(Pu *L, const char *funcname,
 
         if (arg_num > 0)
         {
-            args = (pu_value *)g_pumalloc(arg_num * sizeof(__pu_value*));
+            args = new pu_value[arg_num];
         }
 
-        for (int j = 0;  j < arg_num; ++j)
+        for (int j = 0; j < arg_num; ++j)
         {
             args[j] = &(vs[j]);
         }
@@ -318,7 +302,9 @@ PUAPI pu_value pu_call(Pu *L, const char *funcname,
         fps.pfunc(L, int(arg_num), args);
 
         if (args)
-            g_pufree(args);
+        {
+            delete[] args;
+        }
     }
     else
     {

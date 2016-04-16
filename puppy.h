@@ -328,16 +328,6 @@ int pu_eval(Pu *L, const char *str);
  */
 void pu_val2str(Pu *L, pu_value *v, char *buff, int buffsize);
 
-/*
- * 设置自定义malloc函数
- */
-pumalloc pu_set_malloc(pumalloc fun_malloc);
-
-/*
- * 设置自定义free函数
- */
-pufree pu_set_free(pufree fun_free);
-
 
 #ifdef __cplusplus
 }

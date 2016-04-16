@@ -31,43 +31,21 @@
 #define _PuVector_H_
 
 #include "global.h"
+#include <vector>
 
 template<class ValueType>
-struct VectorBuff : public PuMemObj
+struct VectorBuff : public std::vector<ValueType>
 {
-    VectorBuff():_vb(0),size_(0),capacity(0),refcount(1)
+    VectorBuff():refcount(1)
     {}
 
-    ~VectorBuff()
-    {
-        delete[] _vb;
-    }
-
-    void expand(int size)
-    {
-        ValueType *newbuff = new ValueType[capacity + size];
-        capacity += size;
-        if (_vb)
-        {
-            for (int i=0; i<size; ++i)
-            {
-                newbuff[i] = _vb[i];
-            }
-            delete[] _vb;
-        }
-        _vb = newbuff;
-    }
-
-    ValueType *_vb;
-    int size_;
-    int capacity;
     int refcount;
 };
 
-template<class ValueType, int INIT_SIZE=32>
-struct PuVector : public PuMemObj
+template<class ValueType>
+struct PuVector
 {
-    typedef ValueType* iterator;
+    typedef ValueType *iterator;
 
     PuVector():buff(0)
     {}
@@ -90,37 +68,38 @@ struct PuVector : public PuMemObj
 
     int size() const
     {
-        return (buff)? buff->size_ : 0;
+        return (buff)? (int)buff->size() : 0;
     }
 
     void pop_back()
     {
-        --buff->size_;
+        buff->pop_back();
     }
 
     const ValueType &operator[](int idx) const
     {
-        return buff->_vb[idx];
+        return (*buff)[idx];
     }
 
     ValueType &operator[](int idx)
     {
-        return buff->_vb[idx];
+        return (*buff)[idx];
     }
 
-    ValueType *begin() const
+    iterator begin() const
     {
-        return (buff)? buff->_vb : 0;
+        return (buff)? &*buff->begin() : 0;
     }
 
-    ValueType *end() const
+    iterator end() const
     {
-        return (buff)? &(buff->_vb[buff->size_]) : 0;
+        iterator it = &buff->back();
+        return (buff)? (++it) : 0;
     }
 
     ValueType &back()
     {
-        return buff->_vb[buff->size_ - 1];
+        return buff->back();
     }
 
     void incref()
@@ -137,7 +116,7 @@ struct PuVector : public PuMemObj
         buff = 0;
     }
 
-    void operator=(const PuVector<ValueType, INIT_SIZE> &x)
+    void operator=(const PuVector<ValueType> &x)
     {
         if (buff != x.buff)
         {
@@ -153,30 +132,20 @@ struct PuVector : public PuMemObj
         {
             push_back(v);
         }
-        buff->size_ = 0;
     }
 
     void push_back(const ValueType &v)
     {
-        if (buff)
+        if (!buff)
         {
-            if (size() >= buff->capacity)
-            {
-                buff->expand(buff->capacity);
-            }
+            buff = new VectorBuff<ValueType>();
         }
-        else
-        {
-            buff = new VectorBuff<ValueType>;
-            buff->expand(INIT_SIZE);
-        }
-        buff->_vb[buff->size_++] = v;
+        buff->push_back(v);
     }
 
     void erase(int idx)
     {
-        (*this)[idx] = back();
-        pop_back();
+        buff->erase(buff->begin() + idx);
     }
 
     VectorBuff<ValueType> *buff;

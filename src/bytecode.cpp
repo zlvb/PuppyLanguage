@@ -124,12 +124,12 @@ void get_nextbytetoken(Pu *L, FILE *pbcf, Token &t)
             case STR:{
                 size_t l = 0;
                 fread(&l,sizeof(l),1,pbcf);
-                char *c = (char*)g_pumalloc(l+1);                
+                char *c = (char*)malloc(l+1);                
                 fread(c, 1, l, pbcf);
                 c[l] = 0;
                 t.value.SetType(STR);
                 t.value.strVal() = c;    
-                g_pufree(c);
+                free(c);
                      }break;
             }
             append_token(L,t);

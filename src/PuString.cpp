@@ -36,7 +36,7 @@ void PuString::set_char( int idx, char c )
         if (pbuff->refc > 1)
         {
             int count = FIXALI8(length()+1);
-            char *pb = (char*)g_pumalloc(count);
+            char *pb = (char*)malloc(count);
             memcpy(pb, c_str(), length());
             pb[length()] = 0;
             RELEASE_BUFF((*this));
@@ -86,7 +86,7 @@ PuString PuString::operator+( const PuString &x ) const
 {
     int len = length()+x.length();
     int count = FIXALI8(len+1);
-    char *pb = (char*)g_pumalloc(count);
+    char *pb = (char*)malloc(count);
     memcpy(pb, c_str(), length());
     memcpy(pb+length(),x.c_str(),x.length());
     pb[len] = 0;
@@ -111,7 +111,7 @@ PuString PuString::operator+( const char *x ) const
     int clen = (int)strlen(x);
     int len = length()+clen;
     int count = FIXALI8(len+1);
-    char *pb = (char*)g_pumalloc(count);
+    char *pb = (char*)malloc(count);
     memcpy(pb, c_str(), length());
     memcpy(pb+length(),x,clen);
     pb[len] = 0;
@@ -141,7 +141,7 @@ PuString & PuString::operator+=( const PuString &x )
     if (pbuff == NULL || len+1 > pbuff->count)
     {
         int count = FIXALI32(len+1+128);
-        char *pb = (char*)g_pumalloc(count);
+        char *pb = (char*)malloc(count);
         memcpy(pb,c_str(),length());
         memcpy(pb+length(),x.c_str(),x.length());
         pb[len] = 0;
@@ -168,7 +168,7 @@ PuString & PuString::operator+=( const char *x )
     if (pbuff == NULL || len+1 > pbuff->count)
     {
         int count = FIXALI32(len+1+128);
-        char *pb = (char*)g_pumalloc(count);
+        char *pb = (char*)malloc(count);
         memcpy(pb,c_str(),length());        
         memcpy(pb+length(),x,clen);
         pb[len] = 0;

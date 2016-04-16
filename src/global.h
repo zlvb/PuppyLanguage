@@ -115,40 +115,6 @@ enum CODEFROM{
     FROM_SOURCECODE
 };
 
-extern "C"{
-    typedef void * (*pumalloc)(size_t _Size); 
-    typedef void   (*pufree)(void * _Memory); 
-}
-
-extern pumalloc g_pumalloc;
-extern pufree g_pufree;
-
-struct PuMemObj
-{
-    virtual ~PuMemObj(){}
-#if _DEBUG_MEM == 0
-    void *operator new(size_t size)
-    {
-        return g_pumalloc(size);
-    }
-
-    void operator delete(void *ptr)
-    {
-        g_pufree(ptr);
-    }
-
-    void *operator new[](size_t size)
-    {
-        return g_pumalloc(size);
-    }
-
-    void operator delete[](void *ptr)
-    {
-        g_pufree(ptr);
-    }
-#endif
-};
-
 #endif
 
 

@@ -465,7 +465,7 @@ void bi_eval(Pu *L, int argc, pu_value *v)
     size_t fsize = ftell(pfile);
     fseek(pfile, pos, SEEK_SET);
 
-    char *buff = (char*)g_pumalloc(fsize);
+    char *buff = (char*)malloc(fsize);
     if (vrr[1]->strVal() == "max")
     {         
         fread(buff, fsize, 1, pfile);   
@@ -493,7 +493,7 @@ void bi_eval(Pu *L, int argc, pu_value *v)
     r.SetType(STR);
     r.strVal() = buff;
     pu_set_return_value(L, &r);
-    g_pufree(buff);
+    free(buff);
  }
 
 void bi_read(Pu *L, int argc, pu_value *vrr)
