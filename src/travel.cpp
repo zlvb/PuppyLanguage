@@ -31,26 +31,37 @@ Email zlvbvbzl@gmail.com
 #include "error.h"
 #include "state.h"
 
+static void term_trvel(Pu *L);
+static void get_value_trvel(Pu *L);
+static void factor_trvel(Pu *L);
+static void cmp_trvel(Pu *L);
+static void logic_trvel(Pu *L);
+static void add_trvel(Pu *L);
+static void callfunction_trvel(Pu *L);
+static void get_arrref_trvel(Pu *L);
+static void get_array_trvel(Pu *L);
+static void get_map_trvel(Pu *L);
+
 #define _CHT PuType tp = TOKEN.type;int nv = TOKEN.optype;
 #define _TERM(L) {_CHT if(tp == OP && (nv==OPT_MUL||nv==OPT_DIV||nv==OPT_MOD))term_trvel(L);}
-#define _ADD(L)	 {_CHT if(tp == OP && (nv==OPT_ADD||nv==OPT_SUB))add_trvel(L);}
-#define _CMP(L)	 {_CHT if(tp == OP && (nv==OPT_GT||nv==OPT_LT||nv==OPT_EQ||nv==OPT_GTA||nv==OPT_LTA||nv==OPT_NEQ))cmp_trvel(L);}
+#define _ADD(L)     {_CHT if(tp == OP && (nv==OPT_ADD||nv==OPT_SUB))add_trvel(L);}
+#define _CMP(L)     {_CHT if(tp == OP && (nv==OPT_GT||nv==OPT_LT||nv==OPT_EQ||nv==OPT_GTA||nv==OPT_LTA||nv==OPT_NEQ))cmp_trvel(L);}
 #define _LOGC(L) {_CHT if(tp == OP && (nv==OPT_OR||nv==OPT_AND))logic_trvel(L); }
-#define LOGC(L)	 factor_trvel(L); _TERM(L) _ADD(L) _CMP(L) _LOGC(L)
-#define CMP(L)	 factor_trvel(L); _TERM(L) _ADD(L) _CMP(L)
-#define ADD(L)	 factor_trvel(L); _TERM(L) _ADD(L)
-#define TERM(L)	 factor_trvel(L); _TERM(L)
-#define FACTOR(L)	factor_trvel(L);
+#define LOGC(L)     factor_trvel(L); _TERM(L) _ADD(L) _CMP(L) _LOGC(L)
+#define CMP(L)     factor_trvel(L); _TERM(L) _ADD(L) _CMP(L)
+#define ADD(L)     factor_trvel(L); _TERM(L) _ADD(L)
+#define TERM(L)     factor_trvel(L); _TERM(L)
+#define FACTOR(L)    factor_trvel(L);
 
 struct AutoAddPath
 {
-	AutoAddPath(Pu *L, CONTROL_PATH eTp) :L_(L), eTp_(eTp){}
-	~AutoAddPath()
-	{
-		L_->control_flow->back().push_back(eTp_);
-	}
-	Pu *L_;
-	CONTROL_PATH eTp_;
+    AutoAddPath(Pu *L, CONTROL_PATH eTp) :L_(L), eTp_(eTp){}
+    ~AutoAddPath()
+    {
+        L_->control_flow->back().push_back(eTp_);
+    }
+    Pu *L_;
+    CONTROL_PATH eTp_;
 };
 
 #define AddPath(eTp) AutoAddPath __aap(L, eTp);
@@ -60,53 +71,58 @@ static void _doexp_trvel(Pu * L);
 
 void _doexp_trvel(Pu * L)
 {
-	AddPath(CP_EXP);
-	Token *ptoken = &TOKEN;
-	do {
-		if (ptoken->type == VAR)
-		{
-			NEXT_TOKEN;
-			PuType tp = TOKEN.type;
-			OperatorType nv = TOKEN.optype;
-			if (tp == OP
-				&& (nv == OPT_SET || nv == OPT_ADDS || nv == OPT_SUBS || nv == OPT_MULS || nv == OPT_DIVS))
-			{
-				break;
-			}
-			PREV_TOKEN;
-		}
+    AddPath(CP_EXP);
+    Token *ptoken = &TOKEN;
+    do {
+        if (ptoken->type == VAR)
+        {
+            NEXT_TOKEN;
+            PuType tp = TOKEN.type;
+            OperatorType nv = TOKEN.optype;
+            if (tp == OP
+                && (nv == OPT_SET || nv == OPT_ADDS || nv == OPT_SUBS || nv == OPT_MULS || nv == OPT_DIVS))
+            {
+                break;
+            }
+            PREV_TOKEN;
+        }
 
-		LOGC(L);
+        LOGC(L);
 
-	} while (false);
+    } while (false);
 
-	PuType tp = TOKEN.type;
-	OperatorType nv = TOKEN.optype;
-	if (!(tp == OP
-		&& (nv == OPT_SET || nv == OPT_ADDS || nv == OPT_SUBS || nv == OPT_MULS || nv == OPT_DIVS)))
-		return;
+    PuType tp = TOKEN.type;
+    OperatorType nv = TOKEN.optype;
+    if (!(tp == OP
+        && (nv == OPT_SET || nv == OPT_ADDS || nv == OPT_SUBS || nv == OPT_MULS || nv == OPT_DIVS)))
+        return;
 
-	NEXT_TOKEN;
-	_exp_trvel(L);
+    NEXT_TOKEN;
+    _exp_trvel(L);
 }
 
 void _exp_trvel(Pu *L)
 {
-	L->control_flow->push_back(PuVector<CONTROL_PATH>());
-	_doexp_trvel(L);
-	L->control_flow->pop_back();
+    L->control_flow->push_back(PuVector<CONTROL_PATH>());
+    _doexp_trvel(L);
+    L->control_flow->pop_back();
 }
 
 void exp_control_flow_analyze(Pu *L)
 {
-	L->control_flow = new PuVector<PuVector<CONTROL_PATH> >();
-	L->control_flow->push_back(PuVector<CONTROL_PATH>());
-	_doexp_trvel(L);	
+    L->control_flow = new PuVector<PuVector<CONTROL_PATH> >();
+    L->control_flow->push_back(PuVector<CONTROL_PATH>());
+    _doexp_trvel(L);    
+}
+
+void get_map_trvel(Pu *L)
+{
+
 }
 
 void term_trvel(Pu * L)
 {
-	AddPath(CP_TERM);
+    AddPath(CP_TERM);
     PuType tp = TOKEN.type;
     OperatorType nv = TOKEN.optype;
 
@@ -131,10 +147,9 @@ void term_trvel(Pu * L)
     }
 }
 
-
 void get_value_trvel(Pu *L)
 {
-	AddPath(CP_VAL);
+    AddPath(CP_VAL);
     PuType tp = TOKEN.type;
     OperatorType nv = TOKEN.optype;
     if (tp == OP && ((nv == OPT_ADD) || (nv == OPT_SUB) || (nv == OPT_NOT)))
@@ -144,13 +159,13 @@ void get_value_trvel(Pu *L)
     }
     else
     {
-		NEXT_TOKEN;
-    }	
+        NEXT_TOKEN;
+    }    
 }
 
 void factor_trvel(Pu * L)
 {
-	AddPath(CP_FACTOR);
+    AddPath(CP_FACTOR);
     PuType tp = TOKEN.type;
     OperatorType nv = TOKEN.optype;
 
@@ -175,9 +190,9 @@ void factor_trvel(Pu * L)
         case OPT_LSB:
             get_array_trvel(L);
             break;
-        //case OPT_LBR:
-        //    get_map_trvel(L);
-        //    break;
+        case OPT_LBR:
+            get_map_trvel(L);
+            break;
         case OPT_NOT:
             get_value_trvel(L);
         default:
@@ -212,7 +227,7 @@ void factor_trvel(Pu * L)
 
 void cmp_trvel(Pu * L)
 {
-	AddPath(CP_CMP);
+    AddPath(CP_CMP);
     PuType token_type = TOKEN.type;
     OperatorType op_type = TOKEN.optype;
 
@@ -241,7 +256,7 @@ void cmp_trvel(Pu * L)
 
 void logic_trvel(Pu * L)
 {
-	AddPath(CP_LOGIC);
+    AddPath(CP_LOGIC);
     PuType token_type = TOKEN.type;
     OperatorType op_type = TOKEN.optype;
 
@@ -252,7 +267,7 @@ void logic_trvel(Pu * L)
         case OPT_OR:
         case OPT_AND:
         {
-            NEXT_TOKEN;			
+            NEXT_TOKEN;            
             CMP(L);
         }
         break;
@@ -265,8 +280,8 @@ void logic_trvel(Pu * L)
 }
 
 void add_trvel(Pu *L)
-{	
-	AddPath(CP_ADD);
+{    
+    AddPath(CP_ADD);
     PuType token_type = TOKEN.type;
     OperatorType op_type = TOKEN.optype;
 
@@ -278,7 +293,7 @@ void add_trvel(Pu *L)
         case OPT_SUB:
         {
             NEXT_TOKEN;
-            TERM(L);			
+            TERM(L);            
         }
         break;
         default:
@@ -292,37 +307,37 @@ void add_trvel(Pu *L)
 
 void callfunction_trvel(Pu *L)
 {
-	AddPath(CP_CALL);
-	NEXT_TOKEN;
+    AddPath(CP_CALL);
+    NEXT_TOKEN;
     int i = 0;
     for (;;)// )
     {
         PuType tp = TOKEN.type;
         int nv = TOKEN.optype;
 
-		if (tp == OP && nv == OPT_RB)
-		{
-			break; //)
-		}
+        if (tp == OP && nv == OPT_RB)
+        {
+            break; //)
+        }
         if (tp == FINISH) 
-		{
-			error(L, 1); 
-			return; 
-		}
+        {
+            error(L, 1); 
+            return; 
+        }
         if (tp == OP && nv == OPT_COM)
         {
             NEXT_TOKEN;
             continue;
         }
-        _exp_trvel(L);		
+        _exp_trvel(L);        
         ++i;
     }
-	NEXT_TOKEN;
+    NEXT_TOKEN;
 }
 
 void get_arrref_trvel(Pu *L)
 {
-	AddPath(CP_ARRREF);
+    AddPath(CP_ARRREF);
     NEXT_TOKEN;
     _exp_trvel(L);
 
@@ -337,7 +352,7 @@ void get_arrref_trvel(Pu *L)
 
 void get_array_trvel(Pu *L)
 {
-	AddPath(CP_ARRAY);
+    AddPath(CP_ARRAY);
     NEXT_TOKEN;
     for (;;)
     {

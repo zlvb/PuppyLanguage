@@ -1,30 +1,30 @@
 /*
-	Copyright (c) 2009 Zhang li
+    Copyright (c) 2009 Zhang li
 
-	Permission is hereby granted, free of charge, to any person obtaining a copy
-	of this software and associated documentation files (the "Software"), to deal
-	in the Software without restriction, including without limitation the rights
-	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-	copies of the Software, and to permit persons to whom the Software is
-	furnished to do so, subject to the following conditions:
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
 
-	The above copyright notice and this permission notice shall be included in
-	all copies or substantial portions of the Software.
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
 
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-	THE SOFTWARE.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
 
-	MIT License: http://www.opensource.org/licenses/mit-license.php
+    MIT License: http://www.opensource.org/licenses/mit-license.php
 */
 
 /*
-	Author zhang li
-	Email zlvbvbzl@gmail.com
+    Author zhang li
+    Email zlvbvbzl@gmail.com
 */
 
 #ifndef __VM_VALUE__
@@ -42,59 +42,63 @@
 struct Pu;
 
 #ifndef _DEBUG
-#define DECVMAP_REF(userdata)						\
-if (userdata)										\
-{													\
-	((_up_value*)(userdata))->refcount--;			\
-	if (((_up_value*)(userdata))->refcount == 0)	\
-	{												\
-		delete ((_up_value*)(userdata))->vmap;		\
-		((_up_value*)(userdata))->vmap = 0;			\
-		userdata = 0;								\
-	}												\
+#define DECVMAP_REF(userdata)                        \
+if (userdata)                                        \
+{                                                    \
+    ((_up_value*)(userdata))->refcount--;            \
+    if (((_up_value*)(userdata))->refcount == 0)    \
+    {                                                \
+        delete ((_up_value*)(userdata))->vmap;        \
+        ((_up_value*)(userdata))->vmap = 0;            \
+        userdata = 0;                                \
+    }                                                \
 }
 #else
 void DECVMAP_REF(void *&userdata);
 #endif
 
 
-#define VALUE_IS_TRUE(v)										\
-(																\
-	((v).type() == BOOLEANT)?									\
-		((v).numVal() != 0)										\
-																\
-	:(((v).type() == NUM)?										\
-		((v).numVal() != 0)										\
+#define VALUE_IS_TRUE(v)                                        \
+(                                                                \
+    ((v).type() == BOOLEANT)?                                    \
+        ((v).numVal() != 0)                                        \
                                                                 \
-	:(((v).type() == CPTR)?                                     \
-        (*(PU_INT*)&(v).numVal() != 0)		                    \
+    :(((v).type() == NUM)?                                        \
+        ((v).numVal() != 0)                                        \
                                                                 \
-	:(((v).type() == STR)?										\
-		((v).strVal().length() != 0)							\
-																\
-	:(((v).type() == ARRAY)?									\
-		((v).arr().size() != 0)									\
-																\
-	:(((v).type() == CORO)?										\
-		((v).numVal() != -1)									\
-																\
-	:(((v).type() == FILEHANDLE)?								\
-		((v).userdata() != 0 )                                  \
-																\
-	:(((v).type() == FUNCTION)?									\
-		(true):(false)											\
-																\
-	)))))))														\
+    :(((v).type() == CPTR)?                                     \
+        (*(PU_INT*)&(v).numVal() != 0)                            \
+                                                                \
+    :(((v).type() == STR)?                                        \
+        ((v).strVal().length() != 0)                            \
+                                                                \
+    :(((v).type() == ARRAY)?                                    \
+        ((v).arr().size() != 0)                                    \
+                                                                \
+    :(((v).type() == MAP)?                                    \
+        ((v).map().size() != 0)                                    \
+                                                                \
+    :(((v).type() == CORO)?                                        \
+        ((v).numVal() != -1)                                    \
+                                                                \
+    :(((v).type() == FILEHANDLE)?                                \
+        ((v).userdata() != 0 )                                  \
+                                                                \
+    :(((v).type() == FUNCTION)?                                    \
+        (true):(false)                                            \
+                                                                \
+    ))))))))                                                       \
 )
 
 typedef enum PUVALUECREATEDBY{
-	PU_SYSTEM,
-	PU_USER
+    PU_SYSTEM,
+    PU_USER
 }PUVALUECREATEDBY;
 
 struct __pu_value : public PuMemObj
 {
     typedef PuVector<__pu_value> ValueArr;
+    typedef PuMap<__pu_value, __pu_value, 10> PuCommMap;
     typedef PuMap<PuString, __pu_value, 10> PuValMap;
 
     struct _up_value
@@ -105,54 +109,54 @@ struct __pu_value : public PuMemObj
         _up_value *next;
     };
 
-	__pu_value(Pu *_L)
+    __pu_value(Pu *_L)
         :L(_L)
         ,createby(PU_SYSTEM)
         ,_type(UNKNOWN)
-        ,_arr(0)
-        ,_userdata(0)
-	{
-	}
+        ,arr_(0)
+        ,userdata_(0)
+    {
+    }
 
-	__pu_value()
+    __pu_value()
         :L(NULL)
         ,createby(PU_SYSTEM)
         ,_type(UNKNOWN)
-        ,_arr(0)
-        ,_userdata(0)
-	{
-	}
+        ,arr_(0)
+        ,userdata_(0)
+    {
+    }
 
-	__pu_value(const __pu_value &x)
+    __pu_value(const __pu_value &x)
         :L(x.L)
         ,createby(PU_SYSTEM)
         ,_type(UNKNOWN)
-        ,_arr(0)
-        ,_userdata(0)
-	{
-		*this = x;
-	}
+        ,arr_(0)
+        ,userdata_(0)
+    {
+        *this = x;
+    }
 
-	~__pu_value();
+    ~__pu_value();
 
-	void operator =(const __pu_value &x);
-	__pu_value operator +(const __pu_value &x);
-	__pu_value operator -(const __pu_value &x);
-	__pu_value operator /(const __pu_value &x);
-	__pu_value operator %(const __pu_value &x);
-	__pu_value operator *(const __pu_value &x);
-	int operator >(const __pu_value &x) const;
-	int operator <(const __pu_value &x) const;
-	int operator >=(const __pu_value &x) const;
-	int operator <=(const __pu_value &x) const;
-	int operator !=(const __pu_value &x) const;
-	int operator ==(const __pu_value &x) const;
-	int operator ||(const __pu_value &x) const;
-	int operator &&(const __pu_value &x) const;
-	const __pu_value &operator +=(const __pu_value &x);
-	const __pu_value &operator -=(const __pu_value &x);
-	const __pu_value &operator *=(const __pu_value &x);
-	const __pu_value &operator /=(const __pu_value &x);
+    void operator =(const __pu_value &x);
+    __pu_value operator +(const __pu_value &x);
+    __pu_value operator -(const __pu_value &x);
+    __pu_value operator /(const __pu_value &x);
+    __pu_value operator %(const __pu_value &x);
+    __pu_value operator *(const __pu_value &x);
+    int operator >(const __pu_value &x) const;
+    int operator <(const __pu_value &x) const;
+    int operator >=(const __pu_value &x) const;
+    int operator <=(const __pu_value &x) const;
+    int operator !=(const __pu_value &x) const;
+    int operator ==(const __pu_value &x) const;
+    int operator ||(const __pu_value &x) const;
+    int operator &&(const __pu_value &x) const;
+    const __pu_value &operator +=(const __pu_value &x);
+    const __pu_value &operator -=(const __pu_value &x);
+    const __pu_value &operator *=(const __pu_value &x);
+    const __pu_value &operator /=(const __pu_value &x);
     
     Pu *L;
     PUVALUECREATEDBY createby;
@@ -172,69 +176,71 @@ struct __pu_value : public PuMemObj
         }
     }
 
+    unsigned int hash() const;
+
     ValueArr& arr()
     {
 #ifdef _DEBUG
-        if (type() != ARRAY || !_arr)
+        if (type() != ARRAY || !arr_)
         {
             assert(!"arr get value failed");
         }
 #endif
-        return *_arr;
+        return *arr_;
     }
 
     const ValueArr& arr() const
     {
 #ifdef _DEBUG
-        if (type() != ARRAY || !_arr)
+        if (type() != ARRAY || !arr_)
         {
             assert(!"arr get value failed");
         }
 #endif
-        return *_arr;
+        return *arr_;
     }
 
-    PuValMap& map()
+    PuCommMap& map()
     {
 #ifdef _DEBUG
-        if (type() != MAP || !_map)
+        if (type() != MAP || !map_)
         {
             assert(!"map get value failed");
         }
 #endif
-        return *_map;
+        return *map_;
     }
 
-    const PuValMap& map() const
+    const PuCommMap& map() const
     {
 #ifdef _DEBUG
-        if (type() != MAP || !_map)
+        if (type() != MAP || !map_)
         {
             assert(!"map get value failed");
         }
 #endif
-        return *_map;
+        return *map_;
     }
 
     PuString& strVal()
     {
-        return *_strVal;
+        return *strVal_;
     }
 
     const PuString& strVal() const
     {
 #ifdef _DEBUG
-        if (type() != STR || !_strVal)
+        if (type() != STR || !strVal_)
         {
             assert(!"string get value failed");
         }
 #endif
-        return *_strVal;
+        return *strVal_;
     }
 
     PU_NUMBER& numVal()
     {
-        return _numVal;
+        return numVal_;
     }
 
     const PU_NUMBER& numVal() const
@@ -245,17 +251,17 @@ struct __pu_value : public PuMemObj
             assert(!"number get value failed");
         }
 #endif
-        return _numVal;
+        return numVal_;
     }
 
     void *&userdata()
     {    
-        return _userdata;
+        return userdata_;
     }
 
     void *const userdata() const
     {   
-        return _userdata;
+        return userdata_;
     }
 
     void destroy()
@@ -263,16 +269,19 @@ struct __pu_value : public PuMemObj
         switch (type())
         {
         case STR:
-            delete _strVal;
-            _strVal = NULL;
+            delete strVal_;
+            strVal_ = NULL;
             break;
         case ARRAY:
-            delete _arr;
-            _arr = NULL;
+            delete arr_;
+            arr_ = NULL;
             break;
         case FUN:
             DECVMAP_REF(userdata());
             break;
+        case MAP:
+            delete map_;
+            map_ = NULL;
         default:
             break;
         }        
@@ -285,13 +294,13 @@ private:
         switch (type())
         {
         case STR:
-            _strVal = new PuString;
+            strVal_ = new PuString;
             break;
         case MAP:
-            _map = new PuValMap;
+            map_ = new PuCommMap;
             break;
         case ARRAY:
-            _arr = new ValueArr;
+            arr_ = new ValueArr;
             break;
         default:
             break;
@@ -299,16 +308,17 @@ private:
     }
     PuType _type;    
     union {
-	PU_NUMBER _numVal;
-	ValueArr *_arr;
-    PuValMap *_map;			
-	PuString *_strVal;	
+    PU_NUMBER numVal_;
+    ValueArr *arr_;
+    PuCommMap *map_;            
+    PuString *strVal_;    
     };
-    void *_userdata;  
+    void *userdata_;  
 };
 
 typedef __pu_value::ValueArr ValueArr;
-typedef __pu_value::PuValMap VarMap;
+typedef __pu_value::PuCommMap ValueMap;
+typedef __pu_value::PuValMap StrKeyMap;
 typedef __pu_value::_up_value _up_value;
 
 #endif

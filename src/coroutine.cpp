@@ -1,30 +1,30 @@
 /*
-	Copyright (c) 2009 Zhang li
+    Copyright (c) 2009 Zhang li
 
-	Permission is hereby granted, free of charge, to any person obtaining a copy
-	of this software and associated documentation files (the "Software"), to deal
-	in the Software without restriction, including without limitation the rights
-	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-	copies of the Software, and to permit persons to whom the Software is
-	furnished to do so, subject to the following conditions:
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
 
-	The above copyright notice and this permission notice shall be included in
-	all copies or substantial portions of the Software.
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
 
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-	THE SOFTWARE.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
 
-	MIT License: http://www.opensource.org/licenses/mit-license.php
+    MIT License: http://www.opensource.org/licenses/mit-license.php
 */
 
 /*
-	Author zhang li
-	Email zlvbvbzl@gmail.com
+    Author zhang li
+    Email zlvbvbzl@gmail.com
 */
 
 #include "def.h"
@@ -37,53 +37,53 @@ extern int vm(Pu *L);
 extern void bi_return_num( Pu * L, int v );
 void bi_coro_create(Pu *L, int argnum, pu_value *v)
 {
-	if (argnum == 0)
-	{
-		return;
-	}
+    if (argnum == 0)
+    {
+        return;
+    }
 
-	if (v[0]->type() != STR && v[0]->type() != FUN)
-	{
-		return;
-	}
+    if (v[0]->type() != STR && v[0]->type() != FUN)
+    {
+        return;
+    }
 
-	FuncPos &fps = L->funclist[(int)v[0]->numVal()];
+    FuncPos &fps = L->funclist[(int)v[0]->numVal()];
 
-	const FunArgs &args = fps.argnames;
+    const FunArgs &args = fps.argnames;
 
-	if (argnum-1 != args.size())
-	{
-		error(L,27);
-		return;
-	}
+    if (argnum-1 != args.size())
+    {
+        error(L,27);
+        return;
+    }
 
-	if (fps.start == -1)
-	{
-		return;
-	}
-	else
-	{
-		VarMap *newvarmap = new VarMap;
-		
-		int i=0;
+    if (fps.start == -1)
+    {
+        return;
+    }
+    else
+    {
+        StrKeyMap *newvarmap = new StrKeyMap;
+        
+        int i=0;
 
-		for (;i<argnum-1;++i)// )
-		{
-			newvarmap->insert(args[i], *(v[i+1]));
-		}
-		coro c;
-		c.begin = fps.start; 
-		c.end = fps.end;
-		c.cur = c.begin;
-		c.funpos = (int)v[0]->numVal();
-		c.varmap = newvarmap;
+        for (;i<argnum-1;++i)// )
+        {
+            newvarmap->insert(args[i], *(v[i+1]));
+        }
+        coro c;
+        c.begin = fps.start; 
+        c.end = fps.end;
+        c.cur = c.begin;
+        c.funpos = (int)v[0]->numVal();
+        c.varmap = newvarmap;
         c.id = L->coros.size();
-		L->coros.push_back(c);        
-		__pu_value retv(L);
-		retv.SetType(CORO);
-		retv.numVal() = (PU_NUMBER)L->coros.size()-1;
-		pu_set_return_value(L, &retv);
-	}
+        L->coros.push_back(c);        
+        __pu_value retv(L);
+        retv.SetType(CORO);
+        retv.numVal() = (PU_NUMBER)L->coros.size()-1;
+        pu_set_return_value(L, &retv);
+    }
 }
 
 void run_coro( Pu * L, int coro_id, __pu_value * corov );
@@ -111,14 +111,14 @@ void bi_coro_resume(Pu *L, int argnum, pu_value *v)
     {
         return;
     }
-	
+    
     run_coro(L, coro_id, corov);
     return;
 }
 
 void bi_coro_yield(Pu *L, int, pu_value *)
 {
-	L->isyield = true;
+    L->isyield = true;
 }
 
 void run_coro( Pu *L, int coro_id, __pu_value *corov )

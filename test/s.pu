@@ -2,36 +2,36 @@
 
 i=10
 while i
-	k=46
-	a=1
-	b=1
-	while k || 0
-		write(a + '\n')
-		c=b
-		b=a+b
-		a=c
-		k=k-1
-	end
-	i=i-1
+    k=46
+    a=1
+    b=1
+    while k || 0
+        write(a + '\n')
+        c=b
+        b=a+b
+        a=c
+        k=k-1
+    end
+    i=i-1
 end
 
 x=9999
 write('"'+x+'"'+'以内所有素数\n')
 i=2
 while i<=x
-	k=1 is=0
-	while k*k<=i
-		if i % k == 0 && k>1
-			is=0
-			break
-		end
-		k=k+1
-		is=1
-	end
-	if is
-		write(i + '\t')
-	end
-	i=i+1
+    k=1 is=0
+    while k*k<=i
+        if i % k == 0 && k>1
+            is=0
+            break
+        end
+        k=k+1
+        is=1
+    end
+    if is
+        write(i + '\t')
+    end
+    i=i+1
 end
 write('\n')
 
@@ -45,22 +45,22 @@ eval("write('\nend\n')")
 
 def ccc(a,b,c)
 
-	write(a+' thread in ccc\n')
-	coro_yield()
-	
-	write(b+' thread in ccc\n')
-	coro_yield()
-	
-	write(c+' thread in ccc\n')
+    write(a+' thread in ccc\n')
+    coro_yield()
+    
+    write(b+' thread in ccc\n')
+    coro_yield()
+    
+    write(c+' thread in ccc\n')
 end
 
 def kkk(a,b)
-	o = coro_create(ccc,1,2,3)
-	coro_resume(o)
-	write(a+' thread in kkk\n')
-	coro_resume(o)
-	write(b+' thread in kkk\n')
-	coro_resume(o)
+    o = coro_create(ccc,1,2,3)
+    coro_resume(o)
+    write(a+' thread in kkk\n')
+    coro_resume(o)
+    write(b+' thread in kkk\n')
+    coro_resume(o)
 end
 
 
@@ -69,15 +69,15 @@ kkk(1,2)
 a=9
 write(1)
 if a>=9
-	write(2)
+    write(2)
 else
-	write(3)
+    write(3)
 end
 
 if a == 0
-	write(1)
+    write(1)
 else
-	write(99)
+    write(99)
 end
 
 
@@ -85,9 +85,9 @@ o = open('code1.pu')
 w = open('hahah')
 s = read(o,'word')
 while s
-	write(s+'\n')
-	write(w,s)
-	s = read(o,'word')
+    write(s+'\n')
+    write(w,s)
+    s = read(o,'word')
 end
 
 close(w)
@@ -96,26 +96,26 @@ close(o)
 w = open('hahah')
 s = read(w,'word')
 while s
-	write(s+'\n')
-	s = read(w,'word')
+    write(s+'\n')
+    s = read(w,'word')
 end
 
 close(w)
 
 def gg(j)
 
-	a=j
+    a=j
 
-	def kk(p)
-		return a+p
-	end
-	
-	def ll(p)
-		return kk(p)
-	end
+    def kk(p)
+        return a+p
+    end
+    
+    def ll(p)
+        return kk(p)
+    end
 
-	return ll
-	
+    return ll
+    
 end
 
 v1 = gg(1)

@@ -36,19 +36,21 @@ struct Pu;
 
 void exp_control_flow_analyze(Pu *L);
 
+
 enum CONTROL_PATH
 {
-	CP_EXP,
-	CP_ADD,
-	CP_TERM,
-	CP_CMP,
-	CP_LOGIC,
-	CP_CALL,
-	CP_VAL,
-	CP_FACTOR,
-	CP_ARRAY,
-	CP_ARRREF,
+    CP_EXP,
+    CP_ADD,
+    CP_TERM,
+    CP_CMP,
+    CP_LOGIC,
+    CP_CALL,
+    CP_VAL,
+    CP_FACTOR,
+    CP_ARRAY,
+    CP_ARRREF,
 };
 
 
 #endif
+

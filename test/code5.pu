@@ -1,5 +1,5 @@
 def aaa()
-	write('111')
+    write('111')
 end
 
 aaa()
