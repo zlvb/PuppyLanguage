@@ -31,21 +31,15 @@
 
 void PuString::set_char( int idx, char c )
 {
-    if (pbuff->buffer[idx] != c)
+    if ((*pbuff)[idx] != c)
     {
         if (pbuff->refc > 1)
         {
-            int count = FIXALI8(length()+1);
-            char *pb = (char*)malloc(count);
-            memcpy(pb, c_str(), length());
-            pb[length()] = 0;
-            RELEASE_BUFF((*this));
-            pbuff = new PuBuffer;
-            pbuff->buffer = pb;
-            pbuff->length = length();
-            pbuff->count = count;
+            PuBuffer *new_pbuff = new PuBuffer(c_str(), length());
+            release_buff();
+            pbuff = new_pbuff;
         }
-        pbuff->buffer[idx]=c;
+        (*pbuff)[idx]=c;
         hash_Key = 0;
     }
 }
@@ -54,10 +48,12 @@ PuString & PuString::operator=( const char *x )
 {
     if (pbuff)
     {
-        if (pbuff->buffer == x)
+        if (pbuff->c_str() == x)
+        {
             return *this;
+        }
 
-        RELEASE_BUFF((*this));
+        release_buff();
     }
     hash_Key = 0;
     pbuff = new PuBuffer(x);
@@ -66,36 +62,32 @@ PuString & PuString::operator=( const char *x )
 
 PuString & PuString::operator=( const PuString &x )
 {
+    if (pbuff == x.pbuff)
+    {
+        return *this;
+    }
+
     if (pbuff)
     {
-        if (pbuff == x.pbuff)
-            return *this;
-
-        RELEASE_BUFF((*this));
+        release_buff();
     }
     pbuff = x.pbuff;
     hash_Key = x.hash_Key;
 
     if (pbuff)
+    {
         ++pbuff->refc;
+    }
 
     return *this;
 }
 
 PuString PuString::operator+( const PuString &x ) const
 {
-    int len = length()+x.length();
-    int count = FIXALI8(len+1);
-    char *pb = (char*)malloc(count);
-    memcpy(pb, c_str(), length());
-    memcpy(pb+length(),x.c_str(),x.length());
-    pb[len] = 0;
-    PuBuffer *temp = new PuBuffer;
-    temp->buffer = pb;
-    temp->length = len;
+    PuBuffer *temp = new PuBuffer(c_str(), length());
+    temp->append(x.c_str(), x.length());
     PuString ts;
     ts.pbuff = temp;
-    ts.pbuff->count = count;
     return ts;
 }
 
@@ -108,96 +100,68 @@ PuString &PuString::operator+=(char x)
 
 PuString PuString::operator+( const char *x ) const
 {
-    int clen = (int)strlen(x);
-    int len = length()+clen;
-    int count = FIXALI8(len+1);
-    char *pb = (char*)malloc(count);
-    memcpy(pb, c_str(), length());
-    memcpy(pb+length(),x,clen);
-    pb[len] = 0;
-    PuBuffer *temp = new PuBuffer;
-    temp->buffer = pb;
-    temp->length = len;
+    PuBuffer *temp = new PuBuffer(c_str(), length());
+    temp->append(x);
     PuString ts;
     ts.pbuff = temp;
-    ts.pbuff->count = count;
     return ts;
 }
 
 bool PuString::operator==( const PuString &x ) const
 {
-    return (pbuff == x.pbuff)? true : strcmp(c_str(),x.c_str())==0;
+    return (pbuff == x.pbuff)? true : strcmp(c_str(),x.c_str()) == 0;
 }
 
-bool PuString::operator!=( const PuString &x ) const
+bool PuString::operator!=(const PuString &x) const
 {
-    return (pbuff != x.pbuff)? true : strcmp(c_str(),x.c_str())!=0;
+    return !(*this == x);
 }
 
-PuString & PuString::operator+=( const PuString &x )
+PuString &PuString::operator+=( const PuString &x )
 {
-    int len = length() + x.length();
-
-    if (pbuff == NULL || len+1 > pbuff->count)
+    if (pbuff)
     {
-        int count = FIXALI32(len+1+128);
-        char *pb = (char*)malloc(count);
-        memcpy(pb,c_str(),length());
-        memcpy(pb+length(),x.c_str(),x.length());
-        pb[len] = 0;
-        RELEASE_BUFF((*this));
-        pbuff = new PuBuffer();
-        pbuff->buffer = pb;
-        pbuff->count = count;
+        PuBuffer *new_pbuff = new PuBuffer(c_str(), length());
+        new_pbuff->append(x.c_str(), x.length());
+        release_buff();
+        pbuff = new_pbuff;
+        hash_Key = 0;
     }
     else
     {
-        memcpy(pbuff->buffer+length(),x.c_str(),x.length()+1);
+        pbuff = new PuBuffer(x.c_str(), x.length());
     }
     
-    pbuff->length = len;
-    hash_Key = 0;
     return *this;
 }
 
 PuString & PuString::operator+=( const char *x )
 {
-    int clen = (int)strlen(x);
-    int len = length() + clen;
-
-    if (pbuff == NULL || len+1 > pbuff->count)
+    if (pbuff)
     {
-        int count = FIXALI32(len+1+128);
-        char *pb = (char*)malloc(count);
-        memcpy(pb,c_str(),length());        
-        memcpy(pb+length(),x,clen);
-        pb[len] = 0;
-        RELEASE_BUFF((*this));
-        pbuff = new PuBuffer();
-        pbuff->buffer = pb;
-        pbuff->count = count;
+        PuBuffer *new_pbuff = new PuBuffer(c_str(), length());
+        new_pbuff->append(x);
+        release_buff();
+        pbuff = new_pbuff;
+        hash_Key = 0;
     }
     else
     {
-        memcpy(pbuff->buffer+length(),x,clen+1);
+        pbuff = new PuBuffer(x);
     }
 
-    pbuff->length = len;
-    hash_Key = 0;
     return *this;
 }
 
-#ifdef _DEBUG
-void release_buff(PuString &zlstr) 
+void PuString::release_buff()
 {
-    if (zlstr.pbuff)
+    if (pbuff)
     {
-        --zlstr.pbuff->refc;
-        if (zlstr.pbuff->refc <= 0)
+        --pbuff->refc;
+        if (pbuff->refc <= 0)
         {
-            delete zlstr.pbuff;
+            delete pbuff;
         }
-        zlstr.pbuff = NULL;
+        pbuff = NULL;
     }
 }
-#endif

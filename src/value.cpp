@@ -214,30 +214,6 @@ __pu_value __pu_value::operator +(const __pu_value &x)
 
         n.arr().push_back(x);
     }
-    else if (type() == ARRAY && x.type() == ARRAY)
-    {
-        n.SetType(ARRAY);
-        {
-            ValueArr::iterator it = arr().begin();
-            ValueArr::iterator ite = arr().end();
-            while (it != ite)
-            {
-                n.arr().push_back(*it);
-                ++it;
-            }
-        }
-
-        {
-            ValueArr::iterator it = x.arr().begin();
-            ValueArr::iterator ite = x.arr().end();
-            while (it != ite)
-            {
-                n.arr().push_back(*it);
-                ++it;
-            }
-        }
-
-    }
     else
     {
         error(L, 14);

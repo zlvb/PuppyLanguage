@@ -61,9 +61,9 @@ static void save_token(FILE *pbcf, TokenList &tokens)
             fwrite(&cop, sizeof(cop), 1, pbcf);
                 }break;
         case VAR:{
-            char sl = (char)it->value.strVal().length();
+            char sl = (char)it->name.length();
             fwrite(&sl, sizeof(sl), 1, pbcf);
-            fwrite(it->value.strVal().c_str(), sl,1,pbcf);
+            fwrite(it->name.c_str(), sl,1,pbcf);
                  }break;
         case STR:{
             size_t sl = it->value.strVal().length();
@@ -81,7 +81,7 @@ void savebytecode(Pu *, const char *fname, TokenList &tokensave)
 {
     FILE *pbcf = fopen(fname, "wb");
     time_t ti; 
-    ti=time(NULL);
+    ti = time(NULL);
     fwrite(&ti, sizeof(ti), 1, pbcf);
     save_token(pbcf, tokensave);
     fclose(pbcf);
@@ -109,17 +109,17 @@ void get_nextbytetoken(Pu *L, FILE *pbcf, Token &t)
                 char cop = 0;
                 fread(&cop, sizeof(cop), 1, pbcf);
                 t.optype = (OperatorType)cop;
-                    }break;
+                } break;
 
             case VAR:{
                 char l = 0;
                 fread(&l,sizeof(l),1,pbcf);
-                char c[PU_MAXVARLEN] = {0};
+                char *c = (char*)malloc(l + 1);
                 memset(c,0,l+1);
                 fread(c, 1, l, pbcf);
-                t.value.SetType(STR);
-                t.value.strVal() = c;                
-                     }break;
+                t.name = c;   
+                free(c);
+                } break;
 
             case STR:{
                 size_t l = 0;
@@ -130,7 +130,7 @@ void get_nextbytetoken(Pu *L, FILE *pbcf, Token &t)
                 t.value.SetType(STR);
                 t.value.strVal() = c;    
                 free(c);
-                     }break;
+                } break;
             }
             append_token(L,t);
         }
@@ -166,15 +166,17 @@ static void get_token_from_bytecode(Pu *L, FILE *pbcf)
 PUAPI void pu_getbytecodename(char *bytecodename, 
                               const char *csource_code_name)
 {
-    size_t i = strlen(csource_code_name)-1;
+    size_t i = strlen(csource_code_name) - 1;
     for ( ; i != 0; --i)
     {
         if (csource_code_name[i] == '.')
+        {
             break;
+        }
     }
     
-    memcpy(bytecodename,csource_code_name,i);
-    memcpy(bytecodename+i,".puc",5);
+    memcpy(bytecodename, csource_code_name, i);
+    memcpy(bytecodename + i, ".puc", 5);
 }
 
 
@@ -201,7 +203,7 @@ PUAPI int pu_loadbytecode(Pu *L, const char *fname)
         return 0;
     }
 
-    get_token_from_bytecode(L,pbcf);
+    get_token_from_bytecode(L, pbcf);
 
     fclose(pbcf);
     return 1;
@@ -209,14 +211,14 @@ PUAPI int pu_loadbytecode(Pu *L, const char *fname)
 
 PUAPI PURESULT pu_load(Pu *L, const char *sname)
 {
-    size_t i = strlen(sname)-1;
-    for ( ; i != 0; --i)
+    size_t sname_index_max = strlen(sname)-1;
+    for ( ; sname_index_max != 0; --sname_index_max)
     {
-        if (sname[i] == '.')
+        if (sname[sname_index_max] == '.')
             break;
     }
 
-    if (strcmp(&(sname[i]), ".puc") == 0)
+    if (strcmp(&(sname[sname_index_max]), ".puc") == 0)
     {
         return (PURESULT)pu_loadbytecode(L, sname);
     }
@@ -255,7 +257,11 @@ PUAPI PURESULT pu_load(Pu *L, const char *sname)
     }
     
     char bname[1024]={0};
-    pu_getbytecodename(bname,sname);
+    if (sname_index_max + 1 > sizeof(bname))
+    {
+        return PU_FAILED;
+    }
+    pu_getbytecodename(bname, sname);
     savebytecode(L, bname, t);
     t.clear();
     L->cur_token = 0;
@@ -310,7 +316,7 @@ PUAPI void pu_makebytecode(Pu *L, const char *sname)
     pu_load(L, sname);
     L->cur_token = 0;
     char codename[1024]={0};
-    pu_getbytecodename(codename,sname);
+    pu_getbytecodename(codename, sname);
     TokenList t;
     do
     {    

@@ -33,7 +33,7 @@
 #include "PuMap.h"
 #include "PuString.h"
 #include "config.h"
-
+#include <unordered_map>
 #include <stdio.h>
 #include <assert.h>
 #ifdef _MSC_VER
@@ -95,15 +95,23 @@ typedef enum PUVALUECREATEDBY{
     PU_USER
 }PUVALUECREATEDBY;
 
+
 struct __pu_value
 {
+	struct value_hash {
+		size_t operator()(const __pu_value &__x) const
+		{
+			return __x.hash();
+		}
+	};
+
+    typedef std::unordered_map<std::string, __pu_value> StrMap;
     typedef PuVector<__pu_value> ValueArr;
-    typedef PuMap<__pu_value, __pu_value, 10> PuCommMap;
-    typedef PuMap<PuString, __pu_value, 10> PuValMap;
+    typedef PuMap<__pu_value, __pu_value, value_hash> ValueMap;
 
     struct _up_value
     {
-        PuValMap *vmap;
+        StrMap *vmap;
         int refcount;
         bool marked;
         _up_value *next;
@@ -111,8 +119,8 @@ struct __pu_value
 
     __pu_value(Pu *_L)
         :L(_L)
-        ,createby(PU_SYSTEM)
-        ,_type(UNKNOWN)
+        ,createby_(PU_SYSTEM)
+        ,type_(UNKNOWN)
         ,arr_(0)
         ,userdata_(0)
     {
@@ -120,8 +128,8 @@ struct __pu_value
 
     __pu_value()
         :L(NULL)
-        ,createby(PU_SYSTEM)
-        ,_type(UNKNOWN)
+        ,createby_(PU_SYSTEM)
+        ,type_(UNKNOWN)
         ,arr_(0)
         ,userdata_(0)
     {
@@ -129,8 +137,8 @@ struct __pu_value
 
     __pu_value(const __pu_value &x)
         :L(x.L)
-        ,createby(PU_SYSTEM)
-        ,_type(UNKNOWN)
+        ,createby_(PU_SYSTEM)
+        ,type_(UNKNOWN)
         ,arr_(0)
         ,userdata_(0)
     {
@@ -159,19 +167,19 @@ struct __pu_value
     const __pu_value &operator /=(const __pu_value &x);
     
     Pu *L;
-    PUVALUECREATEDBY createby;
+    PUVALUECREATEDBY createby_;
 
     PuType type() const 
     { 
-        return _type; 
+        return type_; 
     }
 
     void SetType(PuType val) 
     { 
-        if (val != _type)
+        if (val != type_)
         {
             destroy();
-            _type = val; 
+            type_ = val; 
             build();
         }
     }
@@ -200,7 +208,7 @@ struct __pu_value
         return *arr_;
     }
 
-    PuCommMap& map()
+    ValueMap& map()
     {
 #ifdef _DEBUG
         if (type() != MAP || !map_)
@@ -211,7 +219,7 @@ struct __pu_value
         return *map_;
     }
 
-    const PuCommMap& map() const
+    const ValueMap& map() const
     {
 #ifdef _DEBUG
         if (type() != MAP || !map_)
@@ -282,6 +290,7 @@ struct __pu_value
         case MAP:
             delete map_;
             map_ = NULL;
+            break;
         default:
             break;
         }        
@@ -297,7 +306,7 @@ private:
             strVal_ = new PuString;
             break;
         case MAP:
-            map_ = new PuCommMap;
+            map_ = new ValueMap;
             break;
         case ARRAY:
             arr_ = new ValueArr;
@@ -306,19 +315,20 @@ private:
             break;
         }
     }
-    PuType _type;    
+    PuType type_;    
     union {
     PU_NUMBER numVal_;
     ValueArr *arr_;
-    PuCommMap *map_;            
+    ValueMap *map_;            
     PuString *strVal_;    
     };
     void *userdata_;  
 };
 
+typedef __pu_value::StrMap StrKeyMap;
 typedef __pu_value::ValueArr ValueArr;
-typedef __pu_value::PuCommMap ValueMap;
-typedef __pu_value::PuValMap StrKeyMap;
+typedef __pu_value::ValueMap ValueMap;
 typedef __pu_value::_up_value _up_value;
+
 
 #endif

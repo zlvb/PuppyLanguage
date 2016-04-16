@@ -34,12 +34,12 @@
 
 #ifdef _MSC_VER
 #include <windows.h> //for win32 Sleep
-#pragma warning(disable:4127) // �ж�����Ϊ���������磺while(1)
+#pragma warning(disable:4127) //while(1)
 #else
 #include <unistd.h>  //for linux usleep
 #endif
 
-extern void get_var(Pu *L, const PuString &name, __pu_value *&v);
+extern void get_var(Pu *L, const std::string &name, __pu_value *&v);
 PUAPI{
 PURESULT pu_push_arr(pu_value varr, const pu_value v);
 PURESULT pu_loadbuff(Pu *L, const char *str);
@@ -149,7 +149,7 @@ void bi_date(Pu *L, int, pu_value*)
     t.SetType(NUM);
     
     __pu_value r(L);
-    r.createby = PU_USER;
+    r.createby_ = PU_USER;
 
     t.numVal() = (PU_NUMBER)local->tm_year+1900;
     pu_push_arr(&r, &t);
@@ -341,7 +341,7 @@ void bi_get_var(Pu *L, int argn, pu_value *v)
     {
         if (v[0]->type() == STR)
         {
-            get_var(L, v[0]->strVal(), temp);
+            get_var(L, v[0]->strVal().c_str(), temp);
             CHECK_EXP(temp);
         }
     }

@@ -32,7 +32,7 @@
 
 #include "value.h"
 #include "travel.h"
-
+#include <string>
 struct Token
 {
     Token()
@@ -46,7 +46,8 @@ struct Token
         {}
     Token(const Token &x);
     void operator=(const Token &x);
-    PuString filename;
+    std::string filename;
+    std::string name;
     __pu_value value;
     __pu_value *regvar;
     int line;

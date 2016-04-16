@@ -31,23 +31,16 @@
 
 static void mark(StrKeyMap *vmap)
 {
-    int ele_num = vmap->_setted.size();
-    for (int i=0; i<ele_num; ++i)
+    for (auto &pair : *vmap)
     {
-        int k = vmap->_setted[i];
-        StrKeyMap::Node_T *node = vmap->_container[k];
-        int bucket_num = node->size();
-        for (int j=0; j<bucket_num; ++j)
+        __pu_value &v = pair.second;
+        if (v.type() == FUN)
         {
-            __pu_value &v = (*node)[j].value;
-            if (v.type() == FUN)
+            _up_value *uv = (_up_value*)v.userdata();
+            if (uv && !uv->marked)
             {
-                _up_value *uv = (_up_value*)v.userdata();
-                if (uv && !uv->marked)
-                {
-                    uv->marked = true;
-                    mark(uv->vmap);
-                }
+                uv->marked = true;
+                mark(uv->vmap);
             }
         }
     }
@@ -71,14 +64,12 @@ static void sweep(Pu *L)
             {
                 L->gclink = L->gclink->next;
                 prev = L->gclink;
-                //delete p->vmap;
                 delete p;
                 p = L->gclink;
             }
             else
             {
                 _up_value *np = p->next;
-                //delete p->vmap;
                 delete p;
                 prev->next = np;
                 p = np;

@@ -38,13 +38,13 @@
 
 typedef PuStack<int> CallStack;
 typedef PuStack<StrKeyMap*> VarStack;
-typedef PuMap<PuString, int> LabelMap;
-typedef std::vector<PuString> FunArgs;
+typedef std::unordered_map<std::string, int> LabelMap;
+typedef std::vector<std::string> FunArgs;
 struct FuncPos
 {
     int start;
     int end;
-    std::vector<PuString> argnames;
+    std::vector<std::string> argnames;
     ScriptFunc pfunc;
     StrKeyMap *newvarmap;
 
@@ -116,7 +116,7 @@ struct Pu
     VarStack            varstack;
     CallStack            callstack;
     __pu_value            return_value;
-    std::vector<PuString>    current_filename;
+    std::vector<std::string>    current_filename;
     CoroList            coros;
     PuStack<int>        uncomdef;
     PuStack<int>        jumpstack;

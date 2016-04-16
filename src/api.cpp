@@ -36,10 +36,10 @@ extern void clear_state(Pu *L);
 extern int vm(Pu *L);
 extern const char *get_typestr(__pu_value &v);
 extern void regbuiltin(Pu *L);
-extern void set_var(Pu *L, const PuString &varname, __pu_value &new_value, __pu_value *&got);
-extern __pu_value *reg_var(Pu *L, const PuString &varname);
+extern void set_var(Pu *L, const std::string &varname, __pu_value &new_value, __pu_value *&got);
+extern __pu_value *reg_var(Pu *L, const std::string &varname);
 #ifdef _MSC_VER
-#pragma warning(disable:4127) // �ж�����Ϊ���������磺while(1)
+#pragma warning(disable:4127) // while(1)
 #endif
 
 
@@ -100,16 +100,10 @@ PUAPI int pu_type(pu_value v)
 
 PUAPI PURESULT pu_set_str(pu_value v, const char *str)
 {
-    if (v->createby == PU_SYSTEM)
+    if (v->createby_ == PU_SYSTEM)
     {
         return PU_FAILED;
     }
-
-//     if (v->type() == ARRAY)
-//     {
-//         v->arr().decref();
-//     }
-
 
     v->SetType(STR);
     v->strVal() = str;
@@ -126,16 +120,10 @@ PUAPI int pu_eval(Pu *L, const char *str)
 
 PUAPI PURESULT pu_set_num(pu_value v, PU_NUMBER number)
 {
-    if (v->createby == PU_SYSTEM)
+    if (v->createby_ == PU_SYSTEM)
     {
         return PU_FAILED;
     }
-
-//     if (v->type() == ARRAY)
-//     {
-//         v->arr().decref();
-//     }
-
 
     v->SetType(NUM);
     v->numVal() = number;
@@ -144,7 +132,7 @@ PUAPI PURESULT pu_set_num(pu_value v, PU_NUMBER number)
 
 PUAPI PURESULT pu_set_ptr(pu_value v, void *ptr)
 {
-    if (v->createby == PU_SYSTEM)
+    if (v->createby_ == PU_SYSTEM)
     {
         return PU_FAILED;
     }
@@ -158,7 +146,7 @@ PUAPI PURESULT pu_set_ptr(pu_value v, void *ptr)
 PUAPI PURESULT pu_set_arr(pu_value v, 
                           int idx, pu_value u)
 {
-    if (v->createby == PU_SYSTEM)
+    if (v->createby_ == PU_SYSTEM)
     {
         return PU_FAILED;
     }
@@ -186,13 +174,13 @@ PUAPI PURESULT pu_set_arr(pu_value v,
 PUAPI pu_value pu_new_value(Pu *L)
 {
     __pu_value *v = new __pu_value(L);
-    v->createby = PU_USER;
+    v->createby_ = PU_USER;
     return v;
 }
 
 PUAPI PURESULT pu_del_value(pu_value v)
 {
-    if (v->createby == PU_SYSTEM)
+    if (v->createby_ == PU_SYSTEM)
     {
         return PU_FAILED;
     }
@@ -203,7 +191,7 @@ PUAPI PURESULT pu_del_value(pu_value v)
 PUAPI PURESULT pu_push_arr(pu_value varr, 
                            pu_value v)
 {
-    if (varr->createby == PU_SYSTEM)
+    if (varr->createby_ == PU_SYSTEM)
     {
         return PU_FAILED;
     }
@@ -216,7 +204,7 @@ PUAPI PURESULT pu_push_arr(pu_value varr,
 
 PUAPI PURESULT pu_pop_arr(pu_value varr)
 {
-    if (varr->createby == PU_SYSTEM)
+    if (varr->createby_ == PU_SYSTEM)
     {
         return PU_FAILED;
     }
@@ -241,7 +229,7 @@ PUAPI int pu_len(pu_value v)
 
 PUAPI PUVALUECREATEDBY pu_value_created_by(pu_value v)
 {
-    return v->createby;
+    return v->createby_;
 }
 
 extern void run_coro( Pu * L, int coro_id, __pu_value * corov );
@@ -260,10 +248,10 @@ PUAPI void pu_run(Pu *L)
 PUAPI pu_value pu_global(Pu *L, const char *name)
 {
     StrKeyMap *pvarmap = L->varstack.bottom();
-    StrKeyMap::Bucket_T *ik = pvarmap->find(name);
-    if (ik != 0)
+    auto it = pvarmap->find(name);
+    if (it != pvarmap->end())
     {
-        return &(ik->value);
+        return &(it->second);
     }
 
     return NULL;
@@ -314,7 +302,7 @@ PUAPI pu_value pu_call(Pu *L, const char *funcname,
         for (int j=0; j<vArgs.size(); ++j)
         {
             __pu_value v = varr->arr()[j];
-            newvarmap->insert(vArgs[j], v);
+            newvarmap->insert(std::make_pair(vArgs[j], v));
         }
 
         L->callstack.push(L->cur_token); 

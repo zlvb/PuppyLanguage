@@ -32,105 +32,117 @@
 #define __PU_MAP__
 
 #include "PuVector.h"
+#include <unordered_map>
 
-template<class Key_T, class Value_T>
-struct __bucket_t 
+template<class Key_T, class Value_T, class HashFunc>
+struct MapRef : public std::unordered_map<Key_T, Value_T, HashFunc>
 {
-    Key_T    key;
-    Value_T    value;
+    MapRef() :refcount(1) {};
+    int refcount;
 };
 
-
-template<class Key_T, class Value_T, int MAPSIZE=65536>
+template<class Key_T, class Value_T, class HashFunc>
 class PuMap
 {
 public:
-    typedef __bucket_t<Key_T,Value_T>   Bucket_T;
-    typedef std::vector<Bucket_T>        Node_T;
-    Node_T*                             _container[MAPSIZE];
-    std::vector<int>                       _setted;
-    int                                 size_;
+	typedef ::MapRef<Key_T, Value_T, HashFunc> MapRef;
+    typedef typename MapRef::iterator iterator;
+    PuMap():mapptr_(0)
+    { }
 
-    PuMap():size_(0)
-    {
-        memset(_container, 0, sizeof(Node_T*) * MAPSIZE);
-    }
+	PuMap(const PuMap &r) :mapptr_(r.mapptr_)
+	{
+		if (mapptr_)
+		{
+			mapptr_->refcount++;
+		}
+	}
 
     ~PuMap()
     {
-        clear();
+        release();
     }
 
-    int size() const
+	void operator=(const PuMap &x)
+	{
+		if (mapptr_ != x.mapptr_)
+		{
+			if (mapptr_)
+			{
+				mapptr_->refcount--;
+			}
+			mapptr_ = x.mapptr_;
+			if (mapptr_)
+			{
+				mapptr_->refcount++;
+			}
+		}
+	}
+
+	int size() const
+	{
+		return mapptr_ ? mapptr_->size() : 0;
+	}
+
+    iterator begin()
     {
-        return size_;
+		if (!mapptr_)
+		{
+			return end();
+		}
+		return mapptr_->begin();
     }
 
-    Bucket_T *find(const Key_T &key) const
+    iterator end()
     {
-        unsigned int hk = key.hash() % MAPSIZE;
-        Node_T *p = _container[hk];
-        if (p)
+		if (!mapptr_)
+		{
+			static MapRef dummy;
+			return dummy.end();
+		}
+		return mapptr_->end();
+    }
+
+    iterator find(const Key_T &key)
+    {
+		if (!mapptr_)
+		{
+			return end();
+		}
+		return mapptr_->find(key);
+    }
+
+    iterator insert(const Key_T &key, const Value_T &value)
+    {
+		if (!mapptr_)
+		{
+			mapptr_ = new MapRef;
+		}
+		return mapptr_->insert(std::make_pair(key, value)).first;
+    }
+
+    void release()
+    {
+        if (mapptr_)
         {
-            int bucket_number = p->size();
-            
-            if (bucket_number == 1 && key == (*p)[0].key) // 只有1个桶，直接返回第一个元素
+            --mapptr_->refcount;
+            if (mapptr_->refcount <= 0)
             {
-                return &(*p)[0];
+                delete mapptr_;
             }
-            // 有多个桶，线性查找
-            for (int i=0; i < bucket_number; ++i)
-            {
-                if (key == (*p)[i].key)
-                {
-                    return &(*p)[i];
-                }
-            }
+            mapptr_ = NULL;
         }
-        return 0;
-    }
-
-    Bucket_T *insert(const Key_T &key, const Value_T &value)
-    {
-        unsigned int hk = key.hash()  % MAPSIZE;
-        Node_T *p = _container[hk];
-        Bucket_T newb = {key,value};
-        if (p)
-        {
-            for (int i = 0; i < p->size(); i++)
-            {
-                if ((*p)[i].key == key)
-                {
-                    (*p)[i].value = value;
-                    return &(*p)[i];
-                }
-            }
-            p->push_back(newb);
-            size_++;
-            return &(*p)[p->size()-1];
-        }
-        p = new Node_T;
-        p->push_back(newb);
-        _setted.push_back(hk);
-        _container[hk] = p;
-        size_++;
-        return &(*p)[0];
     }
 
     void clear()
     {
-        int s = _setted.size();
-
-        for (int i=0; i < s; ++i)
+        if (mapptr_)
         {
-            int k = _setted[i];
-            delete _container[k];
-            _container[k] = 0;
+            mapptr_->clear();
         }
-        _setted.clear();
-        size_ = 0;
     }
 
+    MapRef *mapptr_;
 };
 
 #endif

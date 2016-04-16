@@ -69,7 +69,7 @@ void bi_coro_create(Pu *L, int argnum, pu_value *v)
 
         for (;i<argnum-1;++i)// )
         {
-            newvarmap->insert(args[i], *(v[i+1]));
+            newvarmap->insert(std::make_pair(args[i], *(v[i+1])));
         }
         coro c;
         c.begin = fps.start; 

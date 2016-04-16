@@ -39,7 +39,7 @@ extern void savebytecode(Pu *L, const char *fname, TokenList &tokens);
 PUAPI int pu_loadbytecode(Pu *L, const char *fname);
 Token get_token_from_file(Pu *L, TokenList *t);
 
-static PuType check_token_type(const PuString &identifier)
+static PuType check_token_type(const std::string &identifier)
 {
     int i = 0;
     for (; i < KEYWORDS_TYPES_LENGTH; ++i)
@@ -218,7 +218,7 @@ static bool is_space(Pu *L, int c)
 }
 
 
-static int check_op_type(const PuString &s)
+static int check_op_type(const std::string &s)
 {
     int i = 0;
     for (; i < OPERATOR_TYPES_LENGTH; ++i)
@@ -295,9 +295,7 @@ static void get_var_key(Pu *L, int c, Token &newToken)
     newToken.type = check_token_type(identifier);
     if (newToken.type == VAR)
     {
-        newToken.value.SetType(STR);
-        newToken.value.strVal() = identifier;        
-        newToken.value.L = L;
+        newToken.name = identifier;        
     }    
 }
 
@@ -328,7 +326,8 @@ static void get_label(Pu *L, Token &newToken)
     newToken.type = LABEL;
     char label[PU_MAXVARLEN]={0};
     pu_scanf(L->source, "%s", label);
-    L->labelmap.insert(label, int(L->cur_token));
+    newToken.name = label;
+    L->labelmap.insert(std::make_pair(label, L->cur_token));
 }
 
 // 返回一个函数是否分析完
@@ -364,7 +363,11 @@ void parse_function_body(Pu *L, int lp, int token_from, Token &t, FILE *pbcf=0, 
 
         if (L->funstack.back() == 0)
         {        
-            L->uncomdef.pop();
+            if (L->mode != PU_CODE_FROM_FILE)
+            {
+                L->uncomdef.pop();
+            }
+            
             L->funstack.pop_back();
             break;
         }
@@ -420,7 +423,7 @@ void parse_function(Pu *L, int token_from, FILE *pbcf, TokenList *tl)
         }
         else
         {
-            fps.argnames.push_back(t.value.strVal());
+            fps.argnames.push_back(t.name);
         }
         
         if (token_from == FROM_BYTECODE)
@@ -454,13 +457,14 @@ void parse_function(Pu *L, int token_from, FILE *pbcf, TokenList *tl)
 
 void parse_include(Pu *L, const Token &filename)
 {
-    check_include(L, filename.value.strVal().c_str());
+    check_include(L, filename.name.c_str());
 
-    PuString newfname = filename.value.strVal() + ".puc";
+    std::string newfname = filename.name + ".puc";
     if (!pu_loadbytecode(L, newfname.c_str()))
     {
         Pusource old_s = L->source;
-        PuString fsn = filename.value.strVal() + ".pu";
+        std::string fsn(filename.value.strVal().c_str());
+        fsn += ".pu";
         L->source.pf = fopen(fsn.c_str(), "r");
         L->source.type = Pusource::ST_FILE;
         if (L->source.pf == NULL)
@@ -604,7 +608,8 @@ void Token::operator=( const Token &x )
     line = x.line;
     optype = x.optype;
     filename = x.filename;
-    if (x.type >= VAR && x.type <= LABEL)
+    name = x.name;
+    if (x.type >= NUM && x.type <= LABEL)
     {
         value = x.value;
     }
@@ -624,7 +629,8 @@ Token::Token( const Token &x )
     type = x.type;
     line = x.line;
     optype = x.optype;
-    if (x.type >= VAR && x.type <= LABEL)
+    name = x.name;
+    if (x.type >= NUM && x.type <= LABEL)
     {
         value = x.value;
     }

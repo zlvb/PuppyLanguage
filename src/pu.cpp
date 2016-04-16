@@ -81,41 +81,40 @@ add(L,t);
 #define CLEAR_RETURN                            \
 L->return_value.SetType(NIL);
 
-static __pu_value *get_varref(Pu *L, PuString &name)
+static __pu_value *get_varref(Pu *L, const std::string &name)
 {
     StrKeyMap *pvarmap = L->varstack.top();
-    StrKeyMap::Bucket_T *ik = pvarmap->find(name);
-    if (ik != 0)
+    auto ik = pvarmap->find(name);
+    if (ik != pvarmap->end())
     {
-        return &(ik->value);
+        return &(ik->second);
     }
 
     pvarmap = L->varstack.bottom();
     ik = pvarmap->find(name);
-    if (ik != 0)
+    if (ik != pvarmap->end())
     {
-        return &(ik->value);
+        return &(ik->second);
     }
 
     return NULL;
 }
 
-void get_var(Pu *L, const PuString &name, __pu_value *&v)
+void get_var(Pu *L, const std::string &name, __pu_value *&v)
 {
     StrKeyMap *pvarmap = L->varstack.top();
-
-    StrKeyMap::Bucket_T *ik = pvarmap->find(name);
-    if (ik != 0)
+    auto ik = pvarmap->find(name);
+    if (ik != pvarmap->end())
     {
-        v = &ik->value;
+        v = &ik->second;
         return;
     }
 
     pvarmap = L->varstack.bottom();
     ik = pvarmap->find(name);
-    if (ik != 0)
+    if (ik != pvarmap->end())
     {
-        v = &ik->value;
+        v = &ik->second;
         return;
     }
 
@@ -123,9 +122,9 @@ void get_var(Pu *L, const PuString &name, __pu_value *&v)
     {
         pvarmap = L->upvalue;
         ik = pvarmap->find(name);
-        if (ik != 0)
+        if (ik != pvarmap->end())
         {
-            v = &ik->value;
+            v = &ik->second;
             return;
         }
     }
@@ -134,22 +133,22 @@ void get_var(Pu *L, const PuString &name, __pu_value *&v)
     error(L,7);
 }
 
-__pu_value *reg_var(Pu *L, const PuString &varname)
+__pu_value *reg_var(Pu *L, const std::string &varname)
 {
     __pu_value *got = NULL;
     StrKeyMap *top_varmap = L->varstack.top();
-    StrKeyMap::Bucket_T *it = top_varmap->find(varname);
-    if (it != 0)
+    auto it = top_varmap->find(varname);
+    if (it != top_varmap->end())
     {
-        got = &(it->value);
+        got = &(it->second);
     }
     else 
     {
         StrKeyMap *global_varmap = L->varstack.bottom();
         it = global_varmap->find(varname);
-        if (it != 0)
+        if (it != global_varmap->end())
         {
-            got = &(it->value);
+            got = &(it->second);
         }
         else
         {
@@ -157,9 +156,9 @@ __pu_value *reg_var(Pu *L, const PuString &varname)
             {
                 StrKeyMap *up_varmap = L->upvalue;
                 it = up_varmap->find(varname);
-                if (it != 0)
+                if (it != up_varmap->end())
                 {
-                    got = &(it->value);
+                    got = &(it->second);
                 }
             }
         }
@@ -168,8 +167,8 @@ __pu_value *reg_var(Pu *L, const PuString &varname)
     if (got == NULL)
     {
         StrKeyMap *varmap = L->varstack.top();
-        StrKeyMap::Bucket_T *ret = varmap->insert(varname, __pu_value(L));
-        got = &(ret->value);
+        auto ret = varmap->insert(std::make_pair(varname, __pu_value(L)));
+        got = &(ret.first->second);
         debug("reg %s in %p", varname.c_str(), varmap);
     }
 
@@ -222,7 +221,7 @@ static const __pu_value *exp(Pu *L)
     case OPT_SET:{// =
         if (!ptoken->regvar)
         {
-            ptoken->regvar = reg_var(L, ptoken->value.strVal());
+            ptoken->regvar = reg_var(L, ptoken->name);
         }
         __pu_value *var_value = ptoken->regvar;
         assert( !(var_value->type() == UNKNOWN && temp != NULL) );
@@ -236,7 +235,7 @@ static const __pu_value *exp(Pu *L)
         return temp;}
     case OPT_ADDS:// +=
         {
-            __pu_value *pv = get_varref(L, ptoken->value.strVal());
+            __pu_value *pv = get_varref(L, ptoken->name);
             ptoken->regvar = pv;
             CHECK_EXP_RETURNERR(pv);
             return &pv->operator+=(*t);
@@ -244,21 +243,21 @@ static const __pu_value *exp(Pu *L)
         }
     case OPT_SUBS:// -=
         {
-            __pu_value *pv = get_varref(L, ptoken->value.strVal());
+            __pu_value *pv = get_varref(L, ptoken->name);
             ptoken->regvar = pv;
             CHECK_EXP_RETURNERR(pv);
             return &pv->operator-=(*t);
         }
     case OPT_MULS:// *=
         {
-            __pu_value *pv = get_varref(L, ptoken->value.strVal());
+            __pu_value *pv = get_varref(L, ptoken->name);
             ptoken->regvar = pv;
             CHECK_EXP_RETURNERR(pv);
             return &pv->operator*=(*t);
         }
     case OPT_DIVS:// /=
         {
-            __pu_value *pv = get_varref(L, ptoken->value.strVal());
+            __pu_value *pv = get_varref(L, ptoken->name);
             ptoken->regvar = pv;
             CHECK_EXP_RETURNERR(pv);
             return &pv->operator/=(*t);
@@ -274,12 +273,12 @@ static void get_value(Pu *L, __pu_value *&temp)
 {
     PuType tp = TOKEN.type;
     OperatorType nv = TOKEN.optype;
-    PuString &sv = TOKEN.value.strVal();
     if (tp == VAR)
     {
+        std::string &name = TOKEN.name;
         if (!TOKEN.regvar)
         {
-            get_var(L, sv, TOKEN.regvar);            
+            get_var(L, name, TOKEN.regvar);            
         }
         temp = TOKEN.regvar;
         NEXT_TOKEN;
@@ -372,14 +371,14 @@ static void get_arrvalue(Pu *L, __pu_value *&arrref, const int idx)
 
 static void get_mapvalue(Pu *L, __pu_value *&mapref_out, const __pu_value &key)
 {
-    auto pair = mapref_out->map().find(key);
-    if (pair == NULL)
+    auto it = mapref_out->map().find(key);
+    if (it == mapref_out->map().end())
     {
         error(L, 32);
         MAKE_TEMP_VALUE(mapref_out);
         return;
     }
-    mapref_out = &pair->value;
+    mapref_out = &it->second;
 }
 
 static void get_arrref(Pu *L, __pu_value *&temp)
@@ -1012,7 +1011,7 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
         NEXT_TOKEN;
 
         int i=0;
-        std::vector<std::pair<const PuString*, const __pu_value*> > arg_tmp_cnt;
+        std::vector<std::pair<const std::string*, const __pu_value*> > arg_tmp_cnt;
         for (;;) // find )
         {
             PuType tp = TOKEN.type;
@@ -1050,7 +1049,7 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
 
         for (auto &p : arg_tmp_cnt)
         {
-            funcinfo.newvarmap->insert(*p.first, *p.second);
+            funcinfo.newvarmap->insert(std::make_pair(*p.first, *p.second));
         }
         
         if (L->tail_optimize)
@@ -1099,8 +1098,7 @@ static void gotot(Pu *L)
 
     PuType tp = TOKEN.type;
     OperatorType optype = TOKEN.optype;
-    PuString &sv = TOKEN.value.strVal();
-
+   
     if (tp == VAR)
     {
         if (optype >= 0)
@@ -1109,15 +1107,16 @@ static void gotot(Pu *L)
         }
         else
         {
-            LabelMap::Bucket_T *it = L->labelmap.find(sv);
-            if (it == 0)
+            std::string &sv = TOKEN.name;
+            auto it = L->labelmap.find(sv);
+            if (it == L->labelmap.end())
             {
                 error(L,16);
                 return;
             }
 
-            TOKEN.optype = (OperatorType)(it->value);
-            L->cur_token = it->value;
+            TOKEN.optype = (OperatorType)(it->second);
+            L->cur_token = it->second;
         }
 
         NEXT_TOKEN;
@@ -1215,7 +1214,7 @@ static void regfunc(Pu *L)
              L->cur_nup->refcount++;
          }
 
-        __pu_value *got = reg_var(L, TOKEN.value.strVal());
+        __pu_value *got = reg_var(L, TOKEN.name);
         TOKEN.regvar = got;
         *got = fv;
         L->cur_token = L->funclist[(int)fv.numVal()].end;

@@ -31,62 +31,32 @@
 #define _ZLSTR_H_
 
 #include "global.h"
-#include <string.h>
+#include <string>
 #include <stdlib.h>
 
-#define FIXALI32(n) (((n) + 32-1) & ~(32-1))
-#define FIXALI8(n) (((n) + 8-1) & ~(8-1))
-
-struct PuBuffer
+struct PuBuffer : public std::string
 {
-    PuBuffer(const char *s, int l=0):refc(1),count(0)
+    PuBuffer(const char *s)
+        :std::string(s)
+        ,refc(1)
     {
-        if (l==0)
-            length = int(strlen(s));
-        else
-            length = l;
-        count = FIXALI32(length+1);
-        buffer = (char*)malloc(count);
-        memcpy(buffer,s, length);
-        buffer[length] = 0;
+
     }
 
-    inline PuBuffer():buffer(NULL),length(0),refc(1),count(0)
+    PuBuffer(const char *s, int l)
+        :std::string(s, l)
+        , refc(1)
+    {
+
+    }
+
+    inline PuBuffer()
+        :refc(1)
     {}
 
-    ~PuBuffer()
-    {
-        if (buffer)
-            free(buffer);
-    }
-
-    char *buffer;
-    int length;
     int refc;
-    int count;
-    
 };
 
-
-#ifndef _DEBUG
-#define release_buff(zlstr)            \
-{                                    \
-    if ((zlstr).pbuff)                \
-    {                                \
-        --(zlstr).pbuff->refc;        \
-        if ((zlstr).pbuff->refc <= 0)    \
-        {                            \
-            delete (zlstr).pbuff;        \
-        }                            \
-        (zlstr).pbuff = NULL;            \
-    }                                \
-}
-#define RELEASE_BUFF release_buff
-#else
-struct PuString;
-void release_buff(PuString &zlstr);
-#define RELEASE_BUFF release_buff
-#endif
 
 struct PuString
 {
@@ -107,27 +77,31 @@ struct PuString
 
     ~PuString()
     {
-        RELEASE_BUFF((*this));
+        release_buff();
     }
 
     bool operator==( const char *x ) const
     {
-        return (pbuff->buffer == x)? true : strcmp(c_str(),x)==0;
+        if (!pbuff)
+        {
+            return false;
+        }
+        return *pbuff == x;
     }
 
     bool operator!=( const char *x ) const
     {
-        return (pbuff->buffer != x)? true : strcmp(c_str(),x)!=0;
+        return !(*this == x);
     }
 
     int length() const
     {
-        return (pbuff) ? pbuff->length : 0;
+        return (pbuff) ? pbuff->length() : 0;
     }
 
     char operator[](int idx) const 
     {
-        return pbuff->buffer[idx];
+        return (*pbuff)[idx];
     }
 
     void set_char(int idx, char c);
@@ -149,15 +123,16 @@ struct PuString
         return operator+(temp);
     }
 
-     bool operator==(const PuString &x) const;
-     bool operator!=(const PuString &x) const;
+    bool operator==(const PuString &x) const;
+    bool operator!=(const PuString &x) const;
     PuString &operator+=(const PuString &x);
     PuString &operator+=(const char *x);
+    void release_buff();
     PuString &operator+=(char x);
 
     const char *c_str() const
     {
-        return (pbuff)? pbuff->buffer: "";
+        return (pbuff)? pbuff->c_str(): "";
     }
 
     unsigned int hash() const
