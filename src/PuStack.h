@@ -40,27 +40,27 @@ struct  PuStack : public std::vector<T>
 
     void push( const T &i )
     {
-        push_back(i);
+        this->push_back(i);
     }
 
     void pop()
     {
-        pop_back();
+        this->pop_back();
     }
 
     const T &top() const
     {
-        return back();
+        return this->back();
     }
 
     T &top()
     {
-        return back();
+        return this->back();
     }
 
     const T &bottom() const
     {
-        return *begin();
+        return *this->begin();
     }
 
     void release()

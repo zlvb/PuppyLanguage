@@ -9,13 +9,13 @@
 TARGETNAME = puppy
 
 ifeq ($(BUILD), release)
-	CXXFLAGS = -O3 -Wall
+	CXXFLAGS = -g -O3 -Wall -std=c++11
 	OBJPATH = Release
 	TARGET_BIN = bin/$(TARGETNAME)
 	TARGET_LIB = lib/lib$(TARGETNAME).a
 	LIBS = -L./lib/ -ltcmalloc -lunwind-x86_64 -lunwind -lpthread -all-static
 else
-	CXXFLAGS = -g -D_DEBUG -Wall
+	CXXFLAGS = -g -O0 -D_DEBUG -Wall -std=c++11
 	OBJPATH = Debug
 	TARGET_BIN = bin/$(TARGETNAME)_d
 	TARGET_LIB = lib/lib$(TARGETNAME)_d.a

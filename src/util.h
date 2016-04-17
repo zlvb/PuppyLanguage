@@ -45,6 +45,11 @@ void debug(Args&&... args)
     putchar('\n');
 }
 
+inline void debug(const char *s)
+{
+	printf("[DEBUG] %s\n", s);
+}
+
 #else
 
 #define debug(...) 

@@ -1,2 +1,7 @@
 a = {1:1, 's':'s'}
-a = a[1]
+
+def xx(x)
+    write(x)
+end
+
+xx(a['s'])

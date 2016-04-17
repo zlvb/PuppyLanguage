@@ -27,7 +27,9 @@
     Email zlvbvbzl@gmail.com
 */
 
-typedef long long    PU_INT;
+#include <stdint.h>
+
+typedef int64_t    PU_INT;
 typedef double        PU_FLOAT;
 
 typedef PU_FLOAT    PU_NUMBER;

@@ -36,13 +36,13 @@
 struct Token
 {
     Token()
-        :regvar(NULL)
-        ,type(UNKNOWN)
-        ,line(0)
-        ,exp_end(-1)
-        ,exp_stack(-1)
-        ,optype(OPT_UNKNOWN)
-        ,control_flow(NULL)
+        : regvar(NULL)
+		, line(0)
+        , exp_end(-1)
+        , exp_stack(-1)
+		, type(UNKNOWN)
+        , optype(OPT_UNKNOWN)
+        , control_flow(NULL)
         {}
     Token(const Token &x);
     void operator=(const Token &x);
