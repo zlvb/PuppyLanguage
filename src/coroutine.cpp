@@ -51,7 +51,7 @@ void bi_coro_create(Pu *L, int argnum, pu_value *v)
 
     const FunArgs &args = fps.argnames;
 
-    if (argnum-1 != args.size())
+    if (argnum - 1 != (int)args.size())
     {
         error(L,27);
         return;
@@ -67,7 +67,7 @@ void bi_coro_create(Pu *L, int argnum, pu_value *v)
         
         int i=0;
 
-        for (;i<argnum-1;++i)// )
+        for (; i < argnum - 1; ++i)// )
         {
             newvarmap->insert(std::make_pair(args[i], *(v[i+1])));
         }
@@ -107,7 +107,7 @@ void bi_coro_resume(Pu *L, int argnum, pu_value *v)
         coro_id = int(corov->numVal());        
     }
 
-    if (coro_id < 0 || coro_id >= L->coros.size())
+    if (coro_id < 0 || coro_id >= (int)L->coros.size())
     {
         return;
     }

@@ -123,9 +123,9 @@ void gc(Pu *L)
 
 void clear_temp(Pu *L)
 {
-    for (int i = 0; i < L->tempvals.size(); i++)
+    for (auto &v : L->tempvals)
     {
-        L->tempool.push_back(L->tempvals[i]);
+        L->tempool.push_back(v);
     }
     L->tempvals.clear();
 }

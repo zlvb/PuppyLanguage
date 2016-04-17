@@ -65,7 +65,8 @@ struct  PuStack : public std::vector<T>
 
     void release()
     {
-        this->swap(std::vector<T>());
+		std::vector<T> dummy;
+        this->swap(dummy);
     }
 };
 

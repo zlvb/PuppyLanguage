@@ -454,8 +454,6 @@ else
 static void get_map(Pu *L, __pu_value *&a)
 {
     __pu_value v;
-    PuType last_tp = UNKNOWN;
-    OperatorType last_nv = OPT_UNKNOWN;
     MAKE_TEMP_VALUE(a);
     a->SetType(MAP);
     NEXT_TOKEN;
@@ -480,7 +478,6 @@ static void get_map(Pu *L, __pu_value *&a)
         {
             const __pu_value *key = exp(L);
             CHECK_EXP(key);
-            unsigned int key_hash = key->hash();
             tp = TOKEN.type;
             nv = TOKEN.optype;
             if (tp == OP && nv == OPT_COL) // :

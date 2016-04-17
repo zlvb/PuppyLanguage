@@ -50,7 +50,7 @@ struct PuVector
     PuVector():buff(0)
     {}
 
-    PuVector(const PuVector<ValueType> &x):buff(0)
+    PuVector(const PuVector &x):buff(0)
     {
         buff = x.buff;
         incref();
@@ -65,6 +65,21 @@ struct PuVector
     {
         decref();
     }
+
+	bool operator==(const PuVector &x) const
+	{
+		if (buff == x.buff)
+		{
+			return true;
+		}
+
+		if (!buff || !x.buff)
+		{
+			return false;
+		}
+
+		return *buff == *x.buff;
+	}
 
     int size() const
     {

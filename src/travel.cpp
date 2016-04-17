@@ -117,7 +117,66 @@ void exp_control_flow_analyze(Pu *L)
 
 void get_map_trvel(Pu *L)
 {
+	__pu_value v;
+	NEXT_TOKEN;
+	for (;;)
+	{
+		PuType tp = TOKEN.type;
+		OperatorType nv = TOKEN.optype;
 
+		if (tp == OP)
+		{
+			if (nv == OPT_RBR) // }
+			{
+				NEXT_TOKEN;
+				break;
+			}
+			else
+			{
+				error(L, 29);
+				return;
+			}
+		}
+		else
+		{
+			_exp_trvel(L);
+			tp = TOKEN.type;
+			nv = TOKEN.optype;
+			if (tp == OP && nv == OPT_COL) // :
+			{
+				NEXT_TOKEN;
+			}
+			else
+			{
+				error(L, 29);
+				return;
+			}
+			_exp_trvel(L);
+			if (TOKEN.type != OP)
+			{
+				error(L, 29);
+				return;
+			}
+
+			if (TOKEN.optype != OPT_COM) // ,
+			{
+				if (TOKEN.optype != OPT_RBR) // }
+				{
+					error(L, 29);
+					return;
+				}
+				else
+				{
+					NEXT_TOKEN;
+					break;
+				}
+			}
+			else
+			{
+				NEXT_TOKEN;
+			}
+		}
+	}
 }
 
 void term_trvel(Pu * L)

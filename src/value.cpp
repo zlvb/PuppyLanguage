@@ -54,53 +54,6 @@ void DECVMAP_REF(void *&userdata)
     if (userdata)                            \
         ((_up_value*)(userdata))->refcount++;    
 
-static bool cmpmap(const ValueMap *a, const ValueMap *b)
-{
-    if (a == b)
-        return true;
-
-    if (a->size() != b->size())
-        return false;
-
-    int l = a->size();
-    for (int i = 0; i < l; ++i)
-    {
-        //const __pu_value &m = (*a)[i];
-        //const __pu_value &n = (*b)[i];
-
-        //if (m != n)
-        //{
-        //    return false;
-        //}
-    }
-
-    return true;
-}
-
-// cmp the array
-static bool cmparr(const ValueArr *a, const ValueArr *b)
-{
-    if (a == b)
-        return true;
-
-    if (a->size() != b->size())
-        return false;
-    
-    int l = a->size();
-    for (int i=0; i < l; ++i)
-    {
-        const __pu_value &m = (*a)[i];
-        const __pu_value &n = (*b)[i];
-
-        if (m != n)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 const __pu_value &__pu_value::operator +=(const __pu_value &x)
 {
     if (type() == NUM && x.type() == NUM)
@@ -382,11 +335,11 @@ int __pu_value::operator ==(const __pu_value &x) const
     }
     else if (type() == ARRAY)
     {
-        return cmparr(&arr(), &x.arr())?1:0;
+        return (arr() == x.arr())?1:0;
     }
     else if (type() == MAP)
     {
-        return cmpmap(&map(), &x.map()) ? 0 : 1;
+        return (map() == x.map()) ? 0 : 1;
     }
     else if (userdata() == x.userdata())
     {

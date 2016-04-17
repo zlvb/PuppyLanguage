@@ -105,9 +105,16 @@ struct __pu_value
 		}
 	};
 
+	struct value_eq {
+		bool operator()(const __pu_value &__x, const __pu_value &__y) const
+		{
+			return (__x == __y) == 1;
+		}
+	};
+
     typedef std::unordered_map<std::string, __pu_value> StrMap;
     typedef PuVector<__pu_value> ValueArr;
-    typedef PuMap<__pu_value, __pu_value, value_hash> ValueMap;
+    typedef PuMap<__pu_value, __pu_value, value_hash, value_eq> ValueMap;
 
     struct _up_value
     {

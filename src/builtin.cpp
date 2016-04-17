@@ -284,7 +284,7 @@ void bi_num(Pu *L, int argc, pu_value *v)
 static void writefilehandle(Pu *L, int argc, pu_value *v)
 {
     FILE *pfile = (FILE*)v[0]->userdata();
-    for (int i=1; i<argc; ++i)
+    for (int i = 1; i < argc; ++i)
     {
         char buff[65536];
         pu_val2str(L, &v[i], buff, sizeof(buff));
@@ -306,7 +306,7 @@ void bi_write(Pu *L, int argc, pu_value *v)
     }
     else
     {
-        for (int i=0; i<argc; ++i)
+        for (int i = 0; i < argc; ++i)
         {
             if (v[i]->type() == NUM)
             {
@@ -370,7 +370,7 @@ static void clear_tailcode(Pu *L, int evstart)
     L->callstack.pop();
     L->lasterr = -1;
     int max_token = L->tokens.size();
-    for (int i=0; i < max_token-evstart; ++i)
+    for (int i = 0; i < max_token - evstart; ++i)
     {
         L->tokens.pop_back();
     }

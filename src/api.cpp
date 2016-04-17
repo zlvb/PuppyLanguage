@@ -270,9 +270,9 @@ PUAPI pu_value pu_call(Pu *L, const char *funcname,
     {
         pu_value *args = NULL;
         ValueArr  vs;
-        for (int j = 0; j < varr->arr().size(); ++j)
+        for (auto &v : varr->arr())
         {
-            vs.push_back(varr->arr()[j]);
+            vs.push_back(v);
         }
 
         int arg_num = vs.size();
@@ -299,7 +299,7 @@ PUAPI pu_value pu_call(Pu *L, const char *funcname,
         StrKeyMap *newvarmap = new StrKeyMap;
         L->varstack.push(newvarmap);
 
-        for (int j=0; j<vArgs.size(); ++j)
+        for (int j = 0; j < (int)vArgs.size(); ++j)
         {
             __pu_value v = varr->arr()[j];
             newvarmap->insert(std::make_pair(vArgs[j], v));

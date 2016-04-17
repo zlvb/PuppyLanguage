@@ -234,7 +234,7 @@ PUAPI PURESULT pu_load(Pu *L, const char *sname)
 
     if (L->tokens.size() > 0 && L->tokens.back().type == FINISH)
     {
-        if (L->cur_token == L->tokens.size() - 1)
+        if (L->cur_token == (int)L->tokens.size() - 1)
         {
             L->cur_token--;
         }

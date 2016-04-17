@@ -34,18 +34,18 @@
 #include "PuVector.h"
 #include <unordered_map>
 
-template<class Key_T, class Value_T, class HashFunc>
-struct MapRef : public std::unordered_map<Key_T, Value_T, HashFunc>
+template<class Key_T, class Value_T, class HashFunc, class EqFunc>
+struct MapRef : public std::unordered_map<Key_T, Value_T, HashFunc, EqFunc>
 {
     MapRef() :refcount(1) {};
     int refcount;
 };
 
-template<class Key_T, class Value_T, class HashFunc>
+template<class Key_T, class Value_T, class HashFunc, class EqFunc>
 class PuMap
 {
 public:
-	typedef ::MapRef<Key_T, Value_T, HashFunc> MapRef;
+	typedef ::MapRef<Key_T, Value_T, HashFunc, EqFunc> MapRef;
     typedef typename MapRef::iterator iterator;
     PuMap():mapptr_(0)
     { }
@@ -77,6 +77,21 @@ public:
 				mapptr_->refcount++;
 			}
 		}
+	}
+
+	bool operator==(const PuMap &x) const
+	{
+		if (mapptr_ == x.mapptr_)
+		{
+			return true;
+		}
+		
+		if (!mapptr_ || !x.mapptr_)
+		{
+			return false;
+		}
+
+		return *mapptr_ == *x.mapptr_;
 	}
 
 	int size() const

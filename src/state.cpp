@@ -29,6 +29,7 @@
 
 #include "state.h"
 #include "util.h"
+
 #if defined(_MSC_VER) && defined(_DEBUG)
 #if _DEBUG_MEM == 1
 #include <crtdbg.h>
@@ -78,11 +79,13 @@ Pu::Pu()
     debug("Global scop = %p", global_scop);
 }
 
+extern void gc(Pu *L);
+
 Pu::~Pu()
 {
-    for (int i = 0; i < funclist.size(); i++)
+	gc(this);
+    for (FuncPos &info : funclist)
     {
-        FuncPos &info = funclist[i];
         if (info.newvarmap)
         {
             delete info.newvarmap;
@@ -90,6 +93,10 @@ Pu::~Pu()
     }
     StrKeyMap *nd = varstack.bottom();
     delete nd;
+	for (auto p : this->tempool)
+	{
+		delete p;
+	}
 }
 
 PUAPI Pu *pu_open()
