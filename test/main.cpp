@@ -37,13 +37,13 @@ void pu_console(Pu *L);
 
 int main(int argc, char **argv)
 {
-    srand((unsigned int)time(NULL));
+    srand((unsigned int)time(nullptr));
     Pu *L = pu_open();
     if (argc < 2)
     {
         pu_console(L);
         pu_close(L);
-        L = NULL;
+        L = nullptr;
     }
     else
     {
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
             printf("%s\n", "error.");
         }
         pu_close(L);
-        L = NULL;
+        L = nullptr;
 
 #ifdef _WIN32
         system("pause");

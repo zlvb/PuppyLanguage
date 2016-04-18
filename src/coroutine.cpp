@@ -32,10 +32,10 @@
 #include "state.h"
 #include "error.h"
 
-PUAPI void pu_set_return_value(Pu *L, pu_value v);
+PUAPI void pu_set_return_value(Pu *L, pu_var v);
 extern int vm(Pu *L);
 extern void bi_return_num( Pu * L, int v );
-void bi_coro_create(Pu *L, int argnum, pu_value *v)
+void bi_coro_create(Pu *L, int argnum, pu_var *v)
 {
     if (argnum == 0)
     {
@@ -79,19 +79,19 @@ void bi_coro_create(Pu *L, int argnum, pu_value *v)
         c.varmap = newvarmap;
         c.id = L->coros.size();
         L->coros.push_back(c);        
-        __pu_value retv(L);
+        __pu_var retv(L);
         retv.SetType(CORO);
         retv.numVal() = (PU_NUMBER)L->coros.size()-1;
         pu_set_return_value(L, &retv);
     }
 }
 
-void run_coro( Pu * L, int coro_id, __pu_value * corov );
+void run_coro( Pu * L, int coro_id, __pu_var * corov );
 
-void bi_coro_resume(Pu *L, int argnum, pu_value *v)
+void bi_coro_resume(Pu *L, int argnum, pu_var *v)
 {
     int coro_id = 0;
-    __pu_value *corov = NULL;
+    __pu_var *corov = nullptr;
     if (argnum == 0)
     {
         coro_id = rand() % L->coros.size();        
@@ -116,12 +116,12 @@ void bi_coro_resume(Pu *L, int argnum, pu_value *v)
     return;
 }
 
-void bi_coro_yield(Pu *L, int, pu_value *)
+void bi_coro_yield(Pu *L, int, pu_var *)
 {
     L->isyield = true;
 }
 
-void run_coro( Pu *L, int coro_id, __pu_value *corov )
+void run_coro( Pu *L, int coro_id, __pu_var *corov )
 {
     coro &c = L->coros[coro_id];
 
@@ -149,7 +149,7 @@ void run_coro( Pu *L, int coro_id, __pu_value *corov )
     L->callstack.pop(); 
     L->isreturn.pop();
 
-    __pu_value r = __pu_value(L);
+    __pu_var r = __pu_var(L);
     r.SetType(NUM);
     if (L->isyield)
     {
@@ -166,7 +166,7 @@ void run_coro( Pu *L, int coro_id, __pu_value *corov )
             corov->numVal() = -1;
         }
         delete c.varmap;
-        c.varmap = NULL;
+        c.varmap = nullptr;
         L->coros.erase(L->coros.begin() + coro_id);
     }    
     pu_set_return_value(L, &r);

@@ -47,23 +47,21 @@ struct PuVector
 {
     typedef ValueType *iterator;
 
-    PuVector():buff(0)
+    PuVector():buff(nullptr)
     {}
 
-    PuVector(const PuVector &x):buff(0)
+    PuVector(const PuVector &x):buff(nullptr)
     {
         buff = x.buff;
-        incref();
+		if (buff)
+		{
+			++buff->refcount;
+		}
     }
 
     ~PuVector()
     {
-        decref();
-    }
-
-    void clear()
-    {
-        decref();
+        release();
     }
 
 	bool operator==(const PuVector &x) const
@@ -117,12 +115,7 @@ struct PuVector
         return buff->back();
     }
 
-    void incref()
-    {
-        if (buff) ++buff->refcount;
-    }
-
-    void decref()
+    void release()
     {
         if (buff && (--buff->refcount) == 0)
         {
@@ -135,9 +128,12 @@ struct PuVector
     {
         if (buff != x.buff)
         {
-            decref();
+            release();
             buff = x.buff;
-            incref();
+			if (buff)
+			{
+				++buff->refcount;
+			}
         }
     }
 

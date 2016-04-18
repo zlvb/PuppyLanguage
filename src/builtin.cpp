@@ -39,17 +39,17 @@
 #include <unistd.h>  //for linux usleep
 #endif
 
-extern void get_var(Pu *L, const std::string &name, __pu_value *&v);
+extern void get_var(Pu *L, const std::string *name, __pu_var *&v);
 PUAPI{
-PURESULT pu_push_arr(pu_value varr, const pu_value v);
+PURESULT pu_push_arr(pu_var varr, const pu_var v);
 PURESULT pu_loadbuff(Pu *L, const char *str);
-void pu_val2str(Pu *, const pu_value *p, char *b, int buffsize);
-void pu_set_return_value(Pu *L, const pu_value v);
+void pu_val2str(Pu *, const pu_var *p, char *b, int buffsize);
+void pu_set_return_value(Pu *L, const pu_var v);
 }
 extern int vm(Pu *L);
 extern bool check_complete(Pu *L);
 extern int findcurstart(Pu *L);
-#define bi_return_null {__pu_value None(L); None.SetType(NIL); pu_set_return_value(L, &None);}return;
+#define bi_return_null {__pu_var None(L); None.SetType(NIL); pu_set_return_value(L, &None);}return;
 void bi_return_null_func(Pu *L)
 {
     bi_return_null;
@@ -57,13 +57,13 @@ void bi_return_null_func(Pu *L)
 
 void bi_return_num( Pu * L, int v )
 {
-    __pu_value r = __pu_value(L);
+    __pu_var r = __pu_var(L);
     r.SetType(NUM);
     r.numVal() = v;
     pu_set_return_value(L, &r);
 }
 
-const char *get_typestr(__pu_value &v)
+const char *get_typestr(__pu_var &v)
 {
     static const char *type_string[]={
         "null",
@@ -85,9 +85,9 @@ const char *get_typestr(__pu_value &v)
     return type_string[(int)v.type()-NIL];
 }
 
-void bi_sleep(Pu *L, int, pu_value *v)
+void bi_sleep(Pu *L, int, pu_var *v)
 {
-    if (v == NULL || v[0]->type() != NUM)
+    if (v == nullptr || v[0]->type() != NUM)
     {
         error(L, 24);
         bi_return_null;
@@ -103,15 +103,15 @@ void bi_sleep(Pu *L, int, pu_value *v)
     bi_return_null;
 }
 
-void bi_get_value_len(Pu *L, int, pu_value *v)
+void bi_get_value_len(Pu *L, int, pu_var *v)
 {
-    if (v == NULL)
+    if (v == nullptr)
     {
         error(L, 25);
         bi_return_null;
     }
 
-    __pu_value r(L);
+    __pu_var r(L);
     r.SetType(NUM);
     if (v[0]->type() == NUM)
     {
@@ -128,27 +128,27 @@ void bi_get_value_len(Pu *L, int, pu_value *v)
     pu_set_return_value(L,&r);
 }
 
-void bi_time(Pu *L, int, pu_value*)
+void bi_time(Pu *L, int, pu_var*)
 {
-    time_t ti = time(NULL); 
-    __pu_value t(L);
+    time_t ti = time(nullptr); 
+    __pu_var t(L);
     t.SetType(NUM);
     t.numVal() = (PU_NUMBER)ti;
 
     pu_set_return_value(L, &t);
 }
 
-void bi_date(Pu *L, int, pu_value*)
+void bi_date(Pu *L, int, pu_var*)
 {
     struct tm *local; 
     time_t ti; 
-    ti=time(NULL); 
+    ti=time(nullptr); 
     local=localtime(&ti); 
     
-    __pu_value t(L);
+    __pu_var t(L);
     t.SetType(NUM);
     
-    __pu_value r(L);
+    __pu_var r(L);
     r.createby_ = PU_USER;
 
     t.numVal() = (PU_NUMBER)local->tm_year+1900;
@@ -175,17 +175,17 @@ void bi_date(Pu *L, int, pu_value*)
     pu_set_return_value(L, &r);
 }
 
-void bi_quit(Pu *L, int, pu_value *)
+void bi_quit(Pu *L, int, pu_var *)
 {
     L->isquit = true;
     bi_return_null;
 }
 
-void bi_rand(Pu *L, int, pu_value *)
+void bi_rand(Pu *L, int, pu_var *)
 {
-    __pu_value r(L);
+    __pu_var r(L);
 
-    srand( (unsigned)time( NULL ) ); 
+    srand( (unsigned)time( nullptr ) ); 
 
     int n = rand();
     r.SetType(NUM);
@@ -204,14 +204,14 @@ void bi_rand(Pu *L, int, pu_value *)
         printf("%lf", n->numVal());
 
 
-static void write_arr(const __pu_value &arr)
+static void write_arr(const __pu_var &arr)
 {
     printf("[");
     ValueArr::iterator it = arr.arr().begin();
     ValueArr::iterator ite = arr.arr().end();
     while (it != ite)
     {
-        __pu_value temp = *it;
+        __pu_var temp = *it;
         if (temp.type() == STR)
         {
             printf("\'");
@@ -236,7 +236,7 @@ static void write_arr(const __pu_value &arr)
     printf("]");
 }
 
-void bi_str(Pu *L, int argc, pu_value *v)
+void bi_str(Pu *L, int argc, pu_var *v)
 {
     if (argc == 0)
     {
@@ -245,7 +245,7 @@ void bi_str(Pu *L, int argc, pu_value *v)
 
     if (v[0]->type() != STR)
     {
-        __pu_value o(L);
+        __pu_var o(L);
         char buff[65536];
         pu_val2str(L, &v[0], buff, sizeof(buff));
         o.SetType(STR);
@@ -258,14 +258,14 @@ void bi_str(Pu *L, int argc, pu_value *v)
     }
 }
 
-void bi_num(Pu *L, int argc, pu_value *v)
+void bi_num(Pu *L, int argc, pu_var *v)
 {
     if (argc == 0 || v[0]->type() != STR)
     {
         bi_return_null;
     }
     const char *str = v[0]->strVal().c_str();
-    __pu_value o(L);
+    __pu_var o(L);
     o.SetType(NUM);
     if (is_int(str))
     {
@@ -281,9 +281,9 @@ void bi_num(Pu *L, int argc, pu_value *v)
     }
 }
 
-static void writefilehandle(Pu *L, int argc, pu_value *v)
+static void writefilehandle(Pu *L, int argc, pu_var *v)
 {
-    FILE *pfile = (FILE*)v[0]->userdata();
+    FILE *pfile = (FILE*)v[0]->file();
     for (int i = 1; i < argc; ++i)
     {
         char buff[65536];
@@ -293,7 +293,7 @@ static void writefilehandle(Pu *L, int argc, pu_value *v)
     }
 }
 
-void bi_write(Pu *L, int argc, pu_value *v)
+void bi_write(Pu *L, int argc, pu_var *v)
 {
     if (v == 0)
     {
@@ -334,23 +334,23 @@ void bi_write(Pu *L, int argc, pu_value *v)
 }
 
 
-void bi_get_var(Pu *L, int argn, pu_value *v)
+void bi_get_var(Pu *L, int argn, pu_var *v)
 {
-    __pu_value *temp = NULL;
+    __pu_var *temp = nullptr;
     if (argn > 0)
     {
         if (v[0]->type() == STR)
         {
-            get_var(L, v[0]->strVal().c_str(), temp);
+            get_var(L, v[0]->strVal().pbuff, temp);
             CHECK_EXP(temp);
         }
     }
     pu_set_return_value(L, temp);
 }
 
-void bi_type(Pu *L, int argn, pu_value *v)
+void bi_type(Pu *L, int argn, pu_var *v)
 {
-    __pu_value o(L);
+    __pu_var o(L);
     o.SetType(STR);
     if (argn>0)
     {
@@ -415,7 +415,7 @@ int do_string(Pu *L, const char *str)
     }
 }
 
-void bi_eval(Pu *L, int argc, pu_value *v)
+void bi_eval(Pu *L, int argc, pu_var *v)
 {
     if (argc==0)
     {
@@ -425,40 +425,40 @@ void bi_eval(Pu *L, int argc, pu_value *v)
     bi_return_null;
 }
  
- void bi_open(Pu *L, int argc, pu_value *v)
+ void bi_open(Pu *L, int argc, pu_var *v)
  {     
      if (argc==0)
     {
         bi_return_null;
     }
 
-     __pu_value r(L);    
-     FILE *p = fopen(v[0]->strVal().c_str(), "a+");
-    if (p == NULL)
+    __pu_var r(L);    
+    FILE *p = fopen(v[0]->strVal().c_str(), "a+");
+    if (p == nullptr)
     {
         r.SetType(NIL);
     }
     else
     {
         r.SetType(FILEHANDLE);
-        r.userdata() = p;
+        r.file() = p;
     }
      pu_set_return_value(L, &r);
  }
  
- void bi_close(Pu *L, int argc, pu_value *v)
+ void bi_close(Pu *L, int argc, pu_var *v)
  {
      if (argc==0) return;
-     if (v[0]->userdata())
+     if (v[0]->file())
      {
-         fclose((FILE*)v[0]->userdata());
+         fclose((FILE*)v[0]->file());
      }
     bi_return_null;
  }
 
- static void readfilehandle(Pu *L, pu_value *vrr)
+ static void readfilehandle(Pu *L, pu_var *vrr)
  {
-    FILE *pfile = (FILE*)vrr[0]->userdata();
+    FILE *pfile = (FILE*)vrr[0]->file();
 
     size_t pos = ftell(pfile);
     fseek(pfile, 0, SEEK_END);
@@ -489,21 +489,21 @@ void bi_eval(Pu *L, int argc, pu_value *v)
         }
     }
 
-    __pu_value r(L);
+    __pu_var r(L);
     r.SetType(STR);
     r.strVal() = buff;
     pu_set_return_value(L, &r);
     free(buff);
  }
 
-void bi_read(Pu *L, int argc, pu_value *vrr)
+void bi_read(Pu *L, int argc, pu_var *vrr)
 {
     if (argc == 0)
     {
         char temp[1024];        
         fgets(temp, sizeof(temp), stdin);
         temp[strlen(temp) - 1] = '\0';
-        __pu_value v(L);
+        __pu_var v(L);
 
         if (is_int(temp))
         {

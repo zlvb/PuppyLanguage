@@ -127,13 +127,13 @@ public:
 		return mapptr_->find(key);
     }
 
-    iterator insert(const Key_T &key, const Value_T &value)
+    iterator insert(const Key_T &key, const Value_T &const_value)
     {
 		if (!mapptr_)
 		{
 			mapptr_ = new MapRef;
 		}
-		return mapptr_->insert(std::make_pair(key, value)).first;
+		return mapptr_->insert(std::make_pair(key, const_value)).first;
     }
 
     void release()
@@ -145,7 +145,7 @@ public:
             {
                 delete mapptr_;
             }
-            mapptr_ = NULL;
+            mapptr_ = nullptr;
         }
     }
 

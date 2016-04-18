@@ -32,9 +32,9 @@
 #include "../puppy.h"
 extern void bi_return_null_func(Pu *L);
 // 用于控制台模式下的print函数
-void print(Pu *L, int argnum, pu_value *v)
+void print(Pu *L, int argnum, pu_var *v)
 {
-    if (v==NULL)
+    if (v==nullptr)
     {
         printf("\n");
         bi_return_null_func(L);
@@ -55,7 +55,7 @@ void print(Pu *L, int argnum, pu_value *v)
 }
 
 // 用于控制台模式下的help函数
-void help(Pu *L, int , pu_value *)
+void help(Pu *L, int , pu_var *)
 {
     printf (
         "len(object)\n\tReturn the size of a expression\n"
@@ -83,14 +83,14 @@ void help(Pu *L, int , pu_value *)
 
 bool g_bExit = false;
 // 用于退出控制台的exit函数
-void exit_program(Pu *L, int, pu_value *)
+void exit_program(Pu *L, int, pu_var *)
 {
     g_bExit = true;
     bi_return_null_func(L);
 }
 
 #define PU_MAXINPUT    65536
-#define pu_readline(b) (fgets(b, PU_MAXINPUT, stdin) != NULL)
+#define pu_readline(b) (fgets(b, PU_MAXINPUT, stdin) != nullptr)
 extern void regbuiltin(Pu *L);
 void pu_console(Pu *L)
 {

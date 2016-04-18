@@ -32,17 +32,18 @@
 #ifndef __Pu_H__
 #define __Pu_H__
 
+#include <stdint.h>
 
-typedef long long    PU_INT;
+typedef int64_t    PU_INT;
 typedef double        PU_FLOAT;
 typedef PU_FLOAT    PU_NUMBER;
 
 typedef struct Pu Pu;
-typedef struct __pu_value __pu_value;
-typedef __pu_value* pu_value;
+typedef struct __pu_var __pu_var;
+typedef __pu_var* pu_var;
 
 // 可以让脚本调用的函数类型
-typedef void (*ScriptFunc)(Pu*, int argnum, pu_value*);
+typedef void (*ScriptFunc)(Pu*, int argnum, pu_var*);
 
 // 操作结果
 typedef enum PURESULT{
@@ -74,9 +75,6 @@ typedef enum PUVALUECREATEDBY{
 #ifdef __cplusplus
 extern "C"{
 #endif
-
-    typedef void * (*pumalloc)(size_t _Size); 
-    typedef void   (*pufree)(void * _Memory); 
 
 /**
 *
@@ -148,8 +146,8 @@ void pu_makebytecode(Pu *L, const char *fname);
 *    pu_value *v 返回值
 *
 */
-void pu_set_return_value(Pu *L, pu_value v);
-pu_value pu_get_return_value(Pu *L);
+void pu_set_return_value(Pu *L, pu_var v);
+pu_var pu_get_return_value(Pu *L);
 
 /**
 *
@@ -172,7 +170,7 @@ void pu_reg_func(Pu *L, const char *funcname, ScriptFunc pfunc);
 *    值所代表的字符串
 *
 */
-const char *pu_str(pu_value v);
+const char *pu_str(pu_var v);
 
 /**
 *
@@ -183,7 +181,7 @@ const char *pu_str(pu_value v);
 *    值所代表的整数
 *
 */
-PU_NUMBER pu_num(pu_value v);
+PU_NUMBER pu_num(pu_var v);
 
 /**
 *
@@ -194,7 +192,7 @@ PU_NUMBER pu_num(pu_value v);
 *    值所代表的指针
 *
 */
-void *pu_ptr(pu_value v);
+void *pu_ptr(pu_var v);
 
 /**
 *
@@ -206,7 +204,7 @@ void *pu_ptr(pu_value v);
 *    数组成员
 *
 */
-pu_value pu_arr(pu_value v, int idx);
+pu_var pu_arr(pu_var v, int idx);
 
 /**
 *
@@ -217,7 +215,7 @@ pu_value pu_arr(pu_value v, int idx);
 *    类型
 *
 */
-PUVALUETYPE pu_type(pu_value v);
+PUVALUETYPE pu_type(pu_var v);
 
 /**
 *
@@ -227,7 +225,7 @@ PUVALUETYPE pu_type(pu_value v);
 *    const char *str 要设置的字符串
 *
 */
-PURESULT pu_set_str(pu_value v, const char *str);
+PURESULT pu_set_str(pu_var v, const char *str);
 
 /**
 *
@@ -237,7 +235,7 @@ PURESULT pu_set_str(pu_value v, const char *str);
 *    int num 要设置的数字
 *
 */
-PURESULT pu_set_num(pu_value v, PU_NUMBER num);
+PURESULT pu_set_num(pu_var v, PU_NUMBER num);
 
 /**
 *
@@ -247,7 +245,7 @@ PURESULT pu_set_num(pu_value v, PU_NUMBER num);
 *    void *ptr 要设置的指针
 *
 */
-PURESULT pu_set_ptr(pu_value v, void *ptr);
+PURESULT pu_set_ptr(pu_var v, void *ptr);
 
 /**
 *
@@ -257,20 +255,20 @@ PURESULT pu_set_ptr(pu_value v, void *ptr);
 *    const int num 要设置的数字
 *
 */
-PURESULT pu_set_arr(pu_value varr, int idx, pu_value v);
+PURESULT pu_set_arr(pu_var varr, int idx, pu_var v);
 
 // 值是由脚本系统创建的，还是用户调用pu_new_value创建的
-PUVALUECREATEDBY pu_value_created_by(pu_value v);
+PUVALUECREATEDBY pu_value_created_by(pu_var v);
 
 // 在数组的最后插入值
-PURESULT pu_push_arr(pu_value varr, pu_value v);
+PURESULT pu_push_arr(pu_var varr, pu_var v);
 
 
 // 在数组的最后删除值
-PURESULT pu_pop_arr(pu_value varr);
+PURESULT pu_pop_arr(pu_var varr);
 
 // 得到值的长度
-int pu_len(pu_value v);
+int pu_len(pu_var v);
 
 
 /**
@@ -282,7 +280,7 @@ int pu_len(pu_value v);
 *    值对象
 *
 */
-pu_value pu_new_value(Pu *L);
+pu_var pu_new_value(Pu *L);
 
 /**
 *
@@ -291,7 +289,7 @@ pu_value pu_new_value(Pu *L);
 *    const pu_value v 与脚本交互的值类型的对象
 *
 */
-PURESULT pu_del_value(pu_value v);
+PURESULT pu_del_value(pu_var v);
 
 /**
 *
@@ -302,7 +300,7 @@ PURESULT pu_del_value(pu_value v);
 *    const pu_value varr 参数数组
 *
 */
-pu_value pu_call(Pu *L, const char *function_name, pu_value varr);
+pu_var pu_call(Pu *L, const char *function_name, pu_var varr);
 
 /**
 *
@@ -314,7 +312,7 @@ pu_value pu_call(Pu *L, const char *function_name, pu_value varr);
 *    脚本中的变量
 *
 */
-pu_value pu_global(Pu *L, const char *varname);
+pu_var pu_global(Pu *L, const char *varname);
 
 
 /*
@@ -326,7 +324,7 @@ int pu_eval(Pu *L, const char *str);
 /*
  *    得到一个值的字符串形式
  */
-void pu_val2str(Pu *L, pu_value *v, char *buff, int buffsize);
+void pu_val2str(Pu *L, pu_var *v, char *buff, int buffsize);
 
 
 #ifdef __cplusplus

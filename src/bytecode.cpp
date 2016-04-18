@@ -50,29 +50,30 @@ static void save_token(FILE *pbcf, TokenList &tokens)
     while (it != ite)
     {
         char ctp = (char)it->type;
-        fwrite(&ctp, sizeof(ctp),1,pbcf);
+        fwrite(&ctp, sizeof(ctp), 1, pbcf);
         switch (it->type)
         {
         case NUM:
-            fwrite(&it->value.numVal(), sizeof(it->value.numVal()),1,pbcf);
+            fwrite(&it->literal_value->numVal(), sizeof(it->literal_value->numVal()), 1, pbcf);
             break;
         case OP:{
             char cop = (char)it->optype;
             fwrite(&cop, sizeof(cop), 1, pbcf);
                 }break;
         case VAR:{
-            char sl = (char)it->name.length();
+            char sl = (char)it->name->length();
             fwrite(&sl, sizeof(sl), 1, pbcf);
-            fwrite(it->name.c_str(), sl,1,pbcf);
+            fwrite(it->name->c_str(), sl, 1, pbcf);
                  }break;
         case STR:{
-            size_t sl = it->value.strVal().length();
+            size_t sl = it->literal_value->strVal().length();
             fwrite(&sl, sizeof(size_t), 1, pbcf);
-            fwrite(it->value.strVal().c_str(), it->value.strVal().length(),1,pbcf);
+            fwrite(it->literal_value->strVal().c_str(), it->literal_value->strVal().length(), 1, pbcf);
                  }break;
         default:
             break;
         }
+		fwrite(&it->line, sizeof(it->line), 1, pbcf);
         ++it;
     }
 }
@@ -81,7 +82,7 @@ void savebytecode(Pu *, const char *fname, TokenList &tokensave)
 {
     FILE *pbcf = fopen(fname, "wb");
     time_t ti; 
-    ti = time(NULL);
+    ti = time(nullptr);
     fwrite(&ti, sizeof(ti), 1, pbcf);
     save_token(pbcf, tokensave);
     fclose(pbcf);
@@ -100,10 +101,11 @@ void get_nextbytetoken(Pu *L, FILE *pbcf, Token &t)
 
             switch (type)
             {
-            case NUM:
-                t.value.SetType(NUM);
-                fread(&(t.value.numVal()), sizeof(t.value.numVal()), 1, pbcf);                
-                break;
+            case NUM:{
+				PU_NUMBER number = 0;
+				fread(&number, sizeof(number), 1, pbcf);
+				t.literal_value = get_num_literal(L, number);
+				} break;
 
             case OP:{
                 char cop = 0;
@@ -117,21 +119,22 @@ void get_nextbytetoken(Pu *L, FILE *pbcf, Token &t)
                 char *c = (char*)malloc(l + 1);
                 memset(c,0,l+1);
                 fread(c, 1, l, pbcf);
-                t.name = c;   
+                t.name = InsertStrPool(L, c);
                 free(c);
                 } break;
 
             case STR:{
                 size_t l = 0;
-                fread(&l,sizeof(l),1,pbcf);
-                char *c = (char*)malloc(l+1);                
+                fread(&l, sizeof(l), 1, pbcf);
+                char *c = (char*)malloc(l + 1);                
                 fread(c, 1, l, pbcf);
                 c[l] = 0;
-                t.value.SetType(STR);
-                t.value.strVal() = c;    
-                free(c);
+				t.literal_value = get_str_literal(L, c);
+				free(c);
                 } break;
             }
+			t.filename = L->current_filename.back();
+			fread(&t.line, sizeof(t.line), 1, pbcf);
             append_token(L,t);
         }
 
@@ -145,10 +148,14 @@ void get_nextbytetoken(Pu *L, FILE *pbcf, Token &t)
         }
     }
     
-    if (needinclude)
-        parse_include(L,t);
-    else if (type == FUNCTION)
-        parse_function(L,FROM_BYTECODE, pbcf, 0);
+	if (needinclude)
+	{
+		parse_include(L, t);
+	}
+	else if (type == FUNCTION)
+	{
+		parse_function(L, FROM_BYTECODE, pbcf, 0);
+	}
 }
 
 static void get_token_from_bytecode(Pu *L, FILE *pbcf)
@@ -202,9 +209,9 @@ PUAPI int pu_loadbytecode(Pu *L, const char *fname)
         fclose(pbcf);
         return 0;
     }
-
+	L->current_filename.push_back(InsertStrPool(L, fname));
     get_token_from_bytecode(L, pbcf);
-
+	L->current_filename.pop_back();
     fclose(pbcf);
     return 1;
 }
@@ -225,12 +232,12 @@ PUAPI PURESULT pu_load(Pu *L, const char *sname)
     
     L->source.pf = fopen(sname, "r");
     L->source.type = Pusource::ST_FILE;
-    if (L->source.pf == NULL)
+    if (L->source.pf == nullptr)
     {
         return PU_FAILED;
     }
 
-    L->current_filename.push_back(sname);
+	L->current_filename.push_back(InsertStrPool(L, sname));
 
     if (L->tokens.size() > 0 && L->tokens.back().type == FINISH)
     {
@@ -249,7 +256,7 @@ PUAPI PURESULT pu_load(Pu *L, const char *sname)
         CHECKTOKENERROR PU_FAILED;
     }while(temp.type != FINISH);
     fclose(L->source.pf);
-    L->source.pf = NULL;
+    L->source.pf = nullptr;
 
     if (!check_complete(L))
     {
@@ -273,7 +280,7 @@ PUAPI PURESULT pu_load(Pu *L, const char *sname)
 
 PUAPI PURESULT pu_loadbuff(Pu *L, const char *str)
 {
-    if (str == NULL)
+    if (str == nullptr)
     {
         return PU_FAILED;
     }
@@ -288,22 +295,22 @@ PUAPI PURESULT pu_loadbuff(Pu *L, const char *str)
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
-    L->current_filename.push_back(buffname);
+	L->current_filename.push_back(InsertStrPool(L, buffname));
     L->source.type = Pusource::ST_BUFFER;
     L->source.str.buff = str;
     L->source.str.pos = 0;
     
-    Token temp = get_token_from_file(L,NULL);
+    Token temp = get_token_from_file(L,nullptr);
      while(L->tokens[L->tokens.size()-1].type != FINISH) {        
         if (L->funstack.size() > 0 && L->funstack.back() >= 1)// 如果有函数未结束，继续获取函数内容
             parse_function_body(L,L->uncomdef.top(), 
             FROM_SOURCECODE, temp, 
-            NULL,NULL);
+            nullptr,nullptr);
         else
-            temp = get_token_from_file(L,NULL);
+            temp = get_token_from_file(L,nullptr);
         CHECKTOKENERROR PU_FAILED;
     }
-    L->source.str.buff = NULL;
+    L->source.str.buff = nullptr;
     L->source.str.pos = 0;
     L->cur_token = 0;
     L->current_filename.pop_back();

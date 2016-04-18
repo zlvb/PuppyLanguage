@@ -66,6 +66,8 @@ static const char *errtable[] = {
 "only number and string can calc hash", // 30
 "key must be a number or a string",//31
 "key not exist",//32
+"can not return while out of function",//33
+"count of function arguments is invalid",//34
 };
 
 
@@ -74,7 +76,7 @@ inline const char *geterrcode(int id)
     return errtable[id];
 }
 
-void error(Pu *L, const char *s, int l=0);
-void error(Pu *L, int id, int l=0);
+void error(Pu *L, const char *err_msg, int line = 0);
+void error(Pu *L, int err_id, int line = 0);
 
 #endif

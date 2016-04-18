@@ -34,10 +34,10 @@ const char *PU_VERSION = "Puppy 1.5.1";
 extern int do_string(Pu *L, const char *str);
 extern void clear_state(Pu *L);
 extern int vm(Pu *L);
-extern const char *get_typestr(__pu_value &v);
+extern const char *get_typestr(__pu_var &v);
 extern void regbuiltin(Pu *L);
-extern void set_var(Pu *L, const std::string &varname, __pu_value &new_value, __pu_value *&got);
-extern __pu_value *reg_var(Pu *L, const std::string &varname);
+extern void set_var(Pu *L, const std::string &varname, __pu_var &new_value, __pu_var *&got);
+extern __pu_var *reg_var(Pu *L, const std::string *varname);
 #ifdef _MSC_VER
 #pragma warning(disable:4127) // while(1)
 #endif
@@ -48,12 +48,12 @@ PUAPI const char *pu_version()
     return PU_VERSION;
 }
 
-PUAPI void pu_set_return_value(Pu *L, pu_value v)
+PUAPI void pu_set_return_value(Pu *L, pu_var v)
 {
     L->return_value = *v;
 }
 
-PUAPI pu_value pu_get_return_value(Pu *L)
+PUAPI pu_var pu_get_return_value(Pu *L)
 {
     return &L->return_value;
 }
@@ -65,40 +65,41 @@ PUAPI void pu_reg_func(Pu *L, const char *funcname,
     fps.pfunc = pfunc;
     L->funclist.push_back(fps);
 
-    __pu_value v(L);
+    __pu_var v(L);
     v.SetType(CFUN);
     v.numVal() = (PU_NUMBER)L->funclist.size()-1;
-    __pu_value *got = reg_var(L, funcname);
+	const std::string *strname = InsertStrPool(L, funcname);
+    __pu_var *got = reg_var(L, strname);
     *got = v;        
 }
 
-PUAPI const char *pu_str(pu_value v)
+PUAPI const char *pu_str(pu_var v)
 {
     return v->strVal().c_str();
 }
 
-PUAPI PU_NUMBER pu_num(pu_value v)
+PUAPI PU_NUMBER pu_num(pu_var v)
 {
     return v->numVal();
 }
 
-PUAPI pu_value pu_arr(pu_value v, int idx)
+PUAPI pu_var pu_arr(pu_var v, int idx)
 {
     return &(v->arr()[idx]);
 }
 
-PUAPI void *pu_ptr(pu_value v)
+PUAPI void *pu_ptr(pu_var v)
 {
     PU_NUMBER n = v->numVal();
     return (void*)*(PU_INT*)&n;
 }
 
-PUAPI int pu_type(pu_value v)
+PUAPI int pu_type(pu_var v)
 {
     return int(v->type());
 }
 
-PUAPI PURESULT pu_set_str(pu_value v, const char *str)
+PUAPI PURESULT pu_set_str(pu_var v, const char *str)
 {
     if (v->createby_ == PU_SYSTEM)
     {
@@ -118,7 +119,7 @@ PUAPI int pu_eval(Pu *L, const char *str)
     return ret;
 }
 
-PUAPI PURESULT pu_set_num(pu_value v, PU_NUMBER number)
+PUAPI PURESULT pu_set_num(pu_var v, PU_NUMBER number)
 {
     if (v->createby_ == PU_SYSTEM)
     {
@@ -130,7 +131,7 @@ PUAPI PURESULT pu_set_num(pu_value v, PU_NUMBER number)
     return PU_SUCCESS;
 }
 
-PUAPI PURESULT pu_set_ptr(pu_value v, void *ptr)
+PUAPI PURESULT pu_set_ptr(pu_var v, void *ptr)
 {
     if (v->createby_ == PU_SYSTEM)
     {
@@ -143,8 +144,8 @@ PUAPI PURESULT pu_set_ptr(pu_value v, void *ptr)
     return PU_SUCCESS;
 }
 
-PUAPI PURESULT pu_set_arr(pu_value v, 
-                          int idx, pu_value u)
+PUAPI PURESULT pu_set_arr(pu_var v, 
+                          int idx, pu_var u)
 {
     if (v->createby_ == PU_SYSTEM)
     {
@@ -171,14 +172,14 @@ PUAPI PURESULT pu_set_arr(pu_value v,
 }
 
 
-PUAPI pu_value pu_new_value(Pu *L)
+PUAPI pu_var pu_new_value(Pu *L)
 {
-    __pu_value *v = new __pu_value(L);
+    __pu_var *v = new __pu_var(L);
     v->createby_ = PU_USER;
     return v;
 }
 
-PUAPI PURESULT pu_del_value(pu_value v)
+PUAPI PURESULT pu_del_value(pu_var v)
 {
     if (v->createby_ == PU_SYSTEM)
     {
@@ -188,8 +189,8 @@ PUAPI PURESULT pu_del_value(pu_value v)
     return PU_SUCCESS;
 }
 
-PUAPI PURESULT pu_push_arr(pu_value varr, 
-                           pu_value v)
+PUAPI PURESULT pu_push_arr(pu_var varr, 
+                           pu_var v)
 {
     if (varr->createby_ == PU_SYSTEM)
     {
@@ -202,7 +203,7 @@ PUAPI PURESULT pu_push_arr(pu_value varr,
     return PU_SUCCESS;
 }
 
-PUAPI PURESULT pu_pop_arr(pu_value varr)
+PUAPI PURESULT pu_pop_arr(pu_var varr)
 {
     if (varr->createby_ == PU_SYSTEM)
     {
@@ -213,7 +214,7 @@ PUAPI PURESULT pu_pop_arr(pu_value varr)
     return PU_SUCCESS;
 }
 
-PUAPI int pu_len(pu_value v)
+PUAPI int pu_len(pu_var v)
 {
     if (v->type() == STR)
     {
@@ -227,12 +228,12 @@ PUAPI int pu_len(pu_value v)
 }
 
 
-PUAPI PUVALUECREATEDBY pu_value_created_by(pu_value v)
+PUAPI PUVALUECREATEDBY pu_value_created_by(pu_var v)
 {
     return v->createby_;
 }
 
-extern void run_coro( Pu * L, int coro_id, __pu_value * corov );
+extern void run_coro( Pu * L, int coro_id, __pu_var * corov );
 PUAPI void pu_run(Pu *L)
 {    
     clear_state(L);
@@ -241,34 +242,35 @@ PUAPI void pu_run(Pu *L)
     vm(L);
     while (L->coros.size() > 0)
     {
-        run_coro(L, 0, NULL);
+        run_coro(L, 0, nullptr);
     }        
 }
 
-PUAPI pu_value pu_global(Pu *L, const char *name)
+PUAPI pu_var pu_global(Pu *L, const char *name)
 {
     StrKeyMap *pvarmap = L->varstack.bottom();
-    auto it = pvarmap->find(name);
+	std::string strkey(name);
+    auto it = pvarmap->find(&strkey);
     if (it != pvarmap->end())
     {
         return &(it->second);
     }
 
-    return NULL;
+    return nullptr;
 }
 
-PUAPI pu_value pu_call(Pu *L, const char *funcname, 
-                             pu_value varr)
+PUAPI pu_var pu_call(Pu *L, const char *funcname, 
+                             pu_var varr)
 {
     L->return_value.SetType(UNKNOWN);
-    pu_value fv = pu_global(L,funcname);
+    pu_var fv = pu_global(L,funcname);
     FuncPos &fps = L->funclist[(int)fv->numVal()];
 
     const FunArgs &vArgs = fps.argnames;
     L->isreturn.push(0);
     if (fps.start == -1)
     {
-        pu_value *args = NULL;
+        pu_var *args = nullptr;
         ValueArr  vs;
         for (auto &v : varr->arr())
         {
@@ -279,7 +281,7 @@ PUAPI pu_value pu_call(Pu *L, const char *funcname,
 
         if (arg_num > 0)
         {
-            args = new pu_value[arg_num];
+            args = new pu_var[arg_num];
         }
 
         for (int j = 0; j < arg_num; ++j)
@@ -301,7 +303,7 @@ PUAPI pu_value pu_call(Pu *L, const char *funcname,
 
         for (int j = 0; j < (int)vArgs.size(); ++j)
         {
-            __pu_value v = varr->arr()[j];
+            __pu_var v = varr->arr()[j];
             newvarmap->insert(std::make_pair(vArgs[j], v));
         }
 
@@ -344,14 +346,14 @@ PUAPI void pu_set_output_handle(Pu *L, OutputHandle func)
     strcat(b,num);
 
 
-static void s_write_arr(const __pu_value &arr, char *b)
+static void s_write_arr(const __pu_var &arr, char *b)
 {
     strcat(b,"[");
     ValueArr::iterator it = arr.arr().begin();
     ValueArr::iterator ite = arr.arr().end();
     while (it != ite)
     {
-        __pu_value temp = *it;
+        __pu_var temp = *it;
         if (temp.type() == STR)
         {
             strcat(b,"\'");
@@ -376,10 +378,10 @@ static void s_write_arr(const __pu_value &arr, char *b)
     strcat(b,"]");
 }
 
-PUAPI void pu_val2str(Pu *, pu_value *p, char *b, int buffsize)
+PUAPI void pu_val2str(Pu *, pu_var *p, char *b, int buffsize)
 {
     b[0]=0;
-    pu_value &v = *p;
+    pu_var &v = *p;
     if (v->type() == NUM)
     {
         s_WRITE_NUM(v,b);

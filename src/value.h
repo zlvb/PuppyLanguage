@@ -41,22 +41,6 @@
 #endif
 struct Pu;
 
-#ifndef _DEBUG
-#define DECVMAP_REF(userdata)                        \
-if (userdata)                                        \
-{                                                    \
-    ((_up_value*)(userdata))->refcount--;            \
-    if (((_up_value*)(userdata))->refcount == 0)    \
-    {                                                \
-        delete ((_up_value*)(userdata))->vmap;        \
-        ((_up_value*)(userdata))->vmap = 0;            \
-        userdata = 0;                                \
-    }                                                \
-}
-#else
-void DECVMAP_REF(void *&userdata);
-#endif
-
 
 #define VALUE_IS_TRUE(v)                                        \
 (                                                                \
@@ -82,7 +66,7 @@ void DECVMAP_REF(void *&userdata);
         ((v).numVal() != -1)                                    \
                                                                 \
     :(((v).type() == FILEHANDLE)?                                \
-        ((v).userdata() != 0 )                                  \
+        ((v).file() != 0 )                                  \
                                                                 \
     :(((v).type() == FUNCTION)?                                    \
         (true):(false)                                            \
@@ -95,83 +79,170 @@ typedef enum PUVALUECREATEDBY{
     PU_USER
 }PUVALUECREATEDBY;
 
-
-struct __pu_value
+struct __pu_var
 {
 	struct value_hash {
-		size_t operator()(const __pu_value &__x) const
+		size_t operator()(const __pu_var &__x) const
 		{
 			return __x.hash();
 		}
 	};
 
 	struct value_eq {
-		bool operator()(const __pu_value &__x, const __pu_value &__y) const
+		bool operator()(const __pu_var &__x, const __pu_var &__y) const
 		{
 			return (__x == __y) == 1;
 		}
 	};
 
-    typedef std::unordered_map<std::string, __pu_value> StrMap;
-    typedef PuVector<__pu_value> ValueArr;
-    typedef PuMap<__pu_value, __pu_value, value_hash, value_eq> ValueMap;
+	struct strptr_hash {
+		size_t operator()(const std::string * const &__x) const
+		{
+			return std::hash<std::string>()(*__x);
+		}
+	};
 
-    struct _up_value
+	struct strptr_eq {
+		bool operator()(const std::string * const &__x, const std::string * const &__y) const
+		{
+			return *__x == *__y;
+		}
+	};
+
+    typedef std::unordered_map<const std::string*, __pu_var, strptr_hash, strptr_eq> StrKeyMap;
+    typedef PuVector<__pu_var> ValueArr;
+    typedef PuMap<__pu_var, __pu_var, value_hash, value_eq> ValueMap;
+
+    struct _scope
     {
-        StrMap *vmap;
-        int refcount;
-        bool marked;
-        _up_value *next;
+		struct _smap
+		{
+			_smap(Pu *L)
+				: vmap_(new StrKeyMap)
+				, refcount(1)
+				, marked(false)
+				, L_(L)
+				, gc_(true)
+			{
+				add_to_gc();
+			}
+			_smap(Pu *L, StrKeyMap *__vmap)
+				: vmap_(__vmap)
+				, refcount(1)
+				, marked(false)
+				, L_(L)
+				, gc_(false)
+			{
+			}
+			~_smap()
+			{
+				if (gc_)
+				{
+					remove_from_gc();
+					delete vmap_;
+					vmap_ = nullptr;
+				}
+			}
+			StrKeyMap *vmap_;
+			int refcount;
+			bool marked;
+			Pu *L_;
+			bool gc_;
+
+		private:
+			void add_to_gc();
+			void remove_from_gc();
+		};
+
+		_scope(Pu *L)
+			: base_(new _smap(L))			
+		{ }
+		_scope(Pu *L, StrKeyMap *__vmap)
+			: base_(new _smap(L, __vmap))
+		{ }
+		_scope(const _scope &x)
+			: base_(x.base_)
+		{
+			if (base_)
+			{
+				base_->refcount++;
+			}
+		}
+		~_scope()
+		{ 
+			release();
+		}
+		_scope &operator=(const _scope &x)
+		{
+			if (base_ != x.base_)
+			{
+				release();
+				base_ = x.base_;
+				if (base_)
+				{
+					base_->refcount++;
+				}
+			}
+
+			return *this;
+		}
+		_smap *base_;
+	private:
+		void release()
+		{
+			if (base_)
+			{
+				base_->refcount--;
+				if (base_->refcount == 0)
+				{
+					delete base_;
+				}
+				base_ = nullptr;
+			}
+		}
     };
 
-    __pu_value(Pu *_L)
-        :L(_L)
-        ,createby_(PU_SYSTEM)
-        ,type_(UNKNOWN)
-        ,arr_(0)
-        ,userdata_(0)
+	__pu_var(Pu *_L)
+		:L(_L)
+		, createby_(PU_SYSTEM)
+		, type_(UNKNOWN)
+		, arr_(nullptr)
+        , upval_(nullptr)
     {
     }
 
-    __pu_value()
-        :L(NULL)
-        ,createby_(PU_SYSTEM)
-        ,type_(UNKNOWN)
-        ,arr_(0)
-        ,userdata_(0)
-    {
-    }
+	__pu_var();
 
-    __pu_value(const __pu_value &x)
-        :L(x.L)
-        ,createby_(PU_SYSTEM)
-        ,type_(UNKNOWN)
-        ,arr_(0)
-        ,userdata_(0)
+    __pu_var(const __pu_var &x)
+        : L(x.L)
+        , createby_(PU_SYSTEM)
+        , type_(UNKNOWN)
+        , arr_(nullptr)
+        , upval_(nullptr)
     {
         *this = x;
     }
 
-    ~__pu_value();
+    ~__pu_var();
 
-    void operator =(const __pu_value &x);
-    __pu_value operator +(const __pu_value &x);
-    __pu_value operator -(const __pu_value &x);
-    __pu_value operator /(const __pu_value &x);
-    __pu_value operator %(const __pu_value &x);
-    __pu_value operator *(const __pu_value &x);
-    int operator >(const __pu_value &x) const;
-    int operator <(const __pu_value &x) const;
-    int operator >=(const __pu_value &x) const;
-    int operator <=(const __pu_value &x) const;
-    int operator !=(const __pu_value &x) const;
-    int operator ==(const __pu_value &x) const;
-    int operator ||(const __pu_value &x) const;
-    int operator &&(const __pu_value &x) const;
-    const __pu_value &operator +=(const __pu_value &x);
-    const __pu_value &operator -=(const __pu_value &x);
-    const __pu_value &operator *=(const __pu_value &x);
-    const __pu_value &operator /=(const __pu_value &x);
+    void operator =(const __pu_var &x);
+    __pu_var operator +(const __pu_var &x);
+    __pu_var operator -(const __pu_var &x);
+    __pu_var operator /(const __pu_var &x);
+    __pu_var operator %(const __pu_var &x);
+    __pu_var operator *(const __pu_var &x);
+    int operator >(const __pu_var &x) const;
+    int operator <(const __pu_var &x) const;
+    int operator >=(const __pu_var &x) const;
+    int operator <=(const __pu_var &x) const;
+    int operator !=(const __pu_var &x) const;
+    int operator ==(const __pu_var &x) const;
+    int operator ||(const __pu_var &x) const;
+    int operator &&(const __pu_var &x) const;
+    const __pu_var &operator +=(const __pu_var &x);
+    const __pu_var &operator -=(const __pu_var &x);
+    const __pu_var &operator *=(const __pu_var &x);
+    const __pu_var &operator /=(const __pu_var &x);
     
     Pu *L;
     PUVALUECREATEDBY createby_;
@@ -269,73 +340,49 @@ struct __pu_value
         return numVal_;
     }
 
-    void *&userdata()
+	_scope &up_value()
     {    
-        return userdata_;
+        return *upval_;
     }
 
-    void *const userdata() const
+	const _scope &up_value() const
     {   
-        return userdata_;
+        return *upval_;
     }
 
-    void destroy()
-    {
-        switch (type())
-        {
-        case STR:
-            delete strVal_;
-            strVal_ = NULL;
-            break;
-        case ARRAY:
-            delete arr_;
-            arr_ = NULL;
-            break;
-        case FUN:
-            DECVMAP_REF(userdata());
-            break;
-        case MAP:
-            delete map_;
-            map_ = NULL;
-            break;
-        default:
-            break;
-        }        
-    }
+	FILE *&file()
+	{
+		return pfile_;
+	}
+
+	FILE *const file() const
+	{
+		return pfile_;
+	}
+
+	void destroy();
 
 private:
 
-    void build()
-    {
-        switch (type())
-        {
-        case STR:
-            strVal_ = new PuString;
-            break;
-        case MAP:
-            map_ = new ValueMap;
-            break;
-        case ARRAY:
-            arr_ = new ValueArr;
-            break;
-        default:
-            break;
-        }
-    }
+	void build();
     PuType type_;    
     union {
-    PU_NUMBER numVal_;
-    ValueArr *arr_;
-    ValueMap *map_;            
-    PuString *strVal_;    
+		PU_NUMBER numVal_;
+		PU_INT    intVal_;
     };
-    void *userdata_;  
+	union {
+		ValueArr  *arr_;
+		ValueMap  *map_;
+		PuString  *strVal_;
+		FILE      *pfile_;
+		_scope	  *upval_;
+	};
 };
 
-typedef __pu_value::StrMap StrKeyMap;
-typedef __pu_value::ValueArr ValueArr;
-typedef __pu_value::ValueMap ValueMap;
-typedef __pu_value::_up_value _up_value;
+typedef __pu_var::StrKeyMap StrKeyMap;
+typedef __pu_var::ValueArr ValueArr;
+typedef __pu_var::ValueMap ValueMap;
+typedef __pu_var::_scope _scope;
 
 
 #endif

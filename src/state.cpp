@@ -35,30 +35,30 @@
 #include <crtdbg.h>
 #endif
 #endif
-extern void bi_get_value_len(Pu *L, int, pu_value *v);
-extern void bi_date(Pu *L, int ,pu_value*);
-extern void bi_time(Pu *L, int, pu_value*);
-extern void bi_get_value_len(Pu *L, int, pu_value *v);
-extern void bi_write(Pu *L, int ,pu_value *v);
-extern void bi_read(Pu *L, int ,pu_value *v);
-extern void bi_rand(Pu *L, int ,pu_value *v);
-extern void bi_sleep(Pu *L, int, pu_value *v);
-extern void bi_type(Pu *L, int, pu_value *v);
-extern void bi_eval(Pu *L, int, pu_value *v);
-extern void bi_quit(Pu *L, int, pu_value *);
-extern void bi_read(Pu *L, int argc, pu_value *v);
-extern void bi_open(Pu *L, int argc, pu_value *v);
-extern void bi_close(Pu *L, int argc, pu_value *v);
-extern void bi_str(Pu *L, int argc, pu_value *v);
-extern void bi_num(Pu *L, int argc, pu_value *v);
-extern void bi_coro_create(Pu *L, int argnum, pu_value *v);
-extern void bi_coro_resume(Pu *L, int argnum, pu_value *v);
-extern void bi_coro_yield(Pu *L, int argnum, pu_value *v);
-extern void bi_get_var(Pu *L, int argnum, pu_value *v);
+extern void bi_get_value_len(Pu *L, int, pu_var *v);
+extern void bi_date(Pu *L, int ,pu_var*);
+extern void bi_time(Pu *L, int, pu_var*);
+extern void bi_get_value_len(Pu *L, int, pu_var *v);
+extern void bi_write(Pu *L, int ,pu_var *v);
+extern void bi_read(Pu *L, int ,pu_var *v);
+extern void bi_rand(Pu *L, int ,pu_var *v);
+extern void bi_sleep(Pu *L, int, pu_var *v);
+extern void bi_type(Pu *L, int, pu_var *v);
+extern void bi_eval(Pu *L, int, pu_var *v);
+extern void bi_quit(Pu *L, int, pu_var *);
+extern void bi_read(Pu *L, int argc, pu_var *v);
+extern void bi_open(Pu *L, int argc, pu_var *v);
+extern void bi_close(Pu *L, int argc, pu_var *v);
+extern void bi_str(Pu *L, int argc, pu_var *v);
+extern void bi_num(Pu *L, int argc, pu_var *v);
+extern void bi_coro_create(Pu *L, int argnum, pu_var *v);
+extern void bi_coro_resume(Pu *L, int argnum, pu_var *v);
+extern void bi_coro_yield(Pu *L, int argnum, pu_var *v);
+extern void bi_get_var(Pu *L, int argnum, pu_var *v);
 PUAPI void pu_reg_func(Pu *L, const char *funcname, ScriptFunc pfunc);
 
 Pu::Pu()
-    :token(NULL),
+    :token(nullptr),
     cur_token(0),
     line(1),
     isquit(false),
@@ -67,35 +67,44 @@ Pu::Pu()
     output_handle(0),    
     lasterr(-1),
     isyield(false),
-    upvalue(0),
-    cur_nup(0),
-    gclink(0),
+	return_value(this),
+	up_scope(this, nullptr),
+	cur_scope(this, new StrKeyMap),
     builtinreg(false),
     tail_optimize(false)
 {
-    StrKeyMap *global_scop = new StrKeyMap;
-    varstack.push(global_scop);
+    varstack.push(cur_scope.base_->vmap_);
     return_value.SetType(NIL);
-    debug("Global scop = %p", global_scop);
+    debug(this, "Global scop = %p", cur_scope.base_->vmap_);
 }
 
 extern void gc(Pu *L);
-
+extern void sweep(Pu *L);
 Pu::~Pu()
 {
 	gc(this);
-    for (FuncPos &info : funclist)
-    {
-        if (info.newvarmap)
-        {
-            delete info.newvarmap;
-        }
-    }
-    StrKeyMap *nd = varstack.bottom();
-    delete nd;
-	for (auto p : this->tempool)
+	sweep(this);
+	StrKeyMap *global_vmap = varstack.bottom();
+	delete global_vmap;
+
+	for (auto p : tempool)
 	{
 		delete p;
+	}
+
+	for (auto &pair : strpool)
+	{
+		delete pair.second;
+	}
+
+	for (auto &pair : const_str_vals)
+	{
+		delete pair.second;
+	}
+
+	for (auto &pair : const_num_vals)
+	{
+		delete pair.second;
 	}
 }
 
@@ -144,7 +153,7 @@ void clear_state(Pu *L)
     if (L->source.pf)
     {
         fclose(L->source.pf);
-        L->source.pf=NULL;
+        L->source.pf = nullptr;
     }
 
     L->source.str.buff = 0;

@@ -162,6 +162,6 @@ void PuString::release_buff()
         {
             delete pbuff;
         }
-        pbuff = NULL;
+        pbuff = nullptr;
     }
 }

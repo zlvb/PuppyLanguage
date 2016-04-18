@@ -35,24 +35,27 @@
 #include "PuVector.h"
 #include "def.h"
 #include "token.h"
+#include <unordered_set>
 
+typedef std::unordered_map<std::string, const std::string*> StrMap;
+typedef std::unordered_map<std::string, const __pu_var*> ConstVarStrPool;
+typedef std::unordered_map<uint64_t, const __pu_var*> ConstVarNumPool;
 typedef PuStack<int> CallStack;
 typedef PuStack<StrKeyMap*> VarStack;
 typedef std::unordered_map<std::string, int> LabelMap;
-typedef std::vector<std::string> FunArgs;
+typedef std::vector<const std::string*> FunArgs;
+typedef std::vector<__pu_var*> VarVec;
 struct FuncPos
 {
     int start;
     int end;
-    std::vector<std::string> argnames;
+	FunArgs argnames;
     ScriptFunc pfunc;
-    StrKeyMap *newvarmap;
 
     FuncPos()
         :start(-1)
         ,end(-1)
-        ,pfunc(NULL)
-    ,newvarmap(NULL)
+        ,pfunc(nullptr)
     {
 
     }
@@ -99,8 +102,8 @@ struct Pu
     ~Pu();
 
     Token                *token;
-    int                    cur_token;
-    int                    line;
+    int                  cur_token;
+    int                  line;
     PuStack<int>        isreturn;
     bool                isquit;
     int                    mode;
@@ -115,16 +118,19 @@ struct Pu
     FuncList            funclist;
     VarStack            varstack;
     CallStack            callstack;
-    __pu_value            return_value;
-    std::vector<std::string>    current_filename;
+    __pu_var            return_value;
+    std::vector<const std::string*>    current_filename;
+	StrMap				strpool;
     CoroList            coros;
     PuStack<int>        uncomdef;
     PuStack<int>        jumpstack;
-    StrKeyMap                *upvalue;
-    _up_value            *cur_nup;
-    _up_value            *gclink;
-    std::vector<__pu_value*> tempool;
-    std::vector<__pu_value*> tempvals;
+	std::unordered_set<_scope::_smap*>		gccontainer;
+    _scope              up_scope;
+    _scope              cur_scope;
+	VarVec tempool;
+	VarVec tempvals;
+	ConstVarStrPool const_str_vals;
+	ConstVarNumPool const_num_vals;
     bool                builtinreg;
     bool                tail_optimize;
     std::vector<std::vector<CONTROL_PATH> > *control_flow;

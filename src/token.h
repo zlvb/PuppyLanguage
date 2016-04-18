@@ -36,20 +36,24 @@
 struct Token
 {
     Token()
-        : regvar(NULL)
+		: filename(nullptr)
+		, name(nullptr)
+		, literal_value(nullptr)
+        , regvar(nullptr)
 		, line(0)
         , exp_end(-1)
         , exp_stack(-1)
 		, type(UNKNOWN)
         , optype(OPT_UNKNOWN)
-        , control_flow(NULL)
+        , control_flow(nullptr)
         {}
     Token(const Token &x);
+	~Token();
     void operator=(const Token &x);
-    std::string filename;
-    std::string name;
-    __pu_value value;
-    __pu_value *regvar;
+    const std::string *filename;
+    const std::string *name;
+    const __pu_var *literal_value;
+    __pu_var *regvar;
     int line;
     int exp_end;
     short exp_stack;
@@ -69,5 +73,9 @@ typedef std::vector<Token> TokenList;
 #define PU_CODE_FROM_FILE 0
 #define PU_CODE_FROM_BUFF 1
 #define PU_FUNCTION_UNCOMPLETED 2
+
+const std::string *InsertStrPool(Pu *L, const char *sname);
+const __pu_var *get_str_literal(Pu *L, const PuString &strVal);
+const __pu_var *get_num_literal(Pu *L, PU_NUMBER number);
 
 #endif

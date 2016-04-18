@@ -30,31 +30,9 @@
 #include "value.h"
 #include "error.h"
 #include "def.h"
+#include "util.h"
 
-extern void safe_decrecount(Pu *L, _up_value *n);
-
-#ifdef _DEBUG
-void DECVMAP_REF(void *&userdata)
-{
-     if (userdata)                                        
-     {                                                    
-         ((_up_value*)(userdata))->refcount--;            
-         if (((_up_value*)(userdata))->refcount == 0)    
-         {                                        
-             delete ((_up_value*)(userdata))->vmap;    
-             ((_up_value*)(userdata))->vmap = 0;
-             userdata = 0;                                
-         }                                                
-     }
-}
-#endif
-
-
-#define INCVMAP_REF(userdata)                \
-    if (userdata)                            \
-        ((_up_value*)(userdata))->refcount++;    
-
-const __pu_value &__pu_value::operator +=(const __pu_value &x)
+const __pu_var &__pu_var::operator +=(const __pu_var &x)
 {
     if (type() == NUM && x.type() == NUM)
         numVal() += x.numVal();
@@ -65,7 +43,7 @@ const __pu_value &__pu_value::operator +=(const __pu_value &x)
 
     return *this;
 }
-const __pu_value &__pu_value::operator -=(const __pu_value &x)
+const __pu_var &__pu_var::operator -=(const __pu_var &x)
 {
     if (type() == NUM && x.type() == NUM)
         numVal() -= x.numVal();
@@ -73,25 +51,38 @@ const __pu_value &__pu_value::operator -=(const __pu_value &x)
         error(L,9);
     return *this;
 }
-const __pu_value &__pu_value::operator *=(const __pu_value &x)
+const __pu_var &__pu_var::operator *=(const __pu_var &x)
 {
     *this = *this * x;
     return *this;
 }
-const __pu_value &__pu_value::operator /=(const __pu_value &x)
+const __pu_var &__pu_var::operator /=(const __pu_var &x)
 {
     *this = *this / x;
     return *this;
 }
 
-unsigned int __pu_value::hash() const
+union d2ui
+{
+	struct u2
+	{
+		unsigned int x1;
+		unsigned int x2;
+	};
+
+	u2 ui;
+	int64_t li;
+	double f;
+};
+
+unsigned int __pu_var::hash() const
 {
     switch (type())
     {
     case STR:
         return strVal_->hash();
     case NUM:
-        return (unsigned int)numVal_;
+        return ((d2ui*)&numVal_)->ui.x1 + ((d2ui*)&numVal_)->ui.x2;
     default:
         break;
     }
@@ -99,10 +90,56 @@ unsigned int __pu_value::hash() const
     return 0;
 }
 
-
-__pu_value __pu_value::operator +(const __pu_value &x)
+void __pu_var::destroy()
 {
-    __pu_value n(L);
+	switch (type())
+	{
+	case STR:
+		delete strVal_;
+		strVal_ = nullptr;
+		break;
+	case ARRAY:
+		delete arr_;
+		arr_ = nullptr;
+		break;
+	case FUN:
+		delete upval_;
+		upval_ = nullptr;
+		break;
+	case MAP:
+		delete map_;
+		map_ = nullptr;
+		break;
+	default:
+		break;
+	}
+}
+
+void __pu_var::build()
+{
+	switch (type())
+	{
+	case STR:
+		strVal_ = new PuString;
+		break;
+	case MAP:
+		map_ = new ValueMap;
+		break;
+	case ARRAY:
+		arr_ = new ValueArr;
+		break;
+	case FUN:
+		upval_ = new _scope(L, nullptr);
+		break;
+	default:
+		break;
+	}
+}
+
+
+__pu_var __pu_var::operator +(const __pu_var &x)
+{
+    __pu_var n(L);
     if ((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
     {
         n.SetType(NUM);
@@ -175,9 +212,9 @@ __pu_value __pu_value::operator +(const __pu_value &x)
     return n;
 }
 
-__pu_value __pu_value::operator -(const __pu_value &x)
+__pu_var __pu_var::operator -(const __pu_var &x)
 {
-    __pu_value n(L);
+    __pu_var n(L);
     if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
     {
         n.SetType(NUM);
@@ -191,9 +228,9 @@ __pu_value __pu_value::operator -(const __pu_value &x)
     return n;
 }
 
-__pu_value __pu_value::operator /(const __pu_value &x)
+__pu_var __pu_var::operator /(const __pu_var &x)
 {
-    __pu_value n(L);
+    __pu_var n(L);
     if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
     {
         n.SetType(NUM);
@@ -207,9 +244,9 @@ __pu_value __pu_value::operator /(const __pu_value &x)
     return n;
 }
 
-__pu_value __pu_value::operator %(const __pu_value &x)
+__pu_var __pu_var::operator %(const __pu_var &x)
 {
-    __pu_value n(L);
+    __pu_var n(L);
     if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
     {
         n.SetType(NUM);
@@ -223,9 +260,9 @@ __pu_value __pu_value::operator %(const __pu_value &x)
     return n;
 }
 
-__pu_value __pu_value::operator *(const __pu_value &x)
+__pu_var __pu_var::operator *(const __pu_var &x)
 {
-    __pu_value n(L);
+    __pu_var n(L);
     if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
     {
         n.SetType(NUM);
@@ -248,7 +285,7 @@ __pu_value __pu_value::operator *(const __pu_value &x)
     
     return n;
 }
-int __pu_value::operator >(const __pu_value &x) const
+int __pu_var::operator >(const __pu_var &x) const
 {
     if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
     {
@@ -262,7 +299,7 @@ int __pu_value::operator >(const __pu_value &x) const
     error(L,13);
     return 0;
 }
-int __pu_value::operator <(const __pu_value &x) const
+int __pu_var::operator <(const __pu_var &x) const
 {
     if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
     {
@@ -276,7 +313,7 @@ int __pu_value::operator <(const __pu_value &x) const
     error(L,13);
     return 0;
 }
-int __pu_value::operator >=(const __pu_value &x) const
+int __pu_var::operator >=(const __pu_var &x) const
 {
     if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
     {
@@ -290,7 +327,7 @@ int __pu_value::operator >=(const __pu_value &x) const
     error(L,13);
     return 0;
 }
-int __pu_value::operator <=(const __pu_value &x) const
+int __pu_var::operator <=(const __pu_var &x) const
 {
     if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
     {
@@ -304,12 +341,12 @@ int __pu_value::operator <=(const __pu_value &x) const
     error(L,13);
     return 0;
 }
-int __pu_value::operator !=(const __pu_value &x) const
+int __pu_var::operator !=(const __pu_var &x) const
 {
     return (*this == x) ? 0 : 1;
 }
 
-int __pu_value::operator ==(const __pu_value &x) const
+int __pu_var::operator ==(const __pu_var &x) const
 {
     if (type() == NUM && x.type() == BOOLEANT)
     {
@@ -329,6 +366,10 @@ int __pu_value::operator ==(const __pu_value &x) const
     {
         return (numVal() == x.numVal())?1:0;
     }
+	else if (upval_ == x.upval_)
+	{
+		return 1;
+	}
     else if (type() == STR)
     {
         return (strVal() == x.strVal())?1:0;
@@ -341,24 +382,21 @@ int __pu_value::operator ==(const __pu_value &x) const
     {
         return (map() == x.map()) ? 0 : 1;
     }
-    else if (userdata() == x.userdata())
-    {
-        return 1;
-    }
+    
     return 0;
 }
 
-int __pu_value::operator ||(const __pu_value &x) const
+int __pu_var::operator ||(const __pu_var &x) const
 {
     return (VALUE_IS_TRUE(*this)) || (VALUE_IS_TRUE(x));
 }
 
-int __pu_value::operator &&(const __pu_value &x) const
+int __pu_var::operator &&(const __pu_var &x) const
 {
     return (VALUE_IS_TRUE(*this)) && (VALUE_IS_TRUE(x));
 }
 
-void __pu_value::operator =(const __pu_value &x)
+void __pu_var::operator =(const __pu_var &x)
 {
     switch (x.type())
     {
@@ -369,17 +407,9 @@ void __pu_value::operator =(const __pu_value &x)
         }break;
     case FUN:
         {            
-            if (type() == FUN)
-            {
-                if (userdata() != x.userdata())
-                {
-                    DECVMAP_REF(userdata());
-                }
-            }
-            INCVMAP_REF(x.userdata());
-            SetType(x.type());
-            numVal() = x.numVal();
-            userdata() = x.userdata();
+			SetType(x.type());
+			numVal() = x.numVal();
+			up_value() = x.up_value();
         }break;
     case STR:
         {            
@@ -396,25 +426,30 @@ void __pu_value::operator =(const __pu_value &x)
         SetType(x.type());
         map() = x.map();
     }break;
+	case FILEHANDLE:
+	{
+		SetType(x.type());
+		pfile_ = x.pfile_;
+	} break;
     default:
-        SetType(x.type());
+		SetType(x.type());
         break;
     }
-    userdata() = x.userdata();    
+	
     L = x.L;    
 }
 
-__pu_value::~__pu_value()
+__pu_var::__pu_var()
+	:L(nullptr)
+	, createby_(PU_SYSTEM)
+	, type_(UNKNOWN)
+	, arr_(nullptr)
+	, upval_(nullptr)
 {
-    if (type() == FUN && userdata())
-    {
-        _up_value *f = (_up_value*)(userdata());
-        if (f->refcount>0)
-        {
-            userdata() = 0;
-            safe_decrecount(L, f);
-        }
-    }
+	debug(L, "waring call default __pi_var::construct");
+}
 
+__pu_var::~__pu_var()
+{
     destroy();
 }

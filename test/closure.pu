@@ -6,22 +6,20 @@ def foo()
     return closure
 end
 
-c = foo()
-write(c(4))
+#c = foo()
+#write(c(4))
 # write(c(200))
 
-def ccc()
-    write('ccc')
-    #write(x1)
+def ccc(x1,x2)
+    write('ccc' + x1 + '\n')
+    write('ccc' + x2 + '\n')
+    write(x1+x2)
 end
     
 def xxx()
     write('xxx')
     x1 = 1
-    return ccc()
+    return ccc(x1+1,1)
 end
 
 xxx()
-
-def yyy()
-end

@@ -1,4 +1,4 @@
-# 计算裴波那契数列前46位，算100次
+# 锟斤拷锟斤拷锟结波锟斤拷锟斤拷锟斤拷锟斤拷前46位锟斤拷锟斤拷100锟斤拷
 
 i=10
 while i
@@ -16,7 +16,7 @@ while i
 end
 
 x=9999
-write('"'+x+'"'+'以内所有素数\n')
+write('"'+x+'"'+'锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷\n')
 i=2
 while i<=x
     k=1 is=0
@@ -129,3 +129,7 @@ write(r2,'\n')
 
 v1 = null
 v2 = null
+
+include map
+include tailcall
+include closure

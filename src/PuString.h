@@ -60,17 +60,17 @@ struct PuBuffer : public std::string
 
 struct PuString
 {
-    PuString():pbuff(NULL),hash_Key(0)
+    PuString():pbuff(nullptr),hash_Key(0)
     {
     
     }
 
-    PuString(const char *x):pbuff(NULL),hash_Key(0)
+    PuString(const char *x):pbuff(nullptr),hash_Key(0)
     {
         *this = x;
     }
 
-    PuString(const PuString &x):pbuff(NULL),hash_Key(0)
+    PuString(const PuString &x):pbuff(nullptr),hash_Key(0)
     {
         *this = x;
     }

@@ -141,16 +141,30 @@ static void pu_scanf(Pusource &s, const char *fmt, void *out)
     }
 }
 
+const __pu_var *get_str_literal(Pu *L, const PuString &strVal)
+{
+	const __pu_var *literal_value = nullptr;
+	auto it = L->const_str_vals.find(*strVal.pbuff);
+	if (it != L->const_str_vals.end())
+	{
+		literal_value = it->second;
+	}
+	else
+	{
+		literal_value = new __pu_var(L);
+		const_cast<__pu_var*>(literal_value)->SetType(STR);
+		const_cast<__pu_var*>(literal_value)->strVal() = strVal;
+		L->const_str_vals[*strVal.pbuff] = literal_value;
+	}
+
+	return literal_value;
+}
+
 static void get_string(Pu *L, int c, Token &newToken)
 {    
     bool qtt = (c=='\'');
     c = pu_getc(L);
-
-    newToken.type = STR;
-    newToken.value.SetType(STR);
-    newToken.value.L = L;
-    PuString &strValout = newToken.value.strVal();
-
+	PuString strValout;
     while (  (c != '\'' && qtt) || (c != '\"' && !qtt) )
     {
         if (check_source_end(c,L->source))
@@ -173,6 +187,29 @@ static void get_string(Pu *L, int c, Token &newToken)
         strValout += (char(c));
         c = pu_getc(L);
     }
+
+	newToken.type = STR;
+	newToken.literal_value = get_str_literal(L, strValout);
+}
+
+const __pu_var *get_num_literal(Pu *L, PU_NUMBER number)
+{
+	const __pu_var *literal_value = nullptr;
+	uint64_t key = *(uint64_t*)&number;
+	auto it = L->const_num_vals.find(key);
+	if (it != L->const_num_vals.end())
+	{
+		literal_value = it->second;
+	}
+	else
+	{
+		literal_value = new __pu_var(L);
+		const_cast<__pu_var*>(literal_value)->SetType(NUM);
+		const_cast<__pu_var*>(literal_value)->numVal() = number;
+		L->const_num_vals[key] = literal_value;
+	}
+
+	return literal_value;
 }
 
 static void get_num(Pu *L, int c, Token &newToken)
@@ -180,10 +217,9 @@ static void get_num(Pu *L, int c, Token &newToken)
     pu_ungetc(L,c);
     PU_NUMBER number;
     pu_scanf(L->source, "%lf", &number);
+
     newToken.type = NUM;
-    newToken.value.numVal() = number;
-    newToken.value.SetType(NUM);
-    newToken.value.L = L;
+	newToken.literal_value = get_num_literal(L, number);
 }
 
 static bool is_space(Pu *L, int c)
@@ -295,7 +331,7 @@ static void get_var_key(Pu *L, int c, Token &newToken)
     newToken.type = check_token_type(identifier);
     if (newToken.type == VAR)
     {
-        newToken.name = identifier;        
+        newToken.name = InsertStrPool(L, identifier);        
     }    
 }
 
@@ -306,15 +342,18 @@ static void check_include(Pu *L, const char *fname)
 
     while (it != ite)
     {
-        int i = it->length()-1;
-        for (; i>=0; --i)
+        int i = (int)(*it)->length() - 1;
+        for (; i >= 0; --i)
         {
-            if ((*it)[i] == '.') break;
+			if ((*it)->operator[](i) == '.') 
+			{
+				break; 
+			}
         }
 
-        if (memcmp(it->c_str(),fname,i) == 0)
+        if (memcmp((*it)->c_str(), fname, i) == 0)
         {
-            error(L,19);
+            error(L, 19);
             break;
         }
         ++it;
@@ -326,7 +365,7 @@ static void get_label(Pu *L, Token &newToken)
     newToken.type = LABEL;
     char label[PU_MAXVARLEN]={0};
     pu_scanf(L->source, "%s", label);
-    newToken.name = label;
+    newToken.name = InsertStrPool(L, label);
     L->labelmap.insert(std::make_pair(label, L->cur_token));
 }
 
@@ -383,7 +422,7 @@ void parse_function_body(Pu *L, int lp, int token_from, Token &t, FILE *pbcf=0, 
         }
     }
     FuncPos &fps = L->funclist[lp];
-     fps.end = L->tokens.size();
+    fps.end = L->tokens.size();
 }
 
 void parse_function(Pu *L, int token_from, FILE *pbcf, TokenList *tl)
@@ -457,28 +496,28 @@ void parse_function(Pu *L, int token_from, FILE *pbcf, TokenList *tl)
 
 void parse_include(Pu *L, const Token &filename)
 {
-    check_include(L, filename.name.c_str());
+    check_include(L, filename.name->c_str());
 
-    std::string newfname = filename.name + ".puc";
+    std::string newfname = (*filename.name) + ".puc";
     if (!pu_loadbytecode(L, newfname.c_str()))
     {
         Pusource old_s = L->source;
-        std::string fsn(filename.value.strVal().c_str());
+        std::string fsn(*filename.name);
         fsn += ".pu";
         L->source.pf = fopen(fsn.c_str(), "r");
         L->source.type = Pusource::ST_FILE;
-        if (L->source.pf == NULL)
+        if (L->source.pf == nullptr)
         {
             error(L,20);
             return;
         }
 
-        L->current_filename.push_back(fsn);
+		L->current_filename.push_back(InsertStrPool(L, fsn.c_str()));
 
         TokenList t;
         Token temp;
         do{
-            temp = get_token_from_file(L,&t);
+            temp = get_token_from_file(L, &t);
             CHECKTOKENERROR;
         }while(temp.type != FINISH);
         fclose(L->source.pf);
@@ -579,9 +618,9 @@ Token get_token_from_file(Pu *L, TokenList *t)
         CHECKTOKENERROR newToken;
 
         newToken.line = L->line;
-        newToken.filename = L->current_filename[L->current_filename.size()-1];
+        newToken.filename = L->current_filename.back();
 
-        append_token(L,newToken);
+        append_token(L, newToken);
 
         if (t)
         {
@@ -597,7 +636,7 @@ Token get_token_from_file(Pu *L, TokenList *t)
     if (need_include)
         parse_include(L,newToken);
     else if (newToken.type == FUNCTION)
-        parse_function(L,FROM_SOURCECODE, NULL, t);
+        parse_function(L,FROM_SOURCECODE, nullptr, t);
     
     return newToken;
 }
@@ -609,22 +648,16 @@ void Token::operator=( const Token &x )
     optype = x.optype;
     filename = x.filename;
     name = x.name;
-    if (x.type >= NUM && x.type <= LABEL)
-    {
-        value = x.value;
-    }
-    else
-    {
-        value.SetType(UNKNOWN);
-    }
+    literal_value = x.literal_value;
 }
 
 Token::Token( const Token &x )
     : filename(x.filename)
-    , regvar(NULL)
+    , regvar(nullptr)
     , exp_end(-1)
     , exp_stack(-1)
-    , control_flow(NULL)
+    , control_flow(nullptr)
+	, literal_value(NULL)
 {
     type = x.type;
     line = x.line;
@@ -632,6 +665,32 @@ Token::Token( const Token &x )
     name = x.name;
     if (x.type >= NUM && x.type <= LABEL)
     {
-        value = x.value;
+        literal_value = x.literal_value;
     }
+}
+
+Token::~Token()
+{
+	if (control_flow)
+	{
+		delete control_flow;
+		control_flow = nullptr;
+	}
+}
+
+const std::string *InsertStrPool(Pu * L, const char *sname)
+{
+	const std::string *filename = nullptr;
+	auto it = L->strpool.find(sname);
+	if (it == L->strpool.end())
+	{
+		filename = new std::string(sname);
+		L->strpool.insert(std::make_pair(*filename, filename));
+	}
+	else
+	{
+		filename = it->second;
+	}
+
+	return filename;
 }

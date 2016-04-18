@@ -34,14 +34,14 @@
 
 struct Pu;
 struct Token;
-struct __pu_value;
-typedef __pu_value* pu_value; 
+struct __pu_var;
+typedef __pu_var* pu_var; 
 struct FuncPos;
 
 #define PUAPI extern "C"
 
 // 可以让脚本调用的函数类型
-typedef void (*ScriptFunc)(Pu*, int arg_num, pu_value*);
+typedef void (*ScriptFunc)(Pu*, int arg_num, pu_var*);
 
 // 错误处理回调
 typedef void (*ErrHandle)(int err, const char *err_str);
@@ -76,7 +76,7 @@ typedef enum PURESULT{
     }\
     else\
     {\
-        p = new __pu_value(L);\
+        p = new __pu_var(L);\
     }    \
     L->tempvals.push_back(p);
 
@@ -98,7 +98,7 @@ typedef enum PURESULT{
     if (!v || v->type() == UNKNOWN)\
     {\
         error(L, 7);\
-        __pu_value *_r = NULL;\
+        __pu_var *_r = nullptr;\
         MAKE_TEMP_VALUE(_r);\
         return _r;\
     }

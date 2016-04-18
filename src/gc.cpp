@@ -29,89 +29,55 @@
 
 #include "state.h"
 
-static void mark(StrKeyMap *vmap)
+static void mark(StrKeyMap *global_vmap);
+static void mark(_scope *scope);
+static void mark(__pu_var &v)
 {
-    for (auto &pair : *vmap)
+	if (v.type() == FUN)
+	{
+		_scope *uv = &v.up_value();
+		if (uv && !uv->base_->marked)
+		{
+			uv->base_->marked = true;
+			mark(uv);
+		}
+	}
+}
+
+void mark(StrKeyMap *global_vmap)
+{
+	for (auto &pair : *global_vmap)
+	{
+		mark(pair.second);
+	}
+}
+
+void mark(_scope *scope)
+{
+    for (auto &pair : *scope->base_->vmap_)
     {
-        __pu_value &v = pair.second;
-        if (v.type() == FUN)
-        {
-            _up_value *uv = (_up_value*)v.userdata();
-            if (uv && !uv->marked)
-            {
-                uv->marked = true;
-                mark(uv->vmap);
-            }
-        }
+		mark(pair.second);
     }
 }
 
-static void sweep(Pu *L)
+void sweep(Pu *L)
 {
-    _up_value *p = L->gclink;
-    _up_value *prev = p;
-    while (p != 0)
-    {
-        if (p->marked)
-        {
-            p->marked = false;
-            prev = p;
-            p = p->next;
-        }
-        else
-        {
-            if (p == L->gclink)
-            {
-                L->gclink = L->gclink->next;
-                prev = L->gclink;
-                delete p;
-                p = L->gclink;
-            }
-            else
-            {
-                _up_value *np = p->next;
-                delete p;
-                prev->next = np;
-                p = np;
-            }
-        }
-    }
-}
-
-void safe_decrecount(Pu *L, _up_value *n)
-{
-    _up_value *p = L->gclink;
-    _up_value *prev = p;
-    while (p != 0)
-    {
-        if (p != n)
-        {
-            prev = p;
-            p = p->next;
-            continue;
-        }
-
-        if ((--p->refcount) != 0)
-        {
-            break;
-        }
-
-        if (p == L->gclink)
-        {
-            L->gclink = L->gclink->next;
-            prev = L->gclink;
-            //delete p->vmap;
-            delete p;
-        }
-        else
-        {
-            _up_value *np = p->next;
-            //delete p->vmap;
-            delete p;
-            prev->next = np;
-        }
-        break;
-    }
+	auto it = L->gccontainer.begin();
+	auto itend = L->gccontainer.end();
+	while (it != itend)
+	{
+		if (!(*it)->marked)
+		{
+			auto *ptr = *it;
+			it = L->gccontainer.erase(it);
+			delete ptr;
+		}
+		else
+		{
+			(*it)->marked = false;
+			++it;
+		}
+	}
 }
 
 void gc(Pu *L)

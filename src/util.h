@@ -34,20 +34,35 @@ Email zlvbvbzl@gmail.com
 
 #ifdef _DEBUG
 
+#include "state.h"
 #include <stdio.h>
 #include <utility>
 
 template<typename... Args>
-void debug(Args&&... args)
+void debug(Pu *L, Args&&... args)
 {
-    printf("[DEBUG] ");
+	if (L && L->token)
+	{
+		printf("[DEBUG] %s[%d] ", TOKEN.filename?TOKEN.filename->c_str():"", TOKEN.line);
+	}
+	else
+	{
+		printf("%s", "[DEBUG] ");
+	}
     printf(std::forward<Args>(args)...);
     putchar('\n');
 }
 
-inline void debug(const char *s)
+inline void debug(Pu *L, const char *s)
 {
-	printf("[DEBUG] %s\n", s);
+	if (L && L->token)
+	{
+		printf("[DEBUG]  %s[%d] %s\n", TOKEN.filename ? TOKEN.filename->c_str() : "", TOKEN.line, s);
+	}
+	else
+	{
+		printf("[DEBUG]  %s\n", s);
+	}
 }
 
 #else

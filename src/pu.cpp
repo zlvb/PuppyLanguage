@@ -39,11 +39,11 @@
 #include <vector>
 
 int vm(Pu *L);
-static void term(Pu *L, __pu_value *&temp);
-static void factor(Pu *L, __pu_value *&temp);
-static void cmp(Pu *L, __pu_value *&temp);
-static void logic(Pu *L, __pu_value *&temp);
-static void add(Pu *L, __pu_value *&temp);
+static void term(Pu *L, __pu_var *&temp);
+static void factor(Pu *L, __pu_var *&temp);
+static void cmp(Pu *L, __pu_var *&temp);
+static void logic(Pu *L, __pu_var *&temp);
+static void add(Pu *L, __pu_var *&temp);
 static void callfunction(Pu *L, FuncPos &finfo);
 
 #define _CHT PuType tp = TOKEN.type;int nv = TOKEN.optype;
@@ -56,7 +56,7 @@ static void callfunction(Pu *L, FuncPos &finfo);
 #define ADD(L,t)    factor(L,t); _TERM(L,t) _ADD(L,t)
 #define TERM(L,t)    factor(L,t); _TERM(L,t)
 #define FACTOR(L,t)    factor(L,t);
-#define DO_GC if (L->tempvals.size() >= GC_LEVEL){ clear_temp(L);if(L->gclink != 0 && L->varstack.size() == 1){gc(L);}}
+#define DO_GC if (L->tempvals.size() >= GC_LEVEL){ clear_temp(L);if(L->gccontainer.size() != 0 && L->varstack.size() == 1){gc(L);}}
 
 extern void gc(Pu *L);
 extern void clear_temp(Pu *L);
@@ -81,7 +81,7 @@ add(L,t);
 #define CLEAR_RETURN                            \
 L->return_value.SetType(NIL);
 
-static __pu_value *get_varref(Pu *L, const std::string &name)
+static __pu_var *get_varref(Pu *L, const std::string *name)
 {
     StrKeyMap *pvarmap = L->varstack.top();
     auto ik = pvarmap->find(name);
@@ -97,10 +97,10 @@ static __pu_value *get_varref(Pu *L, const std::string &name)
         return &(ik->second);
     }
 
-    return NULL;
+    return nullptr;
 }
 
-void get_var(Pu *L, const std::string &name, __pu_value *&v)
+void get_var(Pu *L, const std::string *name, __pu_var *&v)
 {
     StrKeyMap *pvarmap = L->varstack.top();
     auto ik = pvarmap->find(name);
@@ -118,9 +118,10 @@ void get_var(Pu *L, const std::string &name, __pu_value *&v)
         return;
     }
 
-    if (L->upvalue && L->upvalue != pvarmap)
+    if (L->up_scope.base_->vmap_ != pvarmap 
+		&& L->up_scope.base_->vmap_ != L->varstack.top())
     {
-        pvarmap = L->upvalue;
+        pvarmap = L->up_scope.base_->vmap_;
         ik = pvarmap->find(name);
         if (ik != pvarmap->end())
         {
@@ -133,9 +134,9 @@ void get_var(Pu *L, const std::string &name, __pu_value *&v)
     error(L,7);
 }
 
-__pu_value *reg_var(Pu *L, const std::string &varname)
+__pu_var *reg_var(Pu *L, const std::string *varname)
 {
-    __pu_value *got = NULL;
+    __pu_var *got = nullptr;
     StrKeyMap *top_varmap = L->varstack.top();
     auto it = top_varmap->find(varname);
     if (it != top_varmap->end())
@@ -152,9 +153,10 @@ __pu_value *reg_var(Pu *L, const std::string &varname)
         }
         else
         {
-            if (L->upvalue && L->upvalue != top_varmap)
+            if (L->up_scope.base_->vmap_ && L->up_scope.base_->vmap_ != top_varmap
+				&& L->up_scope.base_->vmap_ != global_varmap)
             {
-                StrKeyMap *up_varmap = L->upvalue;
+                StrKeyMap *up_varmap = L->up_scope.base_->vmap_;
                 it = up_varmap->find(varname);
                 if (it != up_varmap->end())
                 {
@@ -164,21 +166,21 @@ __pu_value *reg_var(Pu *L, const std::string &varname)
         }
     }
 
-    if (got == NULL)
+    if (got == nullptr)
     {
         StrKeyMap *varmap = L->varstack.top();
-        auto ret = varmap->insert(std::make_pair(varname, __pu_value(L)));
+        auto ret = varmap->insert(std::make_pair(varname, __pu_var(L)));
         got = &(ret.first->second);
-        debug("reg %s in %p", varname.c_str(), varmap);
+        debug(L, "reg %s in %p", varname->c_str(), varmap);
     }
 
     return got;
 }
 
-static const __pu_value *exp(Pu *L) 
+static const __pu_var *exp(Pu *L) 
 {
     Token *ptoken = &TOKEN;
-    __pu_value *temp = NULL;
+    __pu_var *temp = nullptr;
     do{
         if (ptoken->type == VAR)
         {
@@ -207,13 +209,13 @@ static const __pu_value *exp(Pu *L)
     if (ptoken->type != VAR)
     {
         error(L,22);
-        __pu_value *result = NULL;
+        __pu_var *result = nullptr;
         MAKE_TEMP_VALUE(result);
         return result;
     }
 
     NEXT_TOKEN;
-    const __pu_value *t = exp(L);
+    const __pu_var *t = exp(L);
     CHECK_EXP_RETURN(t, t);
 
     switch (nv)
@@ -223,10 +225,10 @@ static const __pu_value *exp(Pu *L)
         {
             ptoken->regvar = reg_var(L, ptoken->name);
         }
-        __pu_value *var_value = ptoken->regvar;
-        assert( !(var_value->type() == UNKNOWN && temp != NULL) );
+        __pu_var *var_value = ptoken->regvar;
+        assert( !(var_value->type() == UNKNOWN && temp != nullptr) );
 
-        if (temp == NULL)
+        if (temp == nullptr)
         {
             temp = var_value;
         }
@@ -235,7 +237,7 @@ static const __pu_value *exp(Pu *L)
         return temp;}
     case OPT_ADDS:// +=
         {
-            __pu_value *pv = get_varref(L, ptoken->name);
+            __pu_var *pv = get_varref(L, ptoken->name);
             ptoken->regvar = pv;
             CHECK_EXP_RETURNERR(pv);
             return &pv->operator+=(*t);
@@ -243,21 +245,21 @@ static const __pu_value *exp(Pu *L)
         }
     case OPT_SUBS:// -=
         {
-            __pu_value *pv = get_varref(L, ptoken->name);
+            __pu_var *pv = get_varref(L, ptoken->name);
             ptoken->regvar = pv;
             CHECK_EXP_RETURNERR(pv);
             return &pv->operator-=(*t);
         }
     case OPT_MULS:// *=
         {
-            __pu_value *pv = get_varref(L, ptoken->name);
+            __pu_var *pv = get_varref(L, ptoken->name);
             ptoken->regvar = pv;
             CHECK_EXP_RETURNERR(pv);
             return &pv->operator*=(*t);
         }
     case OPT_DIVS:// /=
         {
-            __pu_value *pv = get_varref(L, ptoken->name);
+            __pu_var *pv = get_varref(L, ptoken->name);
             ptoken->regvar = pv;
             CHECK_EXP_RETURNERR(pv);
             return &pv->operator/=(*t);
@@ -269,13 +271,13 @@ static const __pu_value *exp(Pu *L)
     return t;    
 }
 
-static void get_value(Pu *L, __pu_value *&temp)
+static void get_value(Pu *L, __pu_var *&temp)
 {
     PuType tp = TOKEN.type;
     OperatorType nv = TOKEN.optype;
     if (tp == VAR)
     {
-        std::string &name = TOKEN.name;
+        const std::string *name = TOKEN.name;
         if (!TOKEN.regvar)
         {
             get_var(L, name, TOKEN.regvar);            
@@ -321,13 +323,13 @@ static void get_value(Pu *L, __pu_value *&temp)
             temp->numVal() = 1;
             break;
         case NUM: temp->SetType(NUM);
-            temp->numVal() = TOKEN.value.numVal();
+            temp->numVal() = TOKEN.literal_value->numVal();
             break;
         case STR: temp->SetType(STR);
-            temp->strVal() = TOKEN.value.strVal();
+            temp->strVal() = TOKEN.literal_value->strVal();
             break;
         default: 
-            if (L->isreturn.top())
+            if (!L->isreturn.empty() && L->isreturn.top())
             {
                 temp->SetType(NIL);
                 break;
@@ -339,7 +341,7 @@ static void get_value(Pu *L, __pu_value *&temp)
     }
 }
 
-static void get_arrvalue(Pu *L, __pu_value *&arrref, const int idx)
+static void get_arrvalue(Pu *L, __pu_var *&arrref, const int idx)
 {
     if (arrref->type() == ARRAY)
     {// arr
@@ -369,7 +371,7 @@ static void get_arrvalue(Pu *L, __pu_value *&arrref, const int idx)
     }
 }
 
-static void get_mapvalue(Pu *L, __pu_value *&mapref_out, const __pu_value &key)
+static void get_mapvalue(Pu *L, __pu_var *&mapref_out, const __pu_var &key)
 {
     auto it = mapref_out->map().find(key);
     if (it == mapref_out->map().end())
@@ -381,10 +383,10 @@ static void get_mapvalue(Pu *L, __pu_value *&mapref_out, const __pu_value &key)
     mapref_out = &it->second;
 }
 
-static void get_arrref(Pu *L, __pu_value *&temp)
+static void get_arrref(Pu *L, __pu_var *&temp)
 {
     NEXT_TOKEN;
-    const __pu_value *vidx = exp(L);
+    const __pu_var *vidx = exp(L);
     CHECK_EXP(vidx);
     if (vidx->type() != NUM)
     {// only num can be idx
@@ -407,10 +409,10 @@ static void get_arrref(Pu *L, __pu_value *&temp)
 }
 
 
-static void get_mapref(Pu *L, __pu_value *&temp)
+static void get_mapref(Pu *L, __pu_var *&temp)
 {
     NEXT_TOKEN;
-    const __pu_value *key = exp(L);
+    const __pu_var *key = exp(L);
     CHECK_EXP(key);
     if (key->type() != NUM && key->type() != STR)
     {// only num or str can be key
@@ -430,7 +432,7 @@ static void get_mapref(Pu *L, __pu_value *&temp)
 
     get_mapvalue(L, temp, *key);// get value by key
 }
-PUAPI void pu_val2str(Pu *, const pu_value *p, char *b, int buffsize);
+PUAPI void pu_val2str(Pu *, const pu_var *p, char *b, int buffsize);
 /*
 k = exp(L);
 match(':');
@@ -451,9 +453,9 @@ else
     continue;
 }
 */
-static void get_map(Pu *L, __pu_value *&a)
+static void get_map(Pu *L, __pu_var *&a)
 {
-    __pu_value v;
+    __pu_var v(L);
     MAKE_TEMP_VALUE(a);
     a->SetType(MAP);
     NEXT_TOKEN;
@@ -472,11 +474,12 @@ static void get_map(Pu *L, __pu_value *&a)
             else
             {
                 error(L, 29);
+				return;
             }
         }
         else
         {
-            const __pu_value *key = exp(L);
+            const __pu_var *key = exp(L);
             CHECK_EXP(key);
             tp = TOKEN.type;
             nv = TOKEN.optype;
@@ -487,14 +490,16 @@ static void get_map(Pu *L, __pu_value *&a)
             else
             {
                 error(L, 29);
+				return;
             }
-            const __pu_value *value = exp(L);
-            CHECK_EXP(value);
-            a->map().insert(*key, *value);
+            const __pu_var *const_value = exp(L);
+            CHECK_EXP(const_value);
+            a->map().insert(*key, *const_value);
 
             if (TOKEN.type != OP)
             {
                 error(L, 29);
+				return;
             }
 
             if (TOKEN.optype != OPT_COM) // ,
@@ -502,6 +507,7 @@ static void get_map(Pu *L, __pu_value *&a)
                 if (TOKEN.optype != OPT_RBR) // }
                 {
                     error(L, 29);
+					return;
                 }
                 else
                 {
@@ -517,7 +523,7 @@ static void get_map(Pu *L, __pu_value *&a)
     }
 }
 
-static void get_array(Pu *L, __pu_value *&a)
+static void get_array(Pu *L, __pu_var *&a)
 {
     MAKE_TEMP_VALUE(a);
     a->SetType(ARRAY);
@@ -540,7 +546,7 @@ static void get_array(Pu *L, __pu_value *&a)
         {
             --L->cur_token;
             NEXT_TOKEN;
-            const __pu_value *v = exp(L);
+            const __pu_var *v = exp(L);
             CHECK_EXP(v);
             a->arr().push_back(*v);
         }
@@ -550,13 +556,13 @@ static void get_array(Pu *L, __pu_value *&a)
 static void ift(Pu *L, Token *ptoken) //if
 {
     NEXT_TOKEN;
-    const __pu_value *t = exp(L);
+    const __pu_var *t = exp(L);
     CHECK_EXP(t);
     bool loop = VALUE_IS_TRUE(*t);
     if (loop)
     {
         vm(L);
-        if (L->isreturn.top() || L->isquit || L->isyield)
+        if ((!L->isreturn.empty() && L->isreturn.top()) || L->isquit || L->isyield)
         {
             return;
         }            
@@ -594,7 +600,7 @@ static void ift(Pu *L, Token *ptoken) //if
 }
 
 
-static void logic(Pu *L, __pu_value *&temp)
+static void logic(Pu *L, __pu_var *&temp)
 {
     PuType token_type = TOKEN.type;
     OperatorType op_type = TOKEN.optype;
@@ -606,7 +612,7 @@ static void logic(Pu *L, __pu_value *&temp)
         case OPT_OR:
             {
                 NEXT_TOKEN;    // ||                
-                __pu_value *t = NULL;
+                __pu_var *t = nullptr;
                 CMP(L, t);
                 CHECK_EXP(t);
                 PU_NUMBER r = (PU_NUMBER)(*temp || *t);
@@ -618,7 +624,7 @@ static void logic(Pu *L, __pu_value *&temp)
         case OPT_AND:
             {
                 NEXT_TOKEN;    // &&
-                __pu_value *t = NULL;
+                __pu_var *t = nullptr;
                 CMP(L, t);
                 CHECK_EXP(t);
                 PU_NUMBER r = (PU_NUMBER)(*temp && *t);
@@ -635,7 +641,7 @@ static void logic(Pu *L, __pu_value *&temp)
     }
 }
 
-static void cmp(Pu *L, __pu_value *&temp)
+static void cmp(Pu *L, __pu_var *&temp)
 {
     PuType token_type = TOKEN.type;
     OperatorType op_type = TOKEN.optype;
@@ -647,7 +653,7 @@ static void cmp(Pu *L, __pu_value *&temp)
         case OPT_GT:
             {
                 NEXT_TOKEN;
-                __pu_value *t = NULL;
+                __pu_var *t = nullptr;
                 ADD(L, t);
                 CHECK_EXP(t);
                 PU_NUMBER r = (PU_NUMBER)(*temp > *t);
@@ -659,7 +665,7 @@ static void cmp(Pu *L, __pu_value *&temp)
         case OPT_LT:
             {
                 NEXT_TOKEN;
-                __pu_value *t = NULL;
+                __pu_var *t = nullptr;
                 ADD(L, t);       
                 CHECK_EXP(t);
                 PU_NUMBER r = (PU_NUMBER)(*temp < *t);
@@ -671,7 +677,7 @@ static void cmp(Pu *L, __pu_value *&temp)
         case OPT_EQ:
             {
                 NEXT_TOKEN;
-                __pu_value *t = NULL;
+                __pu_var *t = nullptr;
                 ADD(L, t);      
                 CHECK_EXP(t);
                 PU_NUMBER r = (PU_NUMBER)(*temp == *t);
@@ -683,7 +689,7 @@ static void cmp(Pu *L, __pu_value *&temp)
         case OPT_GTA:
             {
                 NEXT_TOKEN;
-                __pu_value *t = NULL;
+                __pu_var *t = nullptr;
                 ADD(L,t);     
                 CHECK_EXP(t);
                 PU_NUMBER r = (PU_NUMBER)(*temp >= *t);
@@ -695,7 +701,7 @@ static void cmp(Pu *L, __pu_value *&temp)
         case OPT_LTA:
             {
                 NEXT_TOKEN;
-                __pu_value *t = NULL;
+                __pu_var *t = nullptr;
                 ADD(L, t);  
                 CHECK_EXP(t);
                 PU_NUMBER r = (PU_NUMBER)(*temp <= *t);
@@ -707,7 +713,7 @@ static void cmp(Pu *L, __pu_value *&temp)
         case OPT_NEQ:
             {
                 NEXT_TOKEN;
-                __pu_value *t = NULL;
+                __pu_var *t = nullptr;
                 ADD(L, t);      
                 CHECK_EXP(t);
                 PU_NUMBER r = (PU_NUMBER)(*temp != *t);
@@ -724,7 +730,7 @@ static void cmp(Pu *L, __pu_value *&temp)
     }
 }
 
-static void add(Pu *L, __pu_value *&temp)
+static void add(Pu *L, __pu_var *&temp)
 {
     PuType token_type = TOKEN.type;
     OperatorType op_type = TOKEN.optype;
@@ -736,10 +742,10 @@ static void add(Pu *L, __pu_value *&temp)
         case OPT_ADD:
             {
                 NEXT_TOKEN;
-                __pu_value *t = NULL;
+                __pu_var *t = nullptr;
                 TERM(L, t);
                 CHECK_EXP(t);
-                __pu_value *r = NULL;
+                __pu_var *r = nullptr;
                 MAKE_TEMP_VALUE(r);
                 *r = *temp + *t;
                 temp = r;
@@ -748,10 +754,10 @@ static void add(Pu *L, __pu_value *&temp)
         case OPT_SUB:
             {
                 NEXT_TOKEN;
-                __pu_value *t = NULL;
+                __pu_var *t = nullptr;
                 TERM(L,t);
                 CHECK_EXP(t);
-                __pu_value *r = NULL;
+                __pu_var *r = nullptr;
                 MAKE_TEMP_VALUE(r);
                 *r = *temp - *t;
                 temp = r;
@@ -766,7 +772,7 @@ static void add(Pu *L, __pu_value *&temp)
     }
 }
 
-static void term(Pu *L, __pu_value *&temp)
+static void term(Pu *L, __pu_var *&temp)
 {
     PuType tp = TOKEN.type;
     OperatorType nv = TOKEN.optype;
@@ -778,10 +784,10 @@ static void term(Pu *L, __pu_value *&temp)
         case OPT_MUL:
             {
                 NEXT_TOKEN;
-                __pu_value *t = NULL;
+                __pu_var *t = nullptr;
                 FACTOR(L,t);
                 CHECK_EXP(t);
-                __pu_value *r = NULL;
+                __pu_var *r = nullptr;
                 MAKE_TEMP_VALUE(r);
                 *r = *temp * *t;
                 temp = r;
@@ -790,10 +796,10 @@ static void term(Pu *L, __pu_value *&temp)
         case OPT_DIV:
             {
                 NEXT_TOKEN;
-                __pu_value *t = NULL;
+                __pu_var *t = nullptr;
                 FACTOR(L,t);
                 CHECK_EXP(t);
-                __pu_value *r = NULL;
+                __pu_var *r = nullptr;
                 MAKE_TEMP_VALUE(r);
                 *r = *temp / *t;
                 temp = r;
@@ -802,10 +808,10 @@ static void term(Pu *L, __pu_value *&temp)
         case OPT_MOD:
             {
                 NEXT_TOKEN;
-                __pu_value *t = NULL;
+                __pu_var *t = nullptr;
                 FACTOR(L, t);
                 CHECK_EXP(t);
-                __pu_value *r = NULL;
+                __pu_var *r = nullptr;
                 MAKE_TEMP_VALUE(r);
                 *r = *temp % *t;
                 temp = r;
@@ -820,7 +826,7 @@ static void term(Pu *L, __pu_value *&temp)
     }
 }
 
-static void factor(Pu *L, __pu_value *&temp)
+static void factor(Pu *L, __pu_var *&temp)
 {
     PuType tp = TOKEN.type;
     OperatorType nv = TOKEN.optype;
@@ -832,7 +838,7 @@ static void factor(Pu *L, __pu_value *&temp)
         case OPT_LB:
             {
                 NEXT_TOKEN;
-                const __pu_value *exp_result = exp(L);
+                const __pu_var *exp_result = exp(L);
                 CHECK_EXP(exp_result);
                 MAKE_TEMP_VALUE(temp);
                 *temp = *exp_result;
@@ -872,15 +878,16 @@ static void factor(Pu *L, __pu_value *&temp)
             case OPT_LB:
                 if (temp->type() == FUN || temp->type() == CFUN)
                 {
-                    StrKeyMap *old = L->upvalue;
-                    L->upvalue = 0;
-                    if (temp->userdata())
-                    {
-                        L->upvalue = ((_up_value*)temp->userdata())->vmap;
-                    }
-                    
+                    _scope old = L->up_scope;
+					if (temp->type() == FUN)
+					{
+						L->up_scope = temp->up_value();
+					}
                     callfunction(L, L->funclist[(int)temp->numVal()]);
-                    L->upvalue = old;
+					if (temp->type() == FUN)
+					{
+						L->up_scope = old;
+					}
                     MAKE_TEMP_VALUE(temp);
                     *temp = L->return_value;                    
                     tp = TOKEN.type;
@@ -891,6 +898,7 @@ static void factor(Pu *L, __pu_value *&temp)
                 else
                 {
                     error(L, 29);
+					return;
                 }
                 return;
             case OPT_LSB:
@@ -911,6 +919,7 @@ static void factor(Pu *L, __pu_value *&temp)
                 else
                 {
                     error(L, 29);
+					return;
                 }
                 return;
             default:
@@ -924,8 +933,8 @@ static void factor(Pu *L, __pu_value *&temp)
 
 static void callexternfunc(Pu *L, FuncPos &ps)
 {
-    pu_value argsstore[PU_MAXCFUNCARGNUM]={0};
-    pu_value *args=NULL;
+    pu_var argsstore[PU_MAXCFUNCARGNUM]={0};
+    pu_var *args=nullptr;
     ValueArr  vs;
     int i = 0;
     for (;;)// )
@@ -940,7 +949,7 @@ static void callexternfunc(Pu *L, FuncPos &ps)
             NEXT_TOKEN;
             continue;
         }
-        const __pu_value *expresult = exp(L);
+        const __pu_var *expresult = exp(L);
         CHECK_EXP(expresult);
         vs.push_back(*expresult);
         ++i;
@@ -959,23 +968,6 @@ static void callexternfunc(Pu *L, FuncPos &ps)
     }
 
     ps.pfunc(L, arg_num, args);
-}
-
-static void link_to_gc(Pu *L, _up_value *node)
-{
-    node->marked = false;
-    if (L->gclink == 0)
-    {
-        L->gclink = node;
-        return;
-    }
-
-    _up_value *p = L->gclink;
-    while (p->next != 0)
-    {
-        p = p->next;
-    }
-    p->next = node;
 }
 
 static void callfunction(Pu *L, FuncPos &funcinfo)
@@ -1006,9 +998,9 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
 
         }
         NEXT_TOKEN;
-
-        int i=0;
-        std::vector<std::pair<const std::string*, const __pu_value*> > arg_tmp_cnt;
+		
+        int i = 0;
+        std::vector<std::pair<const std::string*, const __pu_var*> > arg_tmp_cnt;
         for (;;) // find )
         {
             PuType tp = TOKEN.type;
@@ -1024,29 +1016,36 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
                 NEXT_TOKEN;
                 continue;
             }
-            const __pu_value *v = exp(L);
+            const __pu_var *v = exp(L);
             CHECK_EXP(v);
-            arg_tmp_cnt.push_back(std::make_pair(&args[i++], v));
+            arg_tmp_cnt.push_back(std::make_pair(args[i++], v));
         }
 
+		if (arg_tmp_cnt.size() != args.size())
+		{
+			error(L, 34);
+			return;
+		}
+
+		_scope *new_scope = nullptr;
         L->tail_optimize = return_end == L->cur_token + 1;
         if (L->tail_optimize)
         {
-            debug("%s", "tail optimize");
+            debug(L, "%s", "tail optimize");
         }
 
-        if (!funcinfo.newvarmap && !L->tail_optimize)
+        if (!L->tail_optimize)
         {
-            funcinfo.newvarmap = new StrKeyMap;
+			new_scope = new _scope(L);
         }
-        else if (!funcinfo.newvarmap)
+        else
         {
-            funcinfo.newvarmap = L->varstack.top();
+			new_scope = &L->cur_scope;
         }
 
         for (auto &p : arg_tmp_cnt)
         {
-            funcinfo.newvarmap->insert(std::make_pair(*p.first, *p.second));
+			new_scope->base_->vmap_->operator[](p.first) = *p.second;
         }
         
         if (L->tail_optimize)
@@ -1054,20 +1053,14 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
             L->cur_token = funcinfo.start;
             NEXT_TOKEN;
             CLEAR_RETURN;
-            funcinfo.newvarmap = 0;
-            debug("start tail call");
+            debug(L, "start tail call");
             return;
         }
 
-        _up_value *newupnode = new _up_value;
-        newupnode->refcount = 1;
-        link_to_gc(L, newupnode);
-        newupnode->next = 0;
-        newupnode->vmap = funcinfo.newvarmap;
-        _up_value *oldcur = L->cur_nup;
-        L->cur_nup = newupnode;
-        L->varstack.push(funcinfo.newvarmap);
-        debug("cur_scop = %p", L->varstack.top());
+        _scope old_scope = L->cur_scope;
+        L->cur_scope = *new_scope;
+        L->varstack.push(new_scope->base_->vmap_);
+        debug(L, "cur_scop = %p", L->varstack.top());
         L->callstack.push(L->cur_token);
         L->isreturn.push(0);
         L->cur_token = funcinfo.start;
@@ -1077,13 +1070,10 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
         L->cur_token = L->callstack.top();
         L->callstack.pop(); 
         L->varstack.pop();
-        debug("cur_scop = %p", L->varstack.top());
-        L->cur_nup = oldcur;
-        newupnode->refcount -= 1;
-        if (newupnode->refcount == 0)    
-        {                                                
-            newupnode->vmap = 0;                                            
-        }
+        debug(L, "cur_scop = %p", L->varstack.top());
+        L->cur_scope = old_scope;
+		delete new_scope;
+		new_scope = nullptr;
     }
 
     NEXT_TOKEN;
@@ -1104,7 +1094,7 @@ static void gotot(Pu *L)
         }
         else
         {
-            std::string &sv = TOKEN.name;
+            const std::string &sv = *TOKEN.name;
             auto it = L->labelmap.find(sv);
             if (it == L->labelmap.end())
             {
@@ -1123,7 +1113,7 @@ static void gotot(Pu *L)
 
 static void procop(Pu *L)
 {
-    __pu_value *temp = NULL;
+    __pu_var *temp = nullptr;
 
     PuType tp = TOKEN.type;
     OperatorType nv = TOKEN.optype;
@@ -1149,6 +1139,7 @@ static void procop(Pu *L)
     else
     {
         error(L, 29);
+		return;
     }
 }
 
@@ -1160,7 +1151,7 @@ static void whilet(Pu *L, Token *ptoken)
     for(;;)
     {
         NEXT_TOKEN;
-        const __pu_value *t = exp(L);
+        const __pu_var *t = exp(L);
         CHECK_EXP(t);
         bool loop = VALUE_IS_TRUE(*t);
 
@@ -1168,7 +1159,7 @@ static void whilet(Pu *L, Token *ptoken)
         {
             vm(L);
 
-            if (L->isreturn.top() || L->isquit || L->isyield)
+            if ((!L->isreturn.empty() && L->isreturn.top()) || L->isquit || L->isyield)
             {
                 return;
             }
@@ -1202,16 +1193,11 @@ static void regfunc(Pu *L)
     NEXT_TOKEN;
     if (TOKEN.type == VAR)
     {    
-        __pu_value fv(L);
+        __pu_var fv(L);
         fv.SetType(FUN);
         fv.numVal() = fpos;
-        fv.userdata() = L->cur_nup;
-         if (L->cur_nup)
-         {
-             L->cur_nup->refcount++;
-         }
-
-        __pu_value *got = reg_var(L, TOKEN.name);
+        fv.up_value() = L->cur_scope;
+        __pu_var *got = reg_var(L, TOKEN.name);
         TOKEN.regvar = got;
         *got = fv;
         L->cur_token = L->funclist[(int)fv.numVal()].end;
@@ -1269,6 +1255,11 @@ int vm(Pu *L)
             regfunc(L);
             break;
         case RETURN:{
+			if (L->isreturn.empty())
+			{
+				error(L, 33);
+				break;
+			}
              L->isreturn.top() = L->cur_token - 1;
              Token *return_token = &L->tokens[L->cur_token - 1];
             NEXT_TOKEN;                  
@@ -1278,13 +1269,13 @@ int vm(Pu *L)
                  int old = L->cur_token;                        
                  exp_control_flow_analyze(L);    
                 return_token->control_flow = L->control_flow;
-                L->control_flow = NULL;
+                L->control_flow = nullptr;
                  int exp_end = L->cur_token;
                  L->cur_token = old;
                  return_token->exp_end = exp_end;
                 L->token = old_token;
              }
-            const __pu_value *expresult = exp(L);
+            const __pu_var *expresult = exp(L);
             if (L->tail_optimize)
             {
                 L->tail_optimize = false;
@@ -1320,5 +1311,12 @@ END_VM:
     return ret;
 }
 
+void __pu_var::_scope::_smap::add_to_gc()
+{
+	L_->gccontainer.insert(this);
+}
 
-
+void __pu_var::_scope::_smap::remove_from_gc()
+{
+	L_->gccontainer.erase(this);
+}

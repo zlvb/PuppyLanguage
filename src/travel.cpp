@@ -117,7 +117,7 @@ void exp_control_flow_analyze(Pu *L)
 
 void get_map_trvel(Pu *L)
 {
-	__pu_value v;
+	__pu_var v(L);
 	NEXT_TOKEN;
 	for (;;)
 	{
