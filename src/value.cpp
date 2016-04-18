@@ -453,3 +453,32 @@ __pu_var::~__pu_var()
 {
     destroy();
 }
+
+
+__pu_var::_scope::_smap::_smap(Pu *L) : vmap_(new StrKeyMap)
+, refcount(1)
+, marked(false)
+, L_(L)
+, gc_(true)
+{
+
+}
+
+
+__pu_var::_scope::_smap::_smap(Pu *L, StrKeyMap *__vmap) : vmap_(__vmap)
+, refcount(1)
+, marked(false)
+, L_(L)
+, gc_(false)
+{
+
+}
+
+__pu_var::_scope::_smap::~_smap()
+{
+	if (gc_)
+	{
+		delete vmap_;
+		vmap_ = nullptr;
+	}
+}

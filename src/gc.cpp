@@ -62,15 +62,15 @@ void mark(_scope *scope)
 
 void sweep(Pu *L)
 {
+	L->start_gc = true;
 	auto it = L->gccontainer.begin();
 	auto itend = L->gccontainer.end();
 	while (it != itend)
 	{
 		if (!(*it)->marked)
 		{
-			auto *ptr = *it;
+			L->garbage.insert(*it);
 			it = L->gccontainer.erase(it);
-			delete ptr;
 		}
 		else
 		{
@@ -78,6 +78,29 @@ void sweep(Pu *L)
 			++it;
 		}
 	}
+
+	while (L->garbage.size() > 0)
+	{
+		for (auto ptr : L->garbage)
+		{
+			for (auto &pair : *ptr->vmap_)
+			{
+				__pu_var &var = pair.second;
+				if (var.type() == FUN)
+				{
+					_scope &uv = var.up_value();
+					if (L->garbage.find(uv.base_) != L->garbage.end())
+					{
+						uv.base_ = nullptr;				// release circular reference 		
+					}
+				}
+			}
+		}
+		auto itg = L->garbage.begin();
+		delete (*itg);
+		L->garbage.erase(itg);
+	}
+	L->start_gc = false;
 }
 
 void gc(Pu *L)
@@ -94,4 +117,14 @@ void clear_temp(Pu *L)
         L->tempool.push_back(v);
     }
     L->tempvals.clear();
+}
+
+void add_to_gc(Pu *L, _scope::_smap *vmap)
+{
+	L->gccontainer.insert(vmap);
+}
+
+void remove_from_gc(Pu *L, _scope::_smap *vmap)
+{
+	L->gccontainer.erase(vmap);
 }

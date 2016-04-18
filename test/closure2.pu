@@ -1,0 +1,26 @@
+def gg(j)
+
+    a=j
+
+    def kk(p)
+        write('kk p=' + p)
+        return a+p
+    end
+    
+    def ll(p)
+        write('ll p=' + p)
+        return kk(p)
+    end
+
+    return ll
+    
+end
+
+v1 = gg(1)
+v2 = gg(2)
+r1 = get_var('v1')(9)
+r2 = v2(9)
+write(r2,'\n')
+write(r1,'\n')
+v1 = null
+v2 = null

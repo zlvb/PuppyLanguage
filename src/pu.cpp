@@ -221,11 +221,7 @@ static const __pu_var *exp(Pu *L)
     switch (nv)
     {
     case OPT_SET:{// =
-        if (!ptoken->regvar)
-        {
-            ptoken->regvar = reg_var(L, ptoken->name);
-        }
-        __pu_var *var_value = ptoken->regvar;
+		__pu_var *var_value = reg_var(L, ptoken->name);
         assert( !(var_value->type() == UNKNOWN && temp != nullptr) );
 
         if (temp == nullptr)
@@ -238,7 +234,6 @@ static const __pu_var *exp(Pu *L)
     case OPT_ADDS:// +=
         {
             __pu_var *pv = get_varref(L, ptoken->name);
-            ptoken->regvar = pv;
             CHECK_EXP_RETURNERR(pv);
             return &pv->operator+=(*t);
 
@@ -246,21 +241,18 @@ static const __pu_var *exp(Pu *L)
     case OPT_SUBS:// -=
         {
             __pu_var *pv = get_varref(L, ptoken->name);
-            ptoken->regvar = pv;
             CHECK_EXP_RETURNERR(pv);
             return &pv->operator-=(*t);
         }
     case OPT_MULS:// *=
         {
             __pu_var *pv = get_varref(L, ptoken->name);
-            ptoken->regvar = pv;
             CHECK_EXP_RETURNERR(pv);
             return &pv->operator*=(*t);
         }
     case OPT_DIVS:// /=
         {
             __pu_var *pv = get_varref(L, ptoken->name);
-            ptoken->regvar = pv;
             CHECK_EXP_RETURNERR(pv);
             return &pv->operator/=(*t);
         }
@@ -278,11 +270,7 @@ static void get_value(Pu *L, __pu_var *&temp)
     if (tp == VAR)
     {
         const std::string *name = TOKEN.name;
-        if (!TOKEN.regvar)
-        {
-            get_var(L, name, TOKEN.regvar);            
-        }
-        temp = TOKEN.regvar;
+        get_var(L, name, temp);
         NEXT_TOKEN;
     }
     else if (tp == OP && ((nv == OPT_ADD) || (nv == OPT_SUB) || (nv == OPT_NOT)))
@@ -970,6 +958,8 @@ static void callexternfunc(Pu *L, FuncPos &ps)
     ps.pfunc(L, arg_num, args);
 }
 
+extern void add_to_gc(Pu *L, _scope::_smap *vmap);
+extern void remove_from_gc(Pu *L, _scope::_smap *vmap);
 static void callfunction(Pu *L, FuncPos &funcinfo)
 {
     const FunArgs &args = funcinfo.argnames;
@@ -1037,6 +1027,7 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
         if (!L->tail_optimize)
         {
 			new_scope = new _scope(L);
+			add_to_gc(L, new_scope->base_);
         }
         else
         {
@@ -1072,6 +1063,10 @@ static void callfunction(Pu *L, FuncPos &funcinfo)
         L->varstack.pop();
         debug(L, "cur_scop = %p", L->varstack.top());
         L->cur_scope = old_scope;
+		if (new_scope->base_->refcount == 1)
+		{
+			remove_from_gc(L, new_scope->base_);
+		}
 		delete new_scope;
 		new_scope = nullptr;
     }
@@ -1198,7 +1193,6 @@ static void regfunc(Pu *L)
         fv.numVal() = fpos;
         fv.up_value() = L->cur_scope;
         __pu_var *got = reg_var(L, TOKEN.name);
-        TOKEN.regvar = got;
         *got = fv;
         L->cur_token = L->funclist[(int)fv.numVal()].end;
         NEXT_TOKEN;
@@ -1309,14 +1303,4 @@ int vm(Pu *L)
 END_VM:
     DO_GC;
     return ret;
-}
-
-void __pu_var::_scope::_smap::add_to_gc()
-{
-	L_->gccontainer.insert(this);
-}
-
-void __pu_var::_scope::_smap::remove_from_gc()
-{
-	L_->gccontainer.erase(this);
 }

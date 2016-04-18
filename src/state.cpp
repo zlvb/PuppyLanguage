@@ -71,7 +71,8 @@ Pu::Pu()
 	up_scope(this, nullptr),
 	cur_scope(this, new StrKeyMap),
     builtinreg(false),
-    tail_optimize(false)
+    tail_optimize(false),
+	start_gc(false)
 {
     varstack.push(cur_scope.base_->vmap_);
     return_value.SetType(NIL);

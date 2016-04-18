@@ -117,41 +117,14 @@ struct __pu_var
     {
 		struct _smap
 		{
-			_smap(Pu *L)
-				: vmap_(new StrKeyMap)
-				, refcount(1)
-				, marked(false)
-				, L_(L)
-				, gc_(true)
-			{
-				add_to_gc();
-			}
-			_smap(Pu *L, StrKeyMap *__vmap)
-				: vmap_(__vmap)
-				, refcount(1)
-				, marked(false)
-				, L_(L)
-				, gc_(false)
-			{
-			}
-			~_smap()
-			{
-				if (gc_)
-				{
-					remove_from_gc();
-					delete vmap_;
-					vmap_ = nullptr;
-				}
-			}
+			_smap(Pu *L);
+			_smap(Pu *L, StrKeyMap *__vmap);
+			~_smap();
 			StrKeyMap *vmap_;
 			int refcount;
 			bool marked;
 			Pu *L_;
 			bool gc_;
-
-		private:
-			void add_to_gc();
-			void remove_from_gc();
 		};
 
 		_scope(Pu *L)

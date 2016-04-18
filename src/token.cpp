@@ -653,7 +653,6 @@ void Token::operator=( const Token &x )
 
 Token::Token( const Token &x )
     : filename(x.filename)
-    , regvar(nullptr)
     , exp_end(-1)
     , exp_stack(-1)
     , control_flow(nullptr)

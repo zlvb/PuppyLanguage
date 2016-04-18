@@ -39,7 +39,6 @@ struct Token
 		: filename(nullptr)
 		, name(nullptr)
 		, literal_value(nullptr)
-        , regvar(nullptr)
 		, line(0)
         , exp_end(-1)
         , exp_stack(-1)
@@ -53,7 +52,6 @@ struct Token
     const std::string *filename;
     const std::string *name;
     const __pu_var *literal_value;
-    __pu_var *regvar;
     int line;
     int exp_end;
     short exp_stack;

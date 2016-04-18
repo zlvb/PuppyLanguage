@@ -125,6 +125,7 @@ struct Pu
     PuStack<int>        uncomdef;
     PuStack<int>        jumpstack;
 	std::unordered_set<_scope::_smap*>		gccontainer;
+	std::unordered_set<_scope::_smap*>		garbage;
     _scope              up_scope;
     _scope              cur_scope;
 	VarVec tempool;
@@ -133,6 +134,7 @@ struct Pu
 	ConstVarNumPool const_num_vals;
     bool                builtinreg;
     bool                tail_optimize;
+	bool				start_gc;
     std::vector<std::vector<CONTROL_PATH> > *control_flow;
 };
 
