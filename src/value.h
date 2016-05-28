@@ -37,7 +37,7 @@
 #include <stdio.h>
 #include <assert.h>
 #ifdef _MSC_VER
-#pragma warning(disable:4127) // 判断条件为常量，比如：while(1)
+#pragma warning(disable:4127) // while(1)
 #endif
 struct Pu;
 
@@ -180,7 +180,6 @@ struct __pu_var
 		, createby_(PU_SYSTEM)
 		, type_(UNKNOWN)
 		, arr_(nullptr)
-        , upval_(nullptr)
     {
     }
 
@@ -191,7 +190,6 @@ struct __pu_var
         , createby_(PU_SYSTEM)
         , type_(UNKNOWN)
         , arr_(nullptr)
-        , upval_(nullptr)
     {
         *this = x;
     }

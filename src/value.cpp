@@ -444,7 +444,6 @@ __pu_var::__pu_var()
 	, createby_(PU_SYSTEM)
 	, type_(UNKNOWN)
 	, arr_(nullptr)
-	, upval_(nullptr)
 {
 	debug(L, "waring call default __pi_var::construct");
 }

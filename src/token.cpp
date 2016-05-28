@@ -369,7 +369,6 @@ static void get_label(Pu *L, Token &newToken)
     L->labelmap.insert(std::make_pair(label, L->cur_token));
 }
 
-// 返回一个函数是否分析完
 void parse_function_body(Pu *L, int lp, int token_from, Token &t, FILE *pbcf=0, TokenList *tl=0)
 {
     for (;;)
@@ -388,7 +387,7 @@ void parse_function_body(Pu *L, int lp, int token_from, Token &t, FILE *pbcf=0, 
         }
         else if (t.type == FINISH)
         {        
-            if (L->mode != PU_CODE_FROM_FILE) // 表示在解释字符串执行
+            if (L->mode != PU_CODE_FROM_FILE) 
             {
                 L->uncomdef.push(lp);
                 return;
@@ -653,10 +652,11 @@ void Token::operator=( const Token &x )
 
 Token::Token( const Token &x )
     : filename(x.filename)
+    , literal_value(NULL)
     , exp_end(-1)
     , exp_stack(-1)
+	
     , control_flow(nullptr)
-	, literal_value(NULL)
 {
     type = x.type;
     line = x.line;
