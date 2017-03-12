@@ -118,7 +118,7 @@ void get_var(Pu *L, const std::string *name, __pu_var *&v)
         return;
     }
 
-    if (L->up_scope.base_->vmap_ != pvarmap 
+    if (L->up_scope.base_->vmap_ && L->up_scope.base_->vmap_ != pvarmap 
 		&& L->up_scope.base_->vmap_ != L->varstack.top())
     {
         pvarmap = L->up_scope.base_->vmap_;
@@ -195,7 +195,7 @@ static const __pu_var *exp(Pu *L)
             PREV_TOKEN;
         }
 
-        LOGC(L,temp);
+        LOGC(L,temp); 
         CHECK_EXP_RETURN(temp, temp);
 
     }while(false);
