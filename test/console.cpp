@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include "../puppy.h"
 extern void bi_return_null_func(Pu *L);
-// 用于控制台模式下的print函数
+// 鐢ㄤ簬鎺у埗鍙版ā寮忎笅鐨刾rint鍑芥暟
 void print(Pu *L, int argnum, pu_var *v)
 {
     if (v==nullptr)
@@ -54,7 +54,7 @@ void print(Pu *L, int argnum, pu_var *v)
     bi_return_null_func(L);
 }
 
-// 用于控制台模式下的help函数
+// 鐢ㄤ簬鎺у埗鍙版ā寮忎笅鐨刪elp鍑芥暟
 void help(Pu *L, int , pu_var *)
 {
     printf (
@@ -82,7 +82,7 @@ void help(Pu *L, int , pu_var *)
 }
 
 bool g_bExit = false;
-// 用于退出控制台的exit函数
+// 鐢ㄤ簬閫�鍑烘帶鍒跺彴鐨別xit鍑芥暟
 void exit_program(Pu *L, int, pu_var *)
 {
     g_bExit = true;

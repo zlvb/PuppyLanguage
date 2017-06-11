@@ -47,14 +47,14 @@ int main(int argc, char **argv)
     }
     else
     {
-        if (argc > 1 && strcmp(argv[1],"-c") == 0)
+        if (argc > 1 && strcmp(argv[1], "-c") == 0)
         {
             pu_makebytecode(L, argv[2]);
             pu_close(L);
             return 0;
         }
 
-        if (pu_load(L,argv[1]) == PU_SUCCESS)
+        if (pu_load(L, argv[1]) == PU_SUCCESS)
         {
             pu_run(L);
         }
@@ -69,6 +69,4 @@ int main(int argc, char **argv)
         system("pause");
 #endif
     }
-
 }
-
