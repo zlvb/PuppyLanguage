@@ -293,7 +293,7 @@ PUAPI PURESULT pu_loadbuff(Pu *L, const char *str)
     
     Token temp = get_token_from_file(L,nullptr);
      while(L->tokens[L->tokens.size()-1].type != FINISH) {        
-        if (L->funstack.size() > 0 && L->funstack.back() >= 1)// ����к���δ������������ȡ��������
+        if (L->funstack.size() > 0 && L->funstack.back() >= 1)// 如果有函数未结束，继续获取函数内容
             parse_function_body(L,L->uncomdef.top(), 
             FROM_SOURCECODE, temp, 
             nullptr,nullptr);
