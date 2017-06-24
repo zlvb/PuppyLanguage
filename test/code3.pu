@@ -1,10 +1,10 @@
 
-#Êä³öËØÊý
-#ÕâÊÇÒ»¸öºÜ¸´ÔÓ³ÌÐò
+#è¾“å‡ºç´ æ•°
+#è¿™æ˜¯ä¸€ä¸ªå¾ˆå¤æ‚ç¨‹åº
 
 
-write('ÊäÈëÒ»¸öÕûÊý£º') x=read()
-write('"'+x+'"ÒÔÄÚËùÓÐËØÊý\n')
+write('è¾“å…¥ä¸€ä¸ªæ•´æ•°ï¼š') x=read()
+write('"'+x+'"ä»¥å†…æ‰€æœ‰ç´ æ•°\n')
 write(time())
 i=2
 while i<=x
