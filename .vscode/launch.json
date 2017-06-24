@@ -41,7 +41,7 @@
             "type": "cppdbg",
             "request": "attach",
             "program": "${workspaceRoot}/bin/puppy_d",
-            "processId": "${command.pickProcess}",
+            "processId": "${command:pickProcess}",
             "linux": {
                 "MIMode": "gdb",
                 "setupCommands": [

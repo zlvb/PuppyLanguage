@@ -440,17 +440,38 @@ void parse_function(Pu *L, int token_from, FILE *pbcf, TokenList *tl)
     }
 
     Token t;
-    if (token_from == FROM_BYTECODE)
+    if (fname.type != VAR)
     {
-        get_nextbytetoken(L,pbcf, t);
-        get_nextbytetoken(L,pbcf, t);
+        if (fname.optype != OPT_LB)
+        {
+            error(L, 29);
+            return;
+        }
+
+        if (token_from == FROM_BYTECODE)
+        {
+            get_nextbytetoken(L,pbcf, t);
+        }
+        else
+        {
+            t = get_token_from_file(L,tl);
+            CHECKTOKENERROR;
+        }
     }
     else
     {
-        t = get_token_from_file(L,tl);
-        CHECKTOKENERROR;
-        t = get_token_from_file(L,tl);
-        CHECKTOKENERROR;
+        if (token_from == FROM_BYTECODE)
+        {
+            get_nextbytetoken(L,pbcf, t);
+            get_nextbytetoken(L,pbcf, t);
+        }
+        else
+        {
+            t = get_token_from_file(L,tl);
+            CHECKTOKENERROR;
+            t = get_token_from_file(L,tl);
+            CHECKTOKENERROR;
+        }
     }
     
     while (!(t.type == OP && t.optype == OPT_RB))// )

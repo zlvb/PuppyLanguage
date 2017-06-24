@@ -177,9 +177,57 @@ __pu_var *reg_var(Pu *L, const std::string *varname)
     return got;
 }
 
+static __pu_var *regfunc(Pu *L)
+{
+    PU_NUMBER fpos = (PU_NUMBER)TOKEN.optype;
+    NEXT_TOKEN;
+    if (TOKEN.type == VAR)
+    {    
+        __pu_var fv(L);
+        fv.SetType(FUN);
+        fv.numVal() = fpos;
+        fv.up_value() = L->cur_scope;
+        __pu_var *got = reg_var(L, TOKEN.name);
+        *got = fv;
+        L->cur_token = L->funclist[(int)fv.numVal()].end;
+        NEXT_TOKEN;
+        return got;
+    }
+    error(L, 29);
+    __pu_var *result = nullptr;
+    MAKE_TEMP_VALUE(result);
+    return result;
+}
+
 static const __pu_var *exp(Pu *L) 
 {
     Token *ptoken = &TOKEN;
+
+    if (ptoken->type == FUNCTION) 
+    {
+        PU_NUMBER fpos = (PU_NUMBER)TOKEN.optype;
+        NEXT_TOKEN;
+        if (TOKEN.type == OP && TOKEN.optype == OPT_LB)
+        {
+            PREV_TOKEN;
+            __pu_var *fv = nullptr;
+            MAKE_TEMP_VALUE(fv);
+            fv->SetType(FUN);
+            fv->numVal() = fpos;
+            fv->up_value() = L->cur_scope;
+            L->cur_token = L->funclist[(int)fv->numVal()].end;
+            NEXT_TOKEN;
+            return fv;
+        }
+        else
+        {
+            error(L, 29);
+            __pu_var *result = nullptr;
+            MAKE_TEMP_VALUE(result);
+            return result;
+        }
+    }
+
     __pu_var *temp = nullptr;
     do{
         if (ptoken->type == VAR)
@@ -1180,25 +1228,6 @@ static void whilet(Pu *L, Token *ptoken)
         NEXT_TOKEN;
         break;
     }
-}
-
-static void regfunc(Pu *L)
-{
-    PU_NUMBER fpos = (PU_NUMBER)TOKEN.optype;
-    NEXT_TOKEN;
-    if (TOKEN.type == VAR)
-    {    
-        __pu_var fv(L);
-        fv.SetType(FUN);
-        fv.numVal() = fpos;
-        fv.up_value() = L->cur_scope;
-        __pu_var *got = reg_var(L, TOKEN.name);
-        *got = fv;
-        L->cur_token = L->funclist[(int)fv.numVal()].end;
-        NEXT_TOKEN;
-        return;
-    }
-    error(L, 29);
 }
 
 int vm(Pu *L)
