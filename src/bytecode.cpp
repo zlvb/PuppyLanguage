@@ -285,16 +285,7 @@ PUAPI PURESULT pu_loadbuff(Pu *L, const char *str)
         return PU_FAILED;
     }
 
-    char buffname[64]={0};
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4311)
-#endif
-    PU_SNPRINTF(buffname, sizeof(buffname), "buffer_%lu", (size_t)str);
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
+    const char *buffname = "<stream buffer>";
 	L->current_filename.push_back(InsertStrPool(L, buffname));
     L->source.type = Pusource::ST_BUFFER;
     L->source.str.buff = str;
@@ -302,7 +293,7 @@ PUAPI PURESULT pu_loadbuff(Pu *L, const char *str)
     
     Token temp = get_token_from_file(L,nullptr);
      while(L->tokens[L->tokens.size()-1].type != FINISH) {        
-        if (L->funstack.size() > 0 && L->funstack.back() >= 1)// Èç¹ûÓÐº¯ÊýÎ´½áÊø£¬¼ÌÐø»ñÈ¡º¯ÊýÄÚÈÝ
+        if (L->funstack.size() > 0 && L->funstack.back() >= 1)// ï¿½ï¿½ï¿½ï¿½Ðºï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             parse_function_body(L,L->uncomdef.top(), 
             FROM_SOURCECODE, temp, 
             nullptr,nullptr);

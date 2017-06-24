@@ -904,71 +904,72 @@ static void factor(Pu *L, __pu_var *&temp)
     {
         get_value(L, temp);
         CHECK_EXP(temp);
-        tp = TOKEN.type;
-        nv = TOKEN.optype;
+    }
 
-        while (tp == OP)
+    tp = TOKEN.type;
+    nv = TOKEN.optype;
+    while (tp == OP)
+    {
+        switch (nv)
         {
-            switch (nv)
+        case OPT_LB:
+            if (temp->type() == FUN || temp->type() == CFUN)
             {
-            case OPT_LB:
-                if (temp->type() == FUN || temp->type() == CFUN)
+                _scope old = L->up_scope;
+                if (temp->type() == FUN)
                 {
-                    _scope old = L->up_scope;
-					if (temp->type() == FUN)
-					{
-						L->up_scope = temp->up_value();
-					}
-                    callfunction(L, L->funclist[(int)temp->numVal()]);
-					if (temp->type() == FUN)
-					{
-						L->up_scope = old;
-					}
-                    MAKE_TEMP_VALUE(temp);
-                    *temp = L->return_value;                    
-                    tp = TOKEN.type;
-                    nv = TOKEN.optype;
-                    CLEAR_RETURN;
-                    break;
+                    L->up_scope = temp->up_value();
                 }
-                else
+                callfunction(L, L->funclist[(int)temp->numVal()]);
+                if (temp->type() == FUN)
                 {
-                    error(L, 29);
-					return;
+                    L->up_scope = old;
                 }
-                return;
-            case OPT_LSB:
-                if (temp->type() == ARRAY || temp->type() == STR)
-                {
-                    get_arrref(L,temp);
-                    CHECK_EXP(temp);
-                    NEXT_TOKEN;
-                    break;
-                }
-                else if (temp->type() == MAP)
-                {
-                    get_mapref(L, temp);
-                    CHECK_EXP(temp);
-                    NEXT_TOKEN;
-                    break;
-                }
-                else
-                {
-                    error(L, 29);
-					return;
-                }
-                return;
-            default:
+                MAKE_TEMP_VALUE(temp);
+                *temp = L->return_value;                    
+                tp = TOKEN.type;
+                nv = TOKEN.optype;
+                CLEAR_RETURN;
+                break;
+            }
+            else
+            {
+                error(L, 29);
                 return;
             }
-            tp = TOKEN.type;
-            nv = TOKEN.optype;
+            return;
+        case OPT_LSB:
+            if (temp->type() == ARRAY || temp->type() == STR)
+            {
+                get_arrref(L,temp);
+                CHECK_EXP(temp);
+                NEXT_TOKEN;
+                break;
+            }
+            else if (temp->type() == MAP)
+            {
+                get_mapref(L, temp);
+                CHECK_EXP(temp);
+                NEXT_TOKEN;
+                break;
+            }
+            else
+            {
+                error(L, 29);
+                return;
+            }
+            return;
+        default:
+            return;
         }
+        tp = TOKEN.type;
+        nv = TOKEN.optype;
     }
 }
 
 static void callexternfunc(Pu *L, FuncPos &ps)
 {
+    debug(L, "call function at %p", ps.pfunc); 
     pu_var argsstore[PU_MAXCFUNCARGNUM]={0};
     pu_var *args=nullptr;
     ValueArr  vs;
@@ -1010,6 +1011,11 @@ extern void add_to_gc(Pu *L, _scope::_smap *vmap);
 extern void remove_from_gc(Pu *L, _scope::_smap *vmap);
 static void callfunction(Pu *L, FuncPos &funcinfo)
 {
+    if (funcinfo.start >= 0)
+    {
+        debug(L, "call function at %d", funcinfo.start);
+    }
+    
     const FunArgs &args = funcinfo.argnames;
     
     if (funcinfo.start == -1)
@@ -1157,7 +1163,6 @@ static void gotot(Pu *L)
 static void procop(Pu *L)
 {
     __pu_var *temp = nullptr;
-
     PuType tp = TOKEN.type;
     OperatorType nv = TOKEN.optype;
 
@@ -1182,7 +1187,7 @@ static void procop(Pu *L)
     else
     {
         error(L, 29);
-		return;
+        return;
     }
 }
 

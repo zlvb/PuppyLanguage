@@ -39,31 +39,41 @@ Email zlvbvbzl@gmail.com
 #include <utility>
 
 template<typename... Args>
-void debug(Pu *L, Args&&... args)
+void __debug(Pu *L, const char *fn, int ln, const char *func, Args&&... args)
 {
-	if (L && L->token)
+	if (L && L->token && TOKEN.filename)
 	{
-		printf("[DEBUG] %s[%d] ", TOKEN.filename?TOKEN.filename->c_str():"", TOKEN.line);
+		const char *pusource_fn = TOKEN.filename->c_str();
+		int pusource_ln = TOKEN.line;
+		printf("[DEBUG] %s[%d](%s) | %s[%d] ", fn, ln, func,
+		pusource_fn, pusource_ln);
 	}
 	else
 	{
-		printf("%s", "[DEBUG] ");
+		printf("[DEBUG] %s[%d](%s) ", fn, ln, func);
 	}
+
     printf(std::forward<Args>(args)...);
     putchar('\n');
 }
 
-inline void debug(Pu *L, const char *s)
+inline void __debug(Pu *L, const char *fn, int ln, const char *func, const char *s)
 {
-	if (L && L->token)
+	if (L && L->token && TOKEN.filename)
 	{
-		printf("[DEBUG]  %s[%d] %s\n", TOKEN.filename ? TOKEN.filename->c_str() : "", TOKEN.line, s);
+		const char *pusource_fn = TOKEN.filename->c_str();
+		int pusource_ln = TOKEN.line;
+		printf("[DEBUG]  %s[%d](%s) | %s[%d] %s\n", fn, ln, func, 
+		pusource_fn, pusource_ln, 
+		s);
 	}
 	else
 	{
-		printf("[DEBUG]  %s\n", s);
+		printf("[DEBUG]  %s[%d](%s) %s\n", fn, ln, func, s);
 	}
 }
+
+#define debug(L, ...) __debug(L, __FILE__, __LINE__, __func__, __VA_ARGS__) 
 
 #else
 

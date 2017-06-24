@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     srand((unsigned int)time(nullptr));
     Pu *L = pu_open();
     if (argc < 2)
-    {
+    {   
         pu_console(L);
         pu_close(L);
         L = nullptr;
