@@ -30,12 +30,12 @@
 #include "PuMap.h"
 #include <ctype.h>
 
-// ÅĞ¶Ï×Ö·û´®ÊÇ·ñ¿É±íÊ¾ÎªÒ»¸öÕûÊı
+// åˆ¤æ–­å­—ç¬¦ä¸²æ˜¯å¦å¯è¡¨ç¤ºä¸ºä¸€ä¸ªæ•´æ•°
 extern "C" int is_int(const char *str)
 {
     if (!str) return 0;
 
-    // ÅĞ¶ÏÊÇ·ñÓĞ·ûºÅ
+    // åˆ¤æ–­æ˜¯å¦æœ‰ç¬¦å·
     if (str[0] == '-' || str[0] == '+')
     {
         ++str;
@@ -49,13 +49,13 @@ extern "C" int is_int(const char *str)
     return 1;
 }
 
-// ÅĞ¶Ï×Ö·û´®ÊÇ·ñ¿É±íÊ¾ÎªÒ»¸ö¸¡µãÊı
+// åˆ¤æ–­å­—ç¬¦ä¸²æ˜¯å¦å¯è¡¨ç¤ºä¸ºä¸€ä¸ªæµ®ç‚¹æ•°
 extern "C" int is_float(const char *str)
 {
     int point = 0;
     if (!str) return 0;
 
-    // ÅĞ¶ÏÊÇ·ñÓĞ·ûºÅ
+    // åˆ¤æ–­æ˜¯å¦æœ‰ç¬¦å·
     if (str[0] == '-' || str[0] == '+')
     {
         ++str;
