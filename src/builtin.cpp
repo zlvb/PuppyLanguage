@@ -63,6 +63,14 @@ void bi_return_num( Pu * L, int v )
     pu_set_return_value(L, &r);
 }
 
+void bi_return_int( Pu * L, int v )
+{
+    __pu_var r = __pu_var(L);
+    r.SetType(INTEGER);
+    r.intVal() = v;
+    pu_set_return_value(L, &r);
+}
+
 const char *get_typestr(__pu_var &v)
 {
     static const char *type_string[]={
@@ -87,12 +95,12 @@ const char *get_typestr(__pu_var &v)
 
 void bi_sleep(Pu *L, int, pu_var *v)
 {
-    if (v == nullptr || v[0]->type() != NUM)
+    if (v == nullptr || v[0]->type() != INTEGER)
     {
         error(L, 24);
         bi_return_null;
     }
-    unsigned long mili = (unsigned long)(v[0]->numVal());
+    unsigned long mili = (unsigned long)(v[0]->intVal());
 
 #ifdef _WIN32
     Sleep(mili);
@@ -112,18 +120,22 @@ void bi_get_value_len(Pu *L, int, pu_var *v)
     }
 
     __pu_var r(L);
-    r.SetType(NUM);
-    if (v[0]->type() == NUM)
+    r.SetType(INTEGER);
+    if (v[0]->type() == INTEGER)
     {
-        r.numVal() = 1;
+        r.intVal() = 1;
+    }
+    else if (v[0]->type() == NUM)
+    {
+        r.intVal() = 1;
     }
     else if (v[0]->type() == STR)
     {
-        r.numVal() = (PU_NUMBER)v[0]->strVal().length();
+        r.intVal() = (PU_INT)v[0]->strVal().length();
     }
     else if (v[0]->type() == ARRAY)
     {
-        r.numVal() = (PU_NUMBER)v[0]->arr().size();
+        r.intVal() = (PU_INT)v[0]->arr().size();
     }
     pu_set_return_value(L,&r);
 }
@@ -132,8 +144,8 @@ void bi_time(Pu *L, int, pu_var*)
 {
     time_t ti = time(nullptr); 
     __pu_var t(L);
-    t.SetType(NUM);
-    t.numVal() = (PU_NUMBER)ti;
+    t.SetType(INTEGER);
+    t.intVal() = (PU_INT)ti;
 
     pu_set_return_value(L, &t);
 }
@@ -146,30 +158,30 @@ void bi_date(Pu *L, int, pu_var*)
     local=localtime(&ti); 
     
     __pu_var t(L);
-    t.SetType(NUM);
+    t.SetType(INTEGER);
     
     __pu_var r(L);
     r.createby_ = PU_USER;
 
-    t.numVal() = (PU_NUMBER)local->tm_year+1900;
+    t.intVal() = (PU_INT)local->tm_year+1900;
     pu_push_arr(&r, &t);
 
-    t.numVal() = (PU_NUMBER)local->tm_mon;
+    t.intVal() = (PU_INT)local->tm_mon;
     pu_push_arr(&r, &t);
 
-    t.numVal() = (PU_NUMBER)local->tm_mday;
+    t.intVal() = (PU_INT)local->tm_mday;
     pu_push_arr(&r, &t);
 
-    t.numVal() = (PU_NUMBER)local->tm_wday;
+    t.intVal() = (PU_INT)local->tm_wday;
     pu_push_arr(&r, &t);
 
-    t.numVal() = (PU_NUMBER)local->tm_hour;
+    t.intVal() = (PU_INT)local->tm_hour;
     pu_push_arr(&r, &t);
 
-    t.numVal() = (PU_NUMBER)local->tm_min;
+    t.intVal() = (PU_INT)local->tm_min;
     pu_push_arr(&r, &t);
 
-    t.numVal() = (PU_NUMBER)local->tm_sec;
+    t.intVal() = (PU_INT)local->tm_sec;
     pu_push_arr(&r, &t);
 
     pu_set_return_value(L, &r);
@@ -188,8 +200,8 @@ void bi_rand(Pu *L, int, pu_var *)
     srand( (unsigned)time( nullptr ) ); 
 
     int n = rand();
-    r.SetType(NUM);
-    r.numVal() = (PU_NUMBER)n;
+    r.SetType(INTEGER);
+    r.intVal() = (PU_INT)n;
     pu_set_return_value(L,&r);
 }
 
@@ -203,6 +215,9 @@ void bi_rand(Pu *L, int, pu_var *)
     else                                \
         printf("%lf", n->numVal());
 
+#define WRITE_INT(n)                    \
+        printf("%lld", n->intVal());
+
 
 static void write_arr(const __pu_var &arr)
 {
@@ -212,7 +227,11 @@ static void write_arr(const __pu_var &arr)
     while (it != ite)
     {
         __pu_var temp = *it;
-        if (temp.type() == STR)
+        if (temp.type() == INTEGER)
+        {
+            WRITE_INT((&temp));
+        }
+        else if (temp.type() == STR)
         {
             printf("\'");
             WRITE_STR((&temp));
@@ -269,7 +288,7 @@ void bi_num(Pu *L, int argc, pu_var *v)
     o.SetType(NUM);
     if (is_int(str))
     {
-        int nv = atoi(str);
+        PU_INT nv = atoll(str);
         o.numVal() = (PU_NUMBER)nv;
         pu_set_return_value(L, v[0]);
     }
@@ -277,6 +296,29 @@ void bi_num(Pu *L, int argc, pu_var *v)
     {    
         PU_NUMBER nv = (PU_NUMBER)atof(str);
         o.numVal() = nv;
+        pu_set_return_value(L, v[0]);
+    }
+}
+
+void bi_int(Pu *L, int argc, pu_var *v)
+{
+    if (argc == 0 || v[0]->type() != STR)
+    {
+        bi_return_null;
+    }
+    const char *str = v[0]->strVal().c_str();
+    __pu_var o(L);
+    o.SetType(INTEGER);
+    if (is_int(str))
+    {
+        PU_INT nv = atoll(str);
+        o.intVal() = nv;
+        pu_set_return_value(L, v[0]);
+    }
+    else if (is_float(str))
+    {    
+        PU_INT nv = (PU_INT)atof(str);
+        o.intVal() = nv;
         pu_set_return_value(L, v[0]);
     }
 }
@@ -308,7 +350,11 @@ void bi_write(Pu *L, int argc, pu_var *v)
     {
         for (int i = 0; i < argc; ++i)
         {
-            if (v[i]->type() == NUM)
+            if (v[i]->type() == INTEGER)
+            {
+                WRITE_INT(v[i]);
+            }
+            else if (v[i]->type() == NUM)
             {
                 WRITE_NUM(v[i]);
             }
@@ -322,7 +368,7 @@ void bi_write(Pu *L, int argc, pu_var *v)
             }
             else if (v[i]->type() == BOOLEANT)
             {
-                printf((v[i]->numVal() != 0)?"true":"false");
+                printf((v[i]->intVal() != 0)?"true":"false");
             }
             else
             {
@@ -352,7 +398,7 @@ void bi_type(Pu *L, int argn, pu_var *v)
 {
     __pu_var o(L);
     o.SetType(STR);
-    if (argn>0)
+    if (argn > 0)
     {
         o.strVal() = get_typestr(*v[0]);
     }
@@ -363,7 +409,7 @@ void bi_type(Pu *L, int argn, pu_var *v)
     pu_set_return_value(L,&o);
 }
 
-// ɾ��β���ķϴ���
+// 删除尾部的废代码
 static void clear_tailcode(Pu *L, int evstart)
 {
     L->cur_token = L->callstack.top();
@@ -396,7 +442,7 @@ int do_string(Pu *L, const char *str)
     
     if (!check_complete(L))
     {
-        // ����δ��β��ȥ��������FINISH
+        // 代码未结尾，去掉最后的FINISH
         L->tokens.pop_back();
         L->cur_token = L->callstack.top();
         L->callstack.pop();
@@ -507,9 +553,9 @@ void bi_read(Pu *L, int argc, pu_var *vrr)
 
         if (is_int(temp))
         {
-            long nv = atol(temp);
-            v.SetType(NUM);
-            v.numVal() = (PU_NUMBER)nv;
+            PU_INT nv = atoll(temp);
+            v.SetType(INTEGER);
+            v.intVal() = nv;
         }
         else if (is_float(temp))
         {    

@@ -192,6 +192,26 @@ static void get_string(Pu *L, int c, Token &newToken)
 	newToken.literal_value = get_str_literal(L, strValout);
 }
 
+const __pu_var *get_int_literal(Pu *L, PU_INT intval)
+{
+	const __pu_var *literal_value = nullptr;
+	int64_t key = intval;
+	auto it = L->const_int_vals.find(key);
+	if (it != L->const_int_vals.end())
+	{
+		literal_value = it->second;
+	}
+	else
+	{
+		literal_value = new __pu_var(L);
+		const_cast<__pu_var*>(literal_value)->SetType(INTEGER);
+		const_cast<__pu_var*>(literal_value)->intVal() = intval;
+		L->const_int_vals[key] = literal_value;
+	}
+
+	return literal_value;
+}
+
 const __pu_var *get_num_literal(Pu *L, PU_NUMBER number)
 {
 	const __pu_var *literal_value = nullptr;
@@ -221,6 +241,17 @@ static void get_num(Pu *L, int c, Token &newToken)
     newToken.type = NUM;
 	newToken.literal_value = get_num_literal(L, number);
 }
+
+void get_int(Pu *L, int c, Token &newToken)
+{
+    pu_ungetc(L,c);
+    PU_INT intval;
+    pu_scanf(L->source, "%lld", &intval);
+
+    newToken.type = INTEGER;
+	newToken.literal_value = get_int_literal(L, intval);
+}
+
 
 static bool is_space(Pu *L, int c)
 {

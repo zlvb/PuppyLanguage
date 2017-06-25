@@ -67,7 +67,7 @@ PUAPI void pu_reg_func(Pu *L, const char *funcname,
 
     __pu_var v(L);
     v.SetType(CFUN);
-    v.numVal() = (PU_NUMBER)L->funclist.size()-1;
+    v.intVal() = (PU_INT)L->funclist.size()-1;
 	const std::string *strname = InsertStrPool(L, funcname);
     __pu_var *got = reg_var(L, strname);
     *got = v;        
@@ -83,6 +83,11 @@ PUAPI PU_NUMBER pu_num(pu_var v)
     return v->numVal();
 }
 
+PUAPI PU_NUMBER pu_int(pu_var v)
+{
+    return v->intVal();
+}
+
 PUAPI pu_var pu_arr(pu_var v, int idx)
 {
     return &(v->arr()[idx]);
@@ -90,8 +95,8 @@ PUAPI pu_var pu_arr(pu_var v, int idx)
 
 PUAPI void *pu_ptr(pu_var v)
 {
-    PU_NUMBER n = v->numVal();
-    return (void*)*(PU_INT*)&n;
+    PU_INT n = v->intVal();
+    return (void*)n;
 }
 
 PUAPI int pu_type(pu_var v)
@@ -131,6 +136,18 @@ PUAPI PURESULT pu_set_num(pu_var v, PU_NUMBER number)
     return PU_SUCCESS;
 }
 
+PUAPI PURESULT pu_set_int(pu_var v, PU_INT intval)
+{
+    if (v->createby_ == PU_SYSTEM)
+    {
+        return PU_FAILED;
+    }
+
+    v->SetType(INTEGER);
+    v->intVal() = intval;
+    return PU_SUCCESS;
+}
+
 PUAPI PURESULT pu_set_ptr(pu_var v, void *ptr)
 {
     if (v->createby_ == PU_SYSTEM)
@@ -140,7 +157,7 @@ PUAPI PURESULT pu_set_ptr(pu_var v, void *ptr)
 
     v->SetType(CPTR);
     PU_INT n = (PU_INT)ptr;
-    v->numVal() = *(PU_NUMBER*)&n;
+    v->intVal() = n;
     return PU_SUCCESS;
 }
 
@@ -264,7 +281,7 @@ PUAPI pu_var pu_call(Pu *L, const char *funcname,
 {
     L->return_value.SetType(UNKNOWN);
     pu_var fv = pu_global(L,funcname);
-    FuncPos &fps = L->funclist[(int)fv->numVal()];
+    FuncPos &fps = L->funclist[(int)fv->intVal()];
 
     const FunArgs &vArgs = fps.argnames;
     L->isreturn.push(0);
@@ -345,6 +362,11 @@ PUAPI void pu_set_output_handle(Pu *L, OutputHandle func)
         PU_SNPRINTF(num, sizeof(num),"%lf", n->numVal());\
     strcat(b,num);
 
+#define s_WRITE_INT(n,b) \
+    char num[64]={0};\
+    PU_SNPRINTF(num, sizeof(num),"%lld", n->intVal());\
+    strcat(b,num);
+
 
 static void s_write_arr(const __pu_var &arr, char *b)
 {
@@ -359,6 +381,10 @@ static void s_write_arr(const __pu_var &arr, char *b)
             strcat(b,"\'");
             s_WRITE_STR((&temp),b);
             strcat(b, "\'");
+        }
+        else if (temp.type() == INTEGER)
+        {
+            s_WRITE_INT((&temp),b);
         }
         else if (temp.type() == NUM)
         {
@@ -382,7 +408,11 @@ PUAPI void pu_val2str(Pu *, pu_var *p, char *b, int buffsize)
 {
     b[0]=0;
     pu_var &v = *p;
-    if (v->type() == NUM)
+    if (v->type() == INTEGER)
+    {
+        s_WRITE_INT(v,b);
+    }
+    else if (v->type() == NUM)
     {
         s_WRITE_NUM(v,b);
     }
@@ -400,7 +430,7 @@ PUAPI void pu_val2str(Pu *, pu_var *p, char *b, int buffsize)
     }      
     else if (v->type() == BOOLEANT)
     {
-        PU_SNPRINTF(b, buffsize, "%s", (v->numVal() != 0)?"true":"false");
+        PU_SNPRINTF(b, buffsize, "%s", (v->intVal() != 0)?"true":"false");
     }
     else
     {

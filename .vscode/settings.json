@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "cmath": "cpp",
-        "hashtable": "cpp"
+        "hashtable": "cpp",
+        "cstdlib": "cpp",
+        "*.tcc": "cpp"
     }
 }

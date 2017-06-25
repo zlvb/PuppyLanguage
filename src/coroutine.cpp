@@ -34,7 +34,7 @@
 
 PUAPI void pu_set_return_value(Pu *L, pu_var v);
 extern int vm(Pu *L);
-extern void bi_return_num( Pu * L, int v );
+extern void bi_return_int( Pu * L, int v );
 void bi_coro_create(Pu *L, int argnum, pu_var *v)
 {
     if (argnum == 0)
@@ -47,7 +47,7 @@ void bi_coro_create(Pu *L, int argnum, pu_var *v)
         return;
     }
 
-    FuncPos &fps = L->funclist[(int)v[0]->numVal()];
+    FuncPos &fps = L->funclist[(int)v[0]->intVal()];
 
     const FunArgs &args = fps.argnames;
 
@@ -75,13 +75,13 @@ void bi_coro_create(Pu *L, int argnum, pu_var *v)
         c.begin = fps.start; 
         c.end = fps.end;
         c.cur = c.begin;
-        c.funpos = (int)v[0]->numVal();
+        c.funpos = (int)v[0]->intVal();
         c.varmap = newvarmap;
         c.id = L->coros.size();
         L->coros.push_back(c);        
         __pu_var retv(L);
         retv.SetType(CORO);
-        retv.numVal() = (PU_NUMBER)L->coros.size()-1;
+        retv.intVal() = (PU_INT)L->coros.size()-1;
         pu_set_return_value(L, &retv);
     }
 }
@@ -101,10 +101,10 @@ void bi_coro_resume(Pu *L, int argnum, pu_var *v)
         corov = v[0];
         if (corov->type() != CORO)
         {
-            bi_return_num(L, -1);
+            bi_return_int(L, -1);
             return;
         }
-        coro_id = int(corov->numVal());        
+        coro_id = int(corov->intVal());        
     }
 
     if (coro_id < 0 || coro_id >= (int)L->coros.size())
@@ -127,7 +127,7 @@ void run_coro( Pu *L, int coro_id, __pu_var *corov )
 
     if (c.cur == c.end)
     {
-        bi_return_num(L, 0);
+        bi_return_int(L, 0);
         return;
     }
 
@@ -150,20 +150,20 @@ void run_coro( Pu *L, int coro_id, __pu_var *corov )
     L->isreturn.pop();
 
     __pu_var r = __pu_var(L);
-    r.SetType(NUM);
+    r.SetType(INTEGER);
     if (L->isyield)
     {
-        r.numVal() = 1;
+        r.intVal() = 1;
         coro cbak = L->coros[coro_id];
         L->coros[coro_id] = L->coros.back();
         L->coros.back() = cbak;
     }
     else
     {
-        r.numVal() = 0;
+        r.intVal() = 0;
         if (corov)
         {
-            corov->numVal() = -1;
+            corov->intVal() = -1;
         }
         delete c.varmap;
         c.varmap = nullptr;

@@ -40,6 +40,7 @@
 typedef std::unordered_map<std::string, const std::string*> StrMap;
 typedef std::unordered_map<std::string, const __pu_var*> ConstVarStrPool;
 typedef std::unordered_map<uint64_t, const __pu_var*> ConstVarNumPool;
+typedef std::unordered_map<int64_t, const __pu_var*> ConstVarIntPool;
 typedef PuStack<int> CallStack;
 typedef PuStack<StrKeyMap*> VarStack;
 typedef std::unordered_map<std::string, int> LabelMap;
@@ -132,6 +133,7 @@ struct Pu
 	VarVec tempvals;
 	ConstVarStrPool const_str_vals;
 	ConstVarNumPool const_num_vals;
+    ConstVarIntPool const_int_vals;
     bool                builtinreg;
     bool                tail_optimize;
 	bool				start_gc;

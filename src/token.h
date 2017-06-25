@@ -75,5 +75,5 @@ typedef std::vector<Token> TokenList;
 const std::string *InsertStrPool(Pu *L, const char *sname);
 const __pu_var *get_str_literal(Pu *L, const PuString &strVal);
 const __pu_var *get_num_literal(Pu *L, PU_NUMBER number);
-
+const __pu_var *get_int_literal(Pu *L, PU_INT number);
 #endif

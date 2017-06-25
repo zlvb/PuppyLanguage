@@ -79,34 +79,35 @@ enum OperatorType
 
 enum PuType
 {
-    WHILE,
-    END,
-    IF,
-    ELSE,
-    BREAK,
-    GOTO,
-    FUNCTION,
-    RETURN,
-    INCLUDE,
-    CONTINUE,
-    ELIF,
-    NIL,
-    FALSEK,
-    TRUEK,
-    OP,
-    VAR,
-    NUM, //
-    STR, //
-    ARRAY, //
-    MAP, //
-    CORO, //
-    FILEHANDLE, //
-    BOOLEANT, //
-    FUN, //
-    CFUN, //
-    LABEL,
-    FINISH,
-    CPTR, //
+    WHILE, // 0
+    END,  // 1
+    IF, // 2
+    ELSE, // 3
+    BREAK, // 4
+    GOTO, // 5
+    FUNCTION, // 6
+    RETURN, // 7
+    INCLUDE, // 8
+    CONTINUE, // 9
+    ELIF, // 10
+    NIL, // 11
+    FALSEK, // 12
+    TRUEK, // 13
+    OP, // 14
+    VAR, // 15
+    NUM, // 16
+    STR, // 17
+    ARRAY, // 18
+    MAP, // 19
+    CORO, // 20
+    FILEHANDLE, // 21
+    BOOLEANT, // 22
+    INTEGER, // 23
+    FUN, // 24
+    CFUN, // 25
+    LABEL, // 26
+    FINISH, // 27
+    CPTR, // 28
     UNKNOWN
 };
 

@@ -45,13 +45,16 @@ struct Pu;
 #define VALUE_IS_TRUE(v)                                        \
 (                                                                \
     ((v).type() == BOOLEANT)?                                    \
-        ((v).numVal() != 0)                                        \
+        ((v).intVal() != 0)                                        \
+                                                                \
+     :(((v).type() == INTEGER)?                                   \
+        ((v).intVal() != 0)                                        \
                                                                 \
     :(((v).type() == NUM)?                                        \
         ((v).numVal() != 0)                                        \
                                                                 \
     :(((v).type() == CPTR)?                                     \
-        (*(PU_INT*)&(v).numVal() != 0)                            \
+        (*(PU_INT*)&(v).intVal() != 0)                            \
                                                                 \
     :(((v).type() == STR)?                                        \
         ((v).strVal().length() != 0)                            \
@@ -63,7 +66,7 @@ struct Pu;
         ((v).map().size() != 0)                                    \
                                                                 \
     :(((v).type() == CORO)?                                        \
-        ((v).numVal() != -1)                                    \
+        ((v).intVal() != -1)                                    \
                                                                 \
     :(((v).type() == FILEHANDLE)?                                \
         ((v).file() != 0 )                                  \
@@ -71,7 +74,7 @@ struct Pu;
     :(((v).type() == FUNCTION)?                                    \
         (true):(false)                                            \
                                                                 \
-    ))))))))                                                       \
+    )))))))))                                                       \
 )
 
 typedef enum PUVALUECREATEDBY{
@@ -96,14 +99,14 @@ struct __pu_var
 	};
 
 	struct strptr_hash {
-		size_t operator()(const std::string * const &__x) const
+		size_t operator()(const std::string *const &__x) const
 		{
 			return std::hash<std::string>()(*__x);
 		}
 	};
 
 	struct strptr_eq {
-		bool operator()(const std::string * const &__x, const std::string * const &__y) const
+		bool operator()(const std::string *const &__x, const std::string *const &__y) const
 		{
 			return *__x == *__y;
 		}
@@ -300,15 +303,25 @@ struct __pu_var
         return numVal_;
     }
 
+    PU_INT& intVal()
+    {
+        return intVal_;
+    }
+
     const PU_NUMBER& numVal() const
     {
+        return numVal_;
+    }
+
+    const PU_INT& intVal() const
+    {
 #ifdef _DEBUG
-        if (type() != FUN && type() != BOOLEANT && type() != NUM && type() != CORO && type() != CFUN && type() != CPTR)
+        if (type() != FUN && type() != BOOLEANT && type() != INTEGER && type() != CORO && type() != CFUN && type() != CPTR)
         {
-            assert(!"number get value failed");
+            assert(!"integer get value failed");
         }
 #endif
-        return numVal_;
+        return intVal_;
     }
 
 	_scope &up_value()

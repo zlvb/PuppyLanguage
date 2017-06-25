@@ -51,6 +51,7 @@ extern void bi_open(Pu *L, int argc, pu_var *v);
 extern void bi_close(Pu *L, int argc, pu_var *v);
 extern void bi_str(Pu *L, int argc, pu_var *v);
 extern void bi_num(Pu *L, int argc, pu_var *v);
+extern void bi_int(Pu *L, int argc, pu_var *v);
 extern void bi_coro_create(Pu *L, int argnum, pu_var *v);
 extern void bi_coro_resume(Pu *L, int argnum, pu_var *v);
 extern void bi_coro_yield(Pu *L, int argnum, pu_var *v);
@@ -146,6 +147,7 @@ void regbuiltin(Pu *L)
     pu_reg_func(L, "close", bi_close);
     pu_reg_func(L, "str", bi_str);
     pu_reg_func(L, "num", bi_num);
+    pu_reg_func(L, "int", bi_int);
     pu_reg_func(L, "get_var", bi_get_var);    
 }
 

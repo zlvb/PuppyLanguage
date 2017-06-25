@@ -34,23 +34,16 @@
 
 const __pu_var &__pu_var::operator +=(const __pu_var &x)
 {
-    if (type() == NUM && x.type() == NUM)
-        numVal() += x.numVal();
-    else if (type() == STR && x.type() == STR)
-        strVal() += x.strVal();
-    else
-        *this = *this + x;
-
+    *this = *this + x;
     return *this;
 }
+
 const __pu_var &__pu_var::operator -=(const __pu_var &x)
 {
-    if (type() == NUM && x.type() == NUM)
-        numVal() -= x.numVal();
-    else
-        error(L,9);
+    *this = *this - x;
     return *this;
 }
+
 const __pu_var &__pu_var::operator *=(const __pu_var &x)
 {
     *this = *this * x;
@@ -81,6 +74,8 @@ unsigned int __pu_var::hash() const
     {
     case STR:
         return strVal_->hash();
+    case INTEGER:
+        return intVal();
     case NUM:
         return ((d2ui*)&numVal_)->ui.x1 + ((d2ui*)&numVal_)->ui.x2;
     default:
@@ -140,7 +135,22 @@ void __pu_var::build()
 __pu_var __pu_var::operator +(const __pu_var &x)
 {
     __pu_var n(L);
-    if ((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
+    if (type() == INTEGER || x.type() == INTEGER)
+    {
+        n.SetType(INTEGER);
+        n.numVal() = intVal() + x.intVal();
+    }
+    else if (type() == INTEGER || x.type() == NUM)
+    {
+        n.SetType(NUM);
+        n.numVal() = intVal() + x.numVal();
+    }
+    else if (type() == NUM || x.type() == INTEGER)
+    {
+        n.SetType(NUM);
+        n.numVal() = numVal() + x.intVal();
+    }
+    else if (type() == NUM || x.type() == NUM)
     {
         n.SetType(NUM);
         n.numVal() = numVal() + x.numVal();
@@ -149,6 +159,20 @@ __pu_var __pu_var::operator +(const __pu_var &x)
     {
         n.SetType(STR);
         n.strVal() = strVal() + x.strVal();
+    }
+    else if (type() == STR && x.type() == INTEGER)
+    {
+        n.SetType(STR);
+        char temp[64];
+        PU_SNPRINTF(temp, sizeof(temp), "%lld", x.intVal());
+        n.strVal() = strVal() + temp;
+    }
+    else if (type() == INTEGER && x.type() == STR)
+    {
+        n.SetType(STR);
+        char temp[64];
+        PU_SNPRINTF(temp, sizeof(temp), "%lld", intVal());
+        n.strVal() = PuString(temp) + x.strVal();
     }
     else if (type() == STR && x.type() == NUM)
     {
@@ -175,7 +199,7 @@ __pu_var __pu_var::operator +(const __pu_var &x)
     else if (type() == STR && x.type() == BOOLEANT)
     {
         n.SetType(STR);
-        if (x.numVal() == 1)
+        if (x.intVal() == 1)
             n.strVal() += "true";
         else
             n.strVal() += "false";
@@ -184,7 +208,7 @@ __pu_var __pu_var::operator +(const __pu_var &x)
     {
         n.SetType(STR);
         PuString res = n.strVal();
-        if (numVal() == 1)
+        if (intVal() == 1)
             n.strVal() = "true";
         else
             n.strVal() = "false";
@@ -215,10 +239,25 @@ __pu_var __pu_var::operator +(const __pu_var &x)
 __pu_var __pu_var::operator -(const __pu_var &x)
 {
     __pu_var n(L);
-    if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
+    if(type() == INTEGER || x.type() == INTEGER)
+    {
+        n.SetType(INTEGER);
+        n.intVal() = intVal() - x.intVal();
+    }
+    else if(type() == NUM || x.type() == NUM)
     {
         n.SetType(NUM);
         n.numVal() = numVal() - x.numVal();
+    }
+    else if(type() == INTEGER || x.type() == NUM)
+    {
+        n.SetType(NUM);
+        n.numVal() = intVal() - x.numVal();
+    }
+    else if(type() == NUM || x.type() == INTEGER)
+    {
+        n.SetType(NUM);
+        n.numVal() = numVal() - x.intVal();
     }
     else
     {
@@ -231,10 +270,42 @@ __pu_var __pu_var::operator -(const __pu_var &x)
 __pu_var __pu_var::operator /(const __pu_var &x)
 {
     __pu_var n(L);
-    if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
+    if (x.type() == INTEGER)
+    {
+        if (x.intVal() == 0)
+        {
+            error(L, 35);
+            return n;
+        }
+    }
+    else if (x.type() == NUM)
+    {
+        if (x.numVal() == 0)
+        {
+            error(L, 35);
+            return n;
+        }
+    }
+
+    if (type() == INTEGER || x.type() == INTEGER)
+    {
+        n.SetType(INTEGER);
+        n.intVal() = intVal() / x.intVal();
+    }
+    else if (type() == NUM || x.type() == NUM)
     {
         n.SetType(NUM);
         n.numVal() = numVal() / x.numVal();
+    }
+    else if (type() == INTEGER || x.type() == NUM)
+    {
+        n.SetType(NUM);
+        n.numVal() = intVal() / x.numVal();
+    }
+    else if (type() == NUM || x.type() == INTEGER)
+    {
+        n.SetType(NUM);
+        n.numVal() = numVal() / x.intVal();
     }
     else
     {
@@ -247,10 +318,10 @@ __pu_var __pu_var::operator /(const __pu_var &x)
 __pu_var __pu_var::operator %(const __pu_var &x)
 {
     __pu_var n(L);
-    if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
+    if (type() == INTEGER && x.type() == INTEGER)
     {
-        n.SetType(NUM);
-        n.numVal() = PU_NUMBER(PU_INT(numVal()) % PU_INT(x.numVal()));
+        n.SetType(INTEGER);
+        n.intVal() = intVal() % x.intVal();
     }
     else
     {
@@ -263,16 +334,31 @@ __pu_var __pu_var::operator %(const __pu_var &x)
 __pu_var __pu_var::operator *(const __pu_var &x)
 {
     __pu_var n(L);
-    if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
+    if (type() == INTEGER || x.type() == INTEGER)
+    {
+        n.SetType(INTEGER);
+        n.intVal() = intVal() * x.intVal();
+    }
+    else if (type() == NUM || x.type() == NUM)
     {
         n.SetType(NUM);
         n.numVal() = numVal() * x.numVal();
     }
-    else if (type() == STR && (x.type() == NUM || x.type() == BOOLEANT))
+    else if (type() == INTEGER || x.type() == NUM)
+    {
+        n.SetType(NUM);
+        n.numVal() = intVal() * x.numVal();
+    }
+    else if (type() == NUM || x.type() == INTEGER)
+    {
+        n.SetType(NUM);
+        n.numVal() = numVal() * x.intVal();
+    }
+    else if (type() == STR && x.type() == INTEGER)
     {
         n.SetType(STR);
         n.strVal() = "";
-        int strvn = int(x.numVal());
+        int strvn = int(x.intVal());
         for (int k=0; k<strvn; ++k)
         {
             n.strVal() += strVal();
@@ -285,90 +371,64 @@ __pu_var __pu_var::operator *(const __pu_var &x)
     
     return n;
 }
-int __pu_var::operator >(const __pu_var &x) const
-{
-    if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
-    {
-        return (numVal() > x.numVal())?1:0;
-    }
-    else if(type() == STR && x.type() == STR)
-    {
-        return !(strVal() < x.strVal()) && (strVal() != x.strVal());
-    }
-    
-    error(L,13);
-    return 0;
-}
+
 int __pu_var::operator <(const __pu_var &x) const
 {
-    if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
+    if (type() == INTEGER || x.type() == INTEGER)
     {
-        return (numVal() < x.numVal())?1:0;
+        return (intVal() < x.intVal())? 1 : 0;
+    }
+    else if (type() == INTEGER || x.type() == NUM)
+    {
+        return (intVal() < x.numVal())? 1 : 0;
+    }
+    else if (type() == NUM || x.type() == INTEGER)
+    {
+        return (numVal() < x.intVal())? 1 : 0;
+    }
+    else if (type() == NUM && x.type() == NUM)
+    {
+        return (numVal() < x.numVal())? 1 : 0;
     }
     else if(type() == STR && x.type() == STR)
     {
-        return strVal() < x.strVal();
+        return (strVal() < x.strVal())? 1 : 0;
     }
-    
-    error(L,13);
-    return 0;
-}
-int __pu_var::operator >=(const __pu_var &x) const
-{
-    if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
+    else 
     {
-        return (numVal() >= x.numVal())?1:0;
+        return ((int)VALUE_IS_TRUE(*this) < (int)VALUE_IS_TRUE(x))?1 : 0;
     }
-    else if(type() == STR && x.type() == STR)
-    {
-        return !(strVal() < x.strVal());
-    }
-
-    error(L,13);
-    return 0;
-}
-int __pu_var::operator <=(const __pu_var &x) const
-{
-    if((type() == NUM || type() == BOOLEANT) && (x.type() == NUM || x.type() == BOOLEANT))
-    {
-        return (numVal() <= x.numVal())?1:0;
-    }
-    else if(type() == STR && x.type() == STR)
-    {
-        return (strVal() < x.strVal()) || (strVal() == x.strVal());
-    }
-    
-    error(L,13);
-    return 0;
-}
-int __pu_var::operator !=(const __pu_var &x) const
-{
-    return (*this == x) ? 0 : 1;
 }
 
 int __pu_var::operator ==(const __pu_var &x) const
 {
-    if (type() == NUM && x.type() == BOOLEANT)
+    if (type() == BOOLEANT && x.type() != BOOLEANT)
     {
-        return (numVal() > 0 && x.numVal() == 1)
-            || (numVal() != 0 && x.numVal() == 0);
+        return (intVal() && VALUE_IS_TRUE(x))? 1 : 0;
     }
-    else if (type() == BOOLEANT && x.type() == NUM)
+    else if (type() != BOOLEANT && x.type() == BOOLEANT)
     {
-        return (x.numVal() > 0 && numVal() == 1)
-            || (x.numVal() != 0 && numVal() == 0);
+        return (x.intVal() && VALUE_IS_TRUE(*this))? 1 : 0;
+    }
+    if (type() == NUM && x.type() == INTEGER)
+    {
+        return (numVal() == x.intVal())? 1 : 0;
+    }
+    else if (type() == INTEGER && x.type() == NUM)
+    {
+        return (intVal() == x.numVal())? 1 : 0;
     }
     else if (type() != x.type())
     {
         return 0;
     }
-    else if (type() == NUM || type() == BOOLEANT || type() == CPTR)
+    else if (type() == INTEGER || type() == BOOLEANT || type() == CPTR)
     {
-        return (numVal() == x.numVal())?1:0;
+        return (intVal() == x.intVal())?1:0;
     }
-	else if (upval_ == x.upval_)
+    else if (type() == NUM)
 	{
-		return 1;
+		return (numVal() == x.numVal())?1:0;
 	}
     else if (type() == STR)
     {
@@ -382,8 +442,32 @@ int __pu_var::operator ==(const __pu_var &x) const
     {
         return (map() == x.map()) ? 0 : 1;
     }
+	else if (upval_ == x.upval_)
+	{
+		return 1;
+	}
     
     return 0;
+}
+
+int __pu_var::operator >(const __pu_var &x) const
+{
+    return (*this < x || *this == x)? 0 : 1;
+}
+
+int __pu_var::operator >=(const __pu_var &x) const
+{
+    return (*this < x)? 0 : 1;
+}
+
+int __pu_var::operator <=(const __pu_var &x) const
+{
+    return ((*this < x) || (*this == x))? 1 : 0;
+}
+
+int __pu_var::operator !=(const __pu_var &x) const
+{
+    return (*this == x) ? 0 : 1;
 }
 
 int __pu_var::operator ||(const __pu_var &x) const
@@ -398,41 +482,39 @@ int __pu_var::operator &&(const __pu_var &x) const
 
 void __pu_var::operator =(const __pu_var &x)
 {
+    SetType(x.type());
     switch (x.type())
     {
-    case CORO: case NUM: case BOOLEANT: case CFUN: case CPTR:
+    case CORO: case INTEGER: case BOOLEANT: case CFUN: case CPTR:
         {            
-            SetType(x.type());
-            numVal() = x.numVal();
+            intVal() = x.intVal();
+        }break;
+    case NUM:
+        {            
+			numVal() = x.numVal();
         }break;
     case FUN:
         {            
-			SetType(x.type());
-			numVal() = x.numVal();
+			intVal() = x.intVal();
 			up_value() = x.up_value();
         }break;
     case STR:
         {            
-            SetType(x.type());
             strVal() = x.strVal();
         }break;
     case ARRAY:
         {            
-            SetType(x.type());
             arr() = x.arr();
         }break;
     case MAP:
-    {
-        SetType(x.type());
-        map() = x.map();
-    }break;
+        {
+            map() = x.map();
+        }break;
 	case FILEHANDLE:
-	{
-		SetType(x.type());
-		pfile_ = x.pfile_;
-	} break;
+        {
+            pfile_ = x.pfile_;
+        } break;
     default:
-		SetType(x.type());
         break;
     }
 	

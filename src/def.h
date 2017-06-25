@@ -40,13 +40,13 @@ struct FuncPos;
 
 #define PUAPI extern "C"
 
-// ¿ÉÒÔÈÃ½Å±¾µ÷ÓÃµÄº¯ÊýÀàÐÍ
+// å¯ä»¥è®©è„šæœ¬è°ƒç”¨çš„å‡½æ•°ç±»åž‹
 typedef void (*ScriptFunc)(Pu*, int arg_num, pu_var*);
 
-// ´íÎó´¦Àí»Øµ÷
+// é”™è¯¯å¤„ç†å›žè°ƒ
 typedef void (*ErrHandle)(int err, const char *err_str);
 
-// ´¦ÀíÊä³öµÄ»Øµ÷
+// å¤„ç†è¾“å‡ºçš„å›žè°ƒ
 typedef void (*OutputHandle)(const char *str);
 
 #define QUIT_SCRIPT            {L->isquit=true; L->cur_token = L->tokens.size() - 1;NEXT_TOKEN}
@@ -56,10 +56,10 @@ typedef void (*OutputHandle)(const char *str);
 #define PREV_TOKEN            {L->cur_token-=2;NEXT_TOKEN;}
 #define PREV_TOKEN_N(n)        {L->cur_token-=1+n;NEXT_TOKEN;}
 
-// ²Ù×÷½á¹û
+// æ“ä½œç»“æžœ
 typedef enum PURESULT{
-    PU_FAILED = -1,// Ê§°Ü
-    PU_SUCCESS = 0// ³É¹¦
+    PU_FAILED = -1,// å¤±è´¥
+    PU_SUCCESS = 0// æˆåŠŸ
 }PURESULT;
 
 #ifdef _MSC_VER

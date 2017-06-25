@@ -185,11 +185,11 @@ static __pu_var *regfunc(Pu *L)
     {    
         __pu_var fv(L);
         fv.SetType(FUN);
-        fv.numVal() = fpos;
+        fv.intVal() = fpos;
         fv.up_value() = L->cur_scope;
         __pu_var *got = reg_var(L, TOKEN.name);
         *got = fv;
-        L->cur_token = L->funclist[(int)fv.numVal()].end;
+        L->cur_token = L->funclist[(int)fv.intVal()].end;
         NEXT_TOKEN;
         return got;
     }
@@ -213,9 +213,9 @@ static const __pu_var *exp(Pu *L)
             __pu_var *fv = nullptr;
             MAKE_TEMP_VALUE(fv);
             fv->SetType(FUN);
-            fv->numVal() = fpos;
+            fv->intVal() = fpos;
             fv->up_value() = L->cur_scope;
-            L->cur_token = L->funclist[(int)fv->numVal()].end;
+            L->cur_token = L->funclist[(int)fv->intVal()].end;
             NEXT_TOKEN;
             return fv;
         }
@@ -328,7 +328,10 @@ static void get_value(Pu *L, __pu_var *&temp)
             NEXT_TOKEN;
             get_value(L, temp);
             CHECK_EXP(temp);
-            temp->numVal() *= -1;
+            if (temp->type() == NUM)
+                temp->numVal() *= -1;
+            else
+                temp->intVal() *= -1;
         }
         else if (nv == OPT_NOT) // !
         {
@@ -337,7 +340,7 @@ static void get_value(Pu *L, __pu_var *&temp)
             CHECK_EXP(temp);
             bool bbb = VALUE_IS_TRUE(*temp);
             temp->SetType(BOOLEANT);
-            temp->numVal() = (PU_NUMBER)(bbb?0:1);
+            temp->intVal() = (PU_NUMBER)(bbb?0:1);
         }
         else
         {
@@ -353,10 +356,13 @@ static void get_value(Pu *L, __pu_var *&temp)
         case NIL: temp->SetType(NIL);
             break;
         case FALSEK: temp->SetType(BOOLEANT);
-            temp->numVal() = 0;
+            temp->intVal() = 0;
             break;
         case TRUEK: temp->SetType(BOOLEANT);
-            temp->numVal() = 1;
+            temp->intVal() = 1;
+            break;
+        case INTEGER: temp->SetType(INTEGER);
+            temp->intVal() = TOKEN.literal_value->intVal();
             break;
         case NUM: temp->SetType(NUM);
             temp->numVal() = TOKEN.literal_value->numVal();
@@ -424,9 +430,9 @@ static void get_arrref(Pu *L, __pu_var *&temp)
     NEXT_TOKEN;
     const __pu_var *vidx = exp(L);
     CHECK_EXP(vidx);
-    if (vidx->type() != NUM)
+    if (vidx->type() != INTEGER)
     {// only num can be idx
-        error(L,3);
+        error(L, 3);
         MAKE_TEMP_VALUE(temp);
         return;
     }
@@ -440,7 +446,7 @@ static void get_arrref(Pu *L, __pu_var *&temp)
         return;
     }
 
-    int idx = int(vidx->numVal());
+    int idx = (int)vidx->intVal();
     get_arrvalue(L, temp, idx);// get value by idx
 }
 
@@ -450,7 +456,7 @@ static void get_mapref(Pu *L, __pu_var *&temp)
     NEXT_TOKEN;
     const __pu_var *key = exp(L);
     CHECK_EXP(key);
-    if (key->type() != NUM && key->type() != STR)
+    if (key->type() != INTEGER && key->type() != NUM && key->type() != STR)
     {// only num or str can be key
         error(L, 31);
         MAKE_TEMP_VALUE(temp);
@@ -651,10 +657,10 @@ static void logic(Pu *L, __pu_var *&temp)
                 __pu_var *t = nullptr;
                 CMP(L, t);
                 CHECK_EXP(t);
-                PU_NUMBER r = (PU_NUMBER)(*temp || *t);
+                PU_INT r = (PU_INT)(*temp || *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-                temp->numVal() = r;
+                temp->intVal() = r;
             }
             break;
         case OPT_AND:
@@ -663,10 +669,10 @@ static void logic(Pu *L, __pu_var *&temp)
                 __pu_var *t = nullptr;
                 CMP(L, t);
                 CHECK_EXP(t);
-                PU_NUMBER r = (PU_NUMBER)(*temp && *t);
+                PU_INT r = (PU_INT)(*temp && *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-                temp->numVal() = r;
+                temp->intVal() = r;
             }
             break;
         default:
@@ -692,10 +698,10 @@ static void cmp(Pu *L, __pu_var *&temp)
                 __pu_var *t = nullptr;
                 ADD(L, t);
                 CHECK_EXP(t);
-                PU_NUMBER r = (PU_NUMBER)(*temp > *t);
+                PU_INT r = (PU_INT)(*temp > *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-                temp->numVal() = r;
+                temp->intVal() = r;
             }
             break;
         case OPT_LT:
@@ -704,10 +710,10 @@ static void cmp(Pu *L, __pu_var *&temp)
                 __pu_var *t = nullptr;
                 ADD(L, t);       
                 CHECK_EXP(t);
-                PU_NUMBER r = (PU_NUMBER)(*temp < *t);
+                PU_INT r = (PU_INT)(*temp < *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-                temp->numVal() = r;
+                temp->intVal() = r;
             }
             break;
         case OPT_EQ:
@@ -716,10 +722,10 @@ static void cmp(Pu *L, __pu_var *&temp)
                 __pu_var *t = nullptr;
                 ADD(L, t);      
                 CHECK_EXP(t);
-                PU_NUMBER r = (PU_NUMBER)(*temp == *t);
+                PU_INT r = (PU_INT)(*temp == *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-                temp->numVal() = r;
+                temp->intVal() = r;
             }
             break;
         case OPT_GTA:
@@ -728,10 +734,10 @@ static void cmp(Pu *L, __pu_var *&temp)
                 __pu_var *t = nullptr;
                 ADD(L,t);     
                 CHECK_EXP(t);
-                PU_NUMBER r = (PU_NUMBER)(*temp >= *t);
+                PU_INT r = (PU_INT)(*temp >= *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-                temp->numVal() = r;
+                temp->intVal() = r;
             }
             break;
         case OPT_LTA:
@@ -740,10 +746,10 @@ static void cmp(Pu *L, __pu_var *&temp)
                 __pu_var *t = nullptr;
                 ADD(L, t);  
                 CHECK_EXP(t);
-                PU_NUMBER r = (PU_NUMBER)(*temp <= *t);
+                PU_INT r = (PU_INT)(*temp <= *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-                temp->numVal() = r;
+                temp->intVal() = r;
             }
             break;
         case OPT_NEQ:
@@ -752,10 +758,10 @@ static void cmp(Pu *L, __pu_var *&temp)
                 __pu_var *t = nullptr;
                 ADD(L, t);      
                 CHECK_EXP(t);
-                PU_NUMBER r = (PU_NUMBER)(*temp != *t);
+                PU_INT r = (PU_INT)(*temp != *t);
                 MAKE_TEMP_VALUE(temp);
                 temp->SetType(BOOLEANT);
-                temp->numVal() = r;
+                temp->intVal() = r;
             }
             break;
         default:
@@ -920,7 +926,7 @@ static void factor(Pu *L, __pu_var *&temp)
                 {
                     L->up_scope = temp->up_value();
                 }
-                callfunction(L, L->funclist[(int)temp->numVal()]);
+                callfunction(L, L->funclist[(int)temp->intVal()]);
                 if (temp->type() == FUN)
                 {
                     L->up_scope = old;
@@ -1173,8 +1179,8 @@ static void procop(Pu *L)
     else if (tp == OP && (nv == OPT_SUB || nv == OPT_ADD))// - +
     {
         MAKE_TEMP_VALUE(temp);
-        temp->SetType(NUM);
-        temp->numVal() = 0;
+        temp->SetType(INTEGER);
+        temp->intVal() = 0;
         add(L,temp);
         CHECK_EXP(temp);
     }

@@ -53,6 +53,9 @@ static void save_token(FILE *pbcf, TokenList &tokens)
         fwrite(&ctp, sizeof(ctp), 1, pbcf);
         switch (it->type)
         {
+        case INTEGER:
+            fwrite(&it->literal_value->intVal(), sizeof(it->literal_value->intVal()), 1, pbcf);
+            break;
         case NUM:
             fwrite(&it->literal_value->numVal(), sizeof(it->literal_value->numVal()), 1, pbcf);
             break;
@@ -101,6 +104,12 @@ void get_nextbytetoken(Pu *L, FILE *pbcf, Token &t)
 
             switch (type)
             {
+            case INTEGER:{
+				PU_INT number = 0;
+				fread(&number, sizeof(number), 1, pbcf);
+				t.literal_value = get_int_literal(L, number);
+				} break;
+
             case NUM:{
 				PU_NUMBER number = 0;
 				fread(&number, sizeof(number), 1, pbcf);

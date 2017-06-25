@@ -68,6 +68,7 @@ static const char *errtable[] = {
 "key not exist",//32
 "can not return while out of function",//33
 "count of function arguments is invalid",//34
+"number division by zero",//35
 };
 
 

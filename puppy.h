@@ -61,8 +61,9 @@ typedef enum PUVALUETYPE{
     CORO,        // 协程对象
     FILEHANDLE,    // 文件句柄
     BOOLEANT,        // 布尔
+    INTEGER,        // 整数
     FUN,            // 函数
-    CPTR = 27       // 指针
+    CPTR = 28,       // 指针
 }PUVALUETYPE;
 
 // 值是由脚本系统创建的，还是用户调用pu_new_value创建的
@@ -178,10 +179,21 @@ const char *pu_str(pu_var v);
 *    参数：    
 *    const pu_value v 与脚本交互的值类型的对象
 *    返回：
-*    值所代表的整数
+*    值所代表的数值
 *
 */
 PU_NUMBER pu_num(pu_var v);
+
+/**
+*
+*    把值转化成整数
+*    参数：    
+*    const pu_value v 与脚本交互的值类型的对象
+*    返回：
+*    值所代表的整数
+*
+*/
+PU_NUMBER pu_int(pu_var v);
 
 /**
 *
@@ -236,6 +248,16 @@ PURESULT pu_set_str(pu_var v, const char *str);
 *
 */
 PURESULT pu_set_num(pu_var v, PU_NUMBER num);
+
+/**
+*
+*    把值设置为整数
+*    参数：    
+*    const pu_value v 与脚本交互的值类型的对象
+*    int num 要设置的整数
+*
+*/
+PURESULT pu_set_int(pu_var v, PU_INT num);
 
 /**
 *
