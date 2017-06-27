@@ -23,3 +23,5 @@ test/cmp/yp.py
 *.opendb
 *.VC.db
 *.o
+/.vs
+*.ipch

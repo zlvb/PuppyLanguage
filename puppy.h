@@ -193,7 +193,7 @@ PU_NUMBER pu_num(pu_var v);
 *    值所代表的整数
 *
 */
-PU_NUMBER pu_int(pu_var v);
+PU_INT pu_int(pu_var v);
 
 /**
 *

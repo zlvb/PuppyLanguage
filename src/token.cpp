@@ -29,6 +29,7 @@
 
 #include "state.h"
 #include "error.h"
+#include "PuMath.h"
 #include <ctype.h>
 
 #define CHECK_ADDLINES {if(c=='\n') ++L->line;}
@@ -234,24 +235,36 @@ const __pu_var *get_num_literal(Pu *L, PU_NUMBER number)
 
 static void get_num(Pu *L, int c, Token &newToken)
 {
-    pu_ungetc(L,c);
-    PU_NUMBER number;
-    pu_scanf(L->source, "%lf", &number);
+    char syntax[64] = {0};
+    int nlen = 0;
+    while (isdigit(c) || c == '.')
+    {
+        if (check_source_end(c, L->source))
+        {
+            error(L, 0, L->line);
+            return;
+        }
+        syntax[nlen++] += char(c);
+        c = pu_getc(L);
+    }
 
-    newToken.type = NUM;
-	newToken.literal_value = get_num_literal(L, number);
+    pu_ungetc(L, c);
+
+    if (is_int(syntax))
+    {
+        newToken.type = INTEGER;
+        newToken.literal_value = get_int_literal(L, atoll(syntax));
+    }
+    else if (is_float(syntax))
+    {
+        newToken.type = NUM;
+        newToken.literal_value = get_num_literal(L, atof(syntax));
+    }    
+    else
+    {
+        error(L, 29);
+    }
 }
-
-void get_int(Pu *L, int c, Token &newToken)
-{
-    pu_ungetc(L,c);
-    PU_INT intval;
-    pu_scanf(L->source, "%lld", &intval);
-
-    newToken.type = INTEGER;
-	newToken.literal_value = get_int_literal(L, intval);
-}
-
 
 static bool is_space(Pu *L, int c)
 {

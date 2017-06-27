@@ -83,7 +83,7 @@ PUAPI PU_NUMBER pu_num(pu_var v)
     return v->numVal();
 }
 
-PUAPI PU_NUMBER pu_int(pu_var v)
+PUAPI PU_INT pu_int(pu_var v)
 {
     return v->intVal();
 }

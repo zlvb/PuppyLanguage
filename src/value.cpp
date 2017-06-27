@@ -75,7 +75,7 @@ unsigned int __pu_var::hash() const
     case STR:
         return strVal_->hash();
     case INTEGER:
-        return intVal();
+        return (unsigned int)intVal();
     case NUM:
         return ((d2ui*)&numVal_)->ui.x1 + ((d2ui*)&numVal_)->ui.x2;
     default:
@@ -138,7 +138,7 @@ __pu_var __pu_var::operator +(const __pu_var &x)
     if (type() == INTEGER || x.type() == INTEGER)
     {
         n.SetType(INTEGER);
-        n.numVal() = intVal() + x.intVal();
+        n.intVal() = intVal() + x.intVal();
     }
     else if (type() == INTEGER || x.type() == NUM)
     {
@@ -300,12 +300,12 @@ __pu_var __pu_var::operator /(const __pu_var &x)
     else if (type() == INTEGER || x.type() == NUM)
     {
         n.SetType(NUM);
-        n.numVal() = intVal() / x.numVal();
+        n.numVal() = (PU_NUMBER)intVal() / x.numVal();
     }
     else if (type() == NUM || x.type() == INTEGER)
     {
         n.SetType(NUM);
-        n.numVal() = numVal() / x.intVal();
+        n.numVal() = numVal() / (PU_NUMBER)x.intVal();
     }
     else
     {

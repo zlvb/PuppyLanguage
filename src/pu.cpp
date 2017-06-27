@@ -179,7 +179,7 @@ __pu_var *reg_var(Pu *L, const std::string *varname)
 
 static __pu_var *regfunc(Pu *L)
 {
-    PU_NUMBER fpos = (PU_NUMBER)TOKEN.optype;
+    PU_INT fpos = (PU_INT)TOKEN.optype;
     NEXT_TOKEN;
     if (TOKEN.type == VAR)
     {    
@@ -205,7 +205,7 @@ static const __pu_var *exp(Pu *L)
 
     if (ptoken->type == FUNCTION) 
     {
-        PU_NUMBER fpos = (PU_NUMBER)TOKEN.optype;
+        PU_INT fpos = (PU_INT)TOKEN.optype;
         NEXT_TOKEN;
         if (TOKEN.type == OP && TOKEN.optype == OPT_LB)
         {
@@ -330,8 +330,10 @@ static void get_value(Pu *L, __pu_var *&temp)
             CHECK_EXP(temp);
             if (temp->type() == NUM)
                 temp->numVal() *= -1;
-            else
+            else if (temp->type() == INTEGER)
                 temp->intVal() *= -1;
+            else
+                error(L, 29);
         }
         else if (nv == OPT_NOT) // !
         {
@@ -340,7 +342,7 @@ static void get_value(Pu *L, __pu_var *&temp)
             CHECK_EXP(temp);
             bool bbb = VALUE_IS_TRUE(*temp);
             temp->SetType(BOOLEANT);
-            temp->intVal() = (PU_NUMBER)(bbb?0:1);
+            temp->intVal() = bbb ? 0 : 1;
         }
         else
         {
