@@ -47,6 +47,7 @@ class PuMap
 public:
 	typedef ::MapRef<Key_T, Value_T, HashFunc, EqFunc> MapRef;
     typedef typename MapRef::iterator iterator;
+    typedef typename MapRef::const_iterator const_iterator;
     PuMap():mapptr_(0)
     { }
 
@@ -116,6 +117,25 @@ public:
 			return dummy.end();
 		}
 		return mapptr_->end();
+    }
+
+    const_iterator begin() const
+    {
+        if (!mapptr_)
+        {
+            return end();
+        }
+        return mapptr_->begin();
+    }
+
+    const_iterator end() const
+    {
+        if (!mapptr_)
+        {
+            static MapRef dummy;
+            return dummy.end();
+        }
+        return mapptr_->end();
     }
 
     iterator find(const Key_T &key)

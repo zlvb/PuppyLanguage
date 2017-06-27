@@ -32,7 +32,7 @@
 const char *OPERATOR_CHARS = "+-*/<>!=()|&%[],{}:";
 const char *KEYWORDS[] = {"while", "end", "if", "else", 
                                 "break", "goto", "def", "return", 
-                                "include", "continue", "elif", "null", "false", "true"};
+                                "include", "continue", "elif", "null", "false", "true", "var", "for", "in"};
 
 
 const char SPACE_TYPES[] = {' ', '\t', '\n', '\r'};
@@ -68,6 +68,7 @@ static int init_operator()
     OPERATORS[OPT_MULS] =  "*=";//24
     OPERATORS[OPT_DIVS] =  "/=";//25
     OPERATORS[OPT_COL] =   ":";//26
+    OPERATORS[OPT_SEM] = ";";//28
     return 0;
 };
 

@@ -139,6 +139,7 @@ void regbuiltin(Pu *L)
     pu_reg_func(L, "type", bi_type);
     pu_reg_func(L, "eval", bi_eval);
     pu_reg_func(L, "quit", bi_quit);
+    pu_reg_func(L, "exit", bi_quit);
     pu_reg_func(L, "coro_create", bi_coro_create);
     pu_reg_func(L, "coro_resume", bi_coro_resume);
     pu_reg_func(L, "coro_yield", bi_coro_yield);

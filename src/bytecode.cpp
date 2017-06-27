@@ -49,7 +49,7 @@ static void save_token(FILE *pbcf, TokenList &tokens)
     TokenList::iterator ite = tokens.end();
     while (it != ite)
     {
-        char ctp = (char)it->type;
+        int ctp = it->type;
         fwrite(&ctp, sizeof(ctp), 1, pbcf);
         switch (it->type)
         {
@@ -93,7 +93,7 @@ void savebytecode(Pu *, const char *fname, TokenList &tokensave)
 
 void get_nextbytetoken(Pu *L, FILE *pbcf, Token &t)
 {
-    char type = (char)UNKNOWN;
+    int type = UNKNOWN;
     bool needinclude = false;
     for (;;)
     {
@@ -147,7 +147,7 @@ void get_nextbytetoken(Pu *L, FILE *pbcf, Token &t)
             append_token(L,t);
         }
 
-        if (type != INCLUDE)
+        if (type != KW_INCLUDE)
         {
             break;
         }
@@ -161,7 +161,7 @@ void get_nextbytetoken(Pu *L, FILE *pbcf, Token &t)
 	{
 		parse_include(L, t);
 	}
-	else if (type == FUNCTION)
+	else if (type == KW_FUNCTION)
 	{
 		parse_function(L, FROM_BYTECODE, pbcf, 0);
 	}

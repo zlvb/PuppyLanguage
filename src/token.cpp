@@ -47,7 +47,14 @@ static PuType check_token_type(const std::string &identifier)
     {
         if (identifier == KEYWORDS[i])
         {
-            return (PuType)i;
+            if (i == KW_NIL)
+            {
+                return NIL;
+            }
+            else
+            {
+                return (PuType)i;
+            }            
         }
     }
     return VAR;
@@ -57,26 +64,26 @@ void append_token(Pu *L, Token &t)
 {
     L->tokens.push_back(t);
 
-    if (t.type == IF || t.type == WHILE || t.type == FUNCTION)
+    if (t.type == KW_IF || t.type == KW_WHILE || t.type == KW_FUNCTION)
     {
         int startpos = L->tokens.size()-1;
         L->jumpstack.push(startpos);
     }
-    else if (t.type == ELIF || t.type == ELSE)
+    else if (t.type == KW_ELIF || t.type == KW_ELSE)
     {
         int startpos = L->jumpstack.top();
-        L->tokens[startpos].optype = (OperatorType)(L->tokens.size()-1);
+        L->tokens[startpos].endpos = L->tokens.size()-1;
         L->jumpstack.pop();
         startpos = L->tokens.size()-1;
         L->jumpstack.push(startpos);
     }
-    else if (t.type == END)
+    else if (t.type == KW_END)
     {    
         int startpos = L->jumpstack.top();
         Token &p = L->tokens[startpos];
-        if (p.type != FUNCTION)
+        if (p.type != KW_FUNCTION)
         {
-            p.optype = (OperatorType)(L->tokens.size()-1);
+            p.endpos = L->tokens.size()-1;
         }
         L->jumpstack.pop();
     }
@@ -417,15 +424,15 @@ void parse_function_body(Pu *L, int lp, int token_from, Token &t, FILE *pbcf=0, 
 {
     for (;;)
     {
-        if (t.type == IF)    
+        if (t.type == KW_IF)    
         {
             L->funstack.back()++;
         }
-        else if    (t.type == WHILE)
+        else if    (t.type == KW_WHILE)
         {
             L->funstack.back()++;
         }
-        else if (t.type == END)        
+        else if (t.type == KW_END)        
         {
             L->funstack.back()--;
         }
@@ -552,7 +559,7 @@ void parse_function(Pu *L, int token_from, FILE *pbcf, TokenList *tl)
     }
     
     L->funclist.push_back(fps);
-    L->tokens[funckeywords_pos].optype = (OperatorType)(L->funclist.size()-1);
+    L->tokens[funckeywords_pos].endpos = L->funclist.size()-1;
     L->funstack.push_back(1);
     parse_function_body(L,L->funclist.size()-1,token_from,t,pbcf,tl);
 }
@@ -624,11 +631,11 @@ bool check_complete(Pu *L)
     for (;TOKEN.type != FINISH;)
     {    
         PuType tp = TOKEN.type;
-        if (tp == WHILE || tp == IF || tp == FUNCTION)
+        if (tp == KW_WHILE || tp == KW_IF || tp == KW_FUNCTION)
         {
             ++whh;
         }
-        else if (tp == END)
+        else if (tp == KW_END)
         {
             --whh;
         }
@@ -691,7 +698,7 @@ Token get_token_from_file(Pu *L, TokenList *t)
             t->push_back(newToken);
         }
                         
-        if (newToken.type != INCLUDE)
+        if (newToken.type != KW_INCLUDE)
             break;
         else
             need_include = true;
@@ -699,7 +706,7 @@ Token get_token_from_file(Pu *L, TokenList *t)
     
     if (need_include)
         parse_include(L,newToken);
-    else if (newToken.type == FUNCTION)
+    else if (newToken.type == KW_FUNCTION)
         parse_function(L,FROM_SOURCECODE, nullptr, t);
     
     return newToken;
@@ -727,7 +734,7 @@ Token::Token( const Token &x )
     line = x.line;
     optype = x.optype;
     name = x.name;
-    if (x.type >= NUM && x.type <= LABEL)
+    if (x.type >= NIL && x.type <= CPTR)
     {
         literal_value = x.literal_value;
     }

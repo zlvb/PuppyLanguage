@@ -56,7 +56,12 @@ struct Token
     int exp_end;
     short exp_stack;
     PuType type;    
-    OperatorType optype;
+    union
+    {
+        OperatorType optype;
+        int endpos;
+    };
+    
     std::vector<std::vector<CONTROL_PATH> > *control_flow;
 };
 

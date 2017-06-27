@@ -134,7 +134,7 @@ void get_var(Pu *L, const std::string *name, __pu_var *&v)
     error(L,7);
 }
 
-__pu_var *reg_var(Pu *L, const std::string *varname)
+__pu_var *regvar(Pu *L, const std::string *varname)
 {
     __pu_var *got = nullptr;
     StrKeyMap *top_varmap = L->varstack.top();
@@ -187,7 +187,7 @@ static __pu_var *regfunc(Pu *L)
         fv.SetType(FUN);
         fv.intVal() = fpos;
         fv.up_value() = L->cur_scope;
-        __pu_var *got = reg_var(L, TOKEN.name);
+        __pu_var *got = regvar(L, TOKEN.name);
         *got = fv;
         L->cur_token = L->funclist[(int)fv.intVal()].end;
         NEXT_TOKEN;
@@ -203,7 +203,7 @@ static const __pu_var *exp(Pu *L)
 {
     Token *ptoken = &TOKEN;
 
-    if (ptoken->type == FUNCTION) 
+    if (ptoken->type == KW_FUNCTION) 
     {
         PU_INT fpos = (PU_INT)TOKEN.optype;
         NEXT_TOKEN;
@@ -269,7 +269,7 @@ static const __pu_var *exp(Pu *L)
     switch (nv)
     {
     case OPT_SET:{// =
-		__pu_var *var_value = reg_var(L, ptoken->name);
+		__pu_var *var_value = regvar(L, ptoken->name);
         assert( !(var_value->type() == UNKNOWN && temp != nullptr) );
 
         if (temp == nullptr)
@@ -357,10 +357,10 @@ static void get_value(Pu *L, __pu_var *&temp)
         switch (tp){
         case NIL: temp->SetType(NIL);
             break;
-        case FALSEK: temp->SetType(BOOLEANT);
+        case KW_FALSE: temp->SetType(BOOLEANT);
             temp->intVal() = 0;
             break;
-        case TRUEK: temp->SetType(BOOLEANT);
+        case KW_TRUE: temp->SetType(BOOLEANT);
             temp->intVal() = 1;
             break;
         case INTEGER: temp->SetType(INTEGER);
@@ -597,7 +597,7 @@ static void get_array(Pu *L, __pu_var *&a)
     }
 }
 
-static void ift(Pu *L, Token *ptoken) //if
+static void if_stage(Pu *L, Token *ptoken) //if
 {
     NEXT_TOKEN;
     const __pu_var *t = exp(L);
@@ -612,10 +612,10 @@ static void ift(Pu *L, Token *ptoken) //if
         }            
 
         PuType putp = TOKEN.type;
-        if (putp == BREAK || putp == CONTINUE)
+        if (putp == KW_BREAK || putp == KW_CONTINUE)
             return;
             
-        while (TOKEN.type != END){
+        while (TOKEN.type != KW_END){
             L->cur_token = ptoken->optype;
             NEXT_TOKEN;
             ptoken = &(TOKEN);
@@ -629,10 +629,10 @@ static void ift(Pu *L, Token *ptoken) //if
         PuType tp = TOKEN.type;
         switch (tp)
         {
-        case ELIF:
-            ift(L, &(TOKEN));
+        case KW_ELIF:
+            if_stage(L, &(TOKEN));
             break;
-        case ELSE:
+        case KW_ELSE:
             NEXT_TOKEN;
             vm(L);
             NEXT_TOKEN;
@@ -1141,13 +1141,13 @@ static void gotot(Pu *L)
     NEXT_TOKEN;
 
     PuType tp = TOKEN.type;
-    OperatorType optype = TOKEN.optype;
+    int endpos = TOKEN.endpos;
    
     if (tp == VAR)
     {
-        if (optype >= 0)
+        if (endpos >= 0)
         {
-            L->cur_token = optype;
+            L->cur_token = endpos;
         }
         else
         {
@@ -1159,7 +1159,7 @@ static void gotot(Pu *L)
                 return;
             }
 
-            TOKEN.optype = (OperatorType)(it->second);
+            TOKEN.endpos = it->second;
             L->cur_token = it->second;
         }
 
@@ -1199,11 +1199,124 @@ static void procop(Pu *L)
     }
 }
 
+static void for_in_arr_str(Pu *L, const __pu_var *t, __pu_var *v, __pu_var *k, int for_begin, int for_end)
+{
+    if (t->type() == STR)
+    {
+        v->SetType(STR);
+    }
+    for (int i = 0; i < t->arr().size(); i++)
+    {
+        k->intVal() = i;
+        if (t->type() == ARRAY)
+        {
+            *v = t->arr()[i];
+        }
+        else
+        {
+            char buff[2] = { 0 };
+            buff[0] = t->strVal()[i];
+            v->strVal() = buff;
+        }
+
+        vm(L);
+        if ((!L->isreturn.empty() && L->isreturn.top()) || L->isquit || L->isyield)
+        {
+            return;
+        }
+
+        PuType putp = TOKEN.type;
+        switch (putp)
+        {
+        case KW_END:
+        case KW_CONTINUE:
+            L->cur_token = for_begin;
+            continue;
+        case KW_BREAK:
+            L->cur_token = for_end;
+            NEXT_TOKEN_N(2);
+        default:
+            break;
+        }
+        return;
+    }
+}
+
+static void for_in_map(Pu *L, const __pu_var *t, __pu_var *v, __pu_var *k, int for_begin, int for_end)
+{
+    for (auto it = t->map().begin(); it != t->map().end(); ++it)
+    {
+        *k = it->first;
+        *v = it->second;
+
+        vm(L);
+        if ((!L->isreturn.empty() && L->isreturn.top()) || L->isquit || L->isyield)
+        {
+            return;
+        }
+
+        PuType putp = TOKEN.type;
+        switch (putp)
+        {
+        case KW_END:
+        case KW_CONTINUE:
+            L->cur_token = for_begin;
+            continue;
+        case KW_BREAK:
+            L->cur_token = for_end;
+            NEXT_TOKEN_N(2);
+        default:
+            break;
+        }
+        return;
+    }
+}
+
+// for
+/*
+for k,v in exp
+for seg exp exp
+*/
+static void for_stage(Pu *L, Token *ptoken)
+{
+    int for_begin = L->cur_token;
+    int for_end = ptoken->endpos;
+    NEXT_TOKEN_N(4);
+    if (TOKEN.type == KW_IN)
+    {
+        PREV_TOKEN(2);
+        __pu_var *k = regvar(L, TOKEN.name);
+        k->SetType(INTEGER);
+        NEXT_TOKEN;
+        __pu_var *v = regvar(L, TOKEN.name);
+        NEXT_TOKEN_N(2);
+        const __pu_var *t = exp(L);
+        CHECK_EXP(t);
+        if (t->type() == ARRAY || t->type() == STR)
+        {
+            for_in_arr_str(L, t, v, k, for_begin, for_end);
+        }
+        else if (t->type() == MAP)
+        {
+            for_in_map(L, t, v, k, for_begin, for_end);
+        }
+        else
+        {
+            // error
+        }
+    }
+    else
+    {
+        PREV_TOKEN;
+        vm(L);
+    }
+}
+
 // while
-static void whilet(Pu *L, Token *ptoken)
+static void while_stage(Pu *L, Token *ptoken)
 {
     int while_begin = L->cur_token;
-    OperatorType while_end = ptoken->optype;
+    int while_end = ptoken->endpos;
     for(;;)
     {
         NEXT_TOKEN;
@@ -1223,11 +1336,11 @@ static void whilet(Pu *L, Token *ptoken)
             PuType putp = TOKEN.type;
             switch (putp)
             {
-            case END:
-            case CONTINUE:
+            case KW_END:
+            case KW_CONTINUE:
                 L->cur_token = while_begin;
                 continue;
-            case BREAK:
+            case KW_BREAK:
                 L->cur_token = while_end;
                 NEXT_TOKEN;
                 NEXT_TOKEN;
@@ -1275,22 +1388,27 @@ int vm(Pu *L)
 
         switch (tp)
         {
-        case WHILE:
-            whilet(L, &TOKEN);
+        case KW_WHILE:
+            while_stage(L, &TOKEN);
             break;
-        case IF:
-            ift(L, &TOKEN);
+        case KW_IF:
+            if_stage(L, &TOKEN);
             break;
         case OP:
             procop(L);
             break;
-        case GOTO:
+        case KW_VAR: {
+            NEXT_TOKEN;
+            regvar(L, TOKEN.name);
+            }
+            break;
+        case KW_GOTO:
             gotot(L);
             break;
-        case FUNCTION:
+        case KW_FUNCTION:
             regfunc(L);
             break;
-        case RETURN:{
+        case KW_RETURN:{
 			if (L->isreturn.empty())
 			{
 				error(L, 33);
@@ -1312,6 +1430,7 @@ int vm(Pu *L)
                 L->token = old_token;
              }
             const __pu_var *expresult = exp(L);
+            CHECK_EXP_CONTINUE(expresult);
             if (L->tail_optimize)
             {
                 L->tail_optimize = false;
@@ -1326,19 +1445,23 @@ int vm(Pu *L)
             L->return_value = *expresult;
             ret = 1;
             goto END_VM;}
-        case INCLUDE:
+        case KW_FOR:
+            for_stage(L, &TOKEN);
+            break;
+        case KW_INCLUDE:
             NEXT_TOKEN;
             NEXT_TOKEN;
             break;
-        case ELSE:
-        case ELIF:
-        case BREAK:
-        case CONTINUE:
-        case END:
+        case KW_ELSE:
+        case KW_ELIF:
+        case KW_BREAK:
+        case KW_CONTINUE:
+        case KW_END:
             ret = 1;
             goto END_VM;
         default:
-            exp(L);
+            const __pu_var *er = exp(L);
+            CHECK_EXP_CONTINUE(er);
             break;
         }
     }

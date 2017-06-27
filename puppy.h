@@ -53,8 +53,8 @@ typedef enum PURESULT{
 
 // 值类型
 typedef enum PUVALUETYPE{
-    NIL = 11,    // 空
-    NUM = 16,    // 数字
+    NIL = 1000,    // 空
+    NUM,    // 数字
     STR,        // 字符串
     ARRAY,        // 数组
     MAP,        // 字典
@@ -63,7 +63,8 @@ typedef enum PUVALUETYPE{
     BOOLEANT,        // 布尔
     INTEGER,        // 整数
     FUN,            // 函数
-    CPTR = 28,       // 指针
+    CFUN,           // C函数
+    CPTR,       // 指针
 }PUVALUETYPE;
 
 // 值是由脚本系统创建的，还是用户调用pu_new_value创建的

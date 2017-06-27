@@ -57,7 +57,7 @@ typedef void (*OutputHandle)(const char *str);
 #define PREV_TOKEN_N(n)        {L->cur_token-=1+n;NEXT_TOKEN;}
 
 // 操作结果
-typedef enum PURESULT{
+typedef enum PURESULT {
     PU_FAILED = -1,// 失败
     PU_SUCCESS = 0// 成功
 }PURESULT;
@@ -86,12 +86,19 @@ typedef enum PURESULT{
         error(L, 7);\
         return;\
     }
-    
+
 #define CHECK_EXP_RETURN(v, r) \
     if (!v || v->type() == UNKNOWN)\
     {\
         error(L, 7);\
         return r;\
+    }
+
+#define CHECK_EXP_CONTINUE(v) \
+    if (!v || v->type() == UNKNOWN)\
+    {\
+        error(L, 7);\
+        continue;\
     }
 
 #define CHECK_EXP_RETURNERR(v) \

@@ -37,7 +37,7 @@ extern int vm(Pu *L);
 extern const char *get_typestr(__pu_var &v);
 extern void regbuiltin(Pu *L);
 extern void set_var(Pu *L, const std::string &varname, __pu_var &new_value, __pu_var *&got);
-extern __pu_var *reg_var(Pu *L, const std::string *varname);
+extern __pu_var *regvar(Pu *L, const std::string *varname);
 #ifdef _MSC_VER
 #pragma warning(disable:4127) // while(1)
 #endif
@@ -69,7 +69,7 @@ PUAPI void pu_reg_func(Pu *L, const char *funcname,
     v.SetType(CFUN);
     v.intVal() = (PU_INT)L->funclist.size()-1;
 	const std::string *strname = InsertStrPool(L, funcname);
-    __pu_var *got = reg_var(L, strname);
+    __pu_var *got = regvar(L, strname);
     *got = v;        
 }
 

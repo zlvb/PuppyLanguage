@@ -74,11 +74,7 @@ void bi_return_int( Pu * L, int v )
 const char *get_typestr(__pu_var &v)
 {
     static const char *type_string[]={
-        "null",
-        "",
-        "",
-        "",
-        "",
+        "<null>",
         "<number>",
         "<string>",
         "<array>",
@@ -86,8 +82,10 @@ const char *get_typestr(__pu_var &v)
         "<coroutine>",
         "<filehandle>",
         "<boolean>",
+        "<integer>",
         "<function>",
-        "<cfunction>"
+        "<cfunction>",
+        "<pointer>",
     };
 
     return type_string[(int)v.type()-NIL];

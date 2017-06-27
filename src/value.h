@@ -71,7 +71,7 @@ struct Pu;
     :(((v).type() == FILEHANDLE)?                                \
         ((v).file() != 0 )                                  \
                                                                 \
-    :(((v).type() == FUNCTION)?                                    \
+    :(((v).type() == FUN)?                                    \
         (true):(false)                                            \
                                                                 \
     )))))))))                                                       \

@@ -33,8 +33,8 @@
 #include "config.h"
 #include <stddef.h>
 
-#define KEYWORDS_TYPES_LENGTH 14
-#define OPERATOR_TYPES_LENGTH 27
+#define KEYWORDS_TYPES_LENGTH 17
+#define OPERATOR_TYPES_LENGTH 28
 #define SPACE_TYPES_LENGTH 4
 
 extern const char SPACE_TYPES[];
@@ -71,6 +71,7 @@ enum OperatorType
     OPT_MULS,
     OPT_DIVS,
     OPT_COL, // :
+    OPT_SEM, // ;
 //--------------
     OPT_COUNT,
     OPT_UNKNOWN = -1,
@@ -79,36 +80,42 @@ enum OperatorType
 
 enum PuType
 {
-    WHILE, // 0
-    END,  // 1
-    IF, // 2
-    ELSE, // 3
-    BREAK, // 4
-    GOTO, // 5
-    FUNCTION, // 6
-    RETURN, // 7
-    INCLUDE, // 8
-    CONTINUE, // 9
-    ELIF, // 10
-    NIL, // 11
-    FALSEK, // 12
-    TRUEK, // 13
-    OP, // 14
-    VAR, // 15
-    NUM, // 16
-    STR, // 17
-    ARRAY, // 18
-    MAP, // 19
-    CORO, // 20
-    FILEHANDLE, // 21
-    BOOLEANT, // 22
-    INTEGER, // 23
-    FUN, // 24
-    CFUN, // 25
-    LABEL, // 26
-    FINISH, // 27
-    CPTR, // 28
-    UNKNOWN
+    KW_WHILE, // 0
+    KW_END,  // 1
+    KW_IF, // 2
+    KW_ELSE, // 3
+    KW_BREAK, // 4
+    KW_GOTO, // 5
+    KW_FUNCTION, // 6
+    KW_RETURN, // 7
+    KW_INCLUDE, // 8
+    KW_CONTINUE, // 9
+    KW_ELIF, // 10
+    KW_NIL, // 11
+    KW_FALSE, // 12
+    KW_TRUE, // 13
+    KW_VAR, // 14
+    KW_FOR, // 15
+    KW_IN, // 16
+//-----------------------------------------------
+    OP = 500, // 
+    VAR, // 
+    FINISH,
+    LABEL,
+//-----------------------------------------------
+    UNKNOWN = 1000,
+    NIL,
+    NUM,
+    STR,
+    ARRAY, 
+    MAP, 
+    CORO, 
+    FILEHANDLE, 
+    BOOLEANT, 
+    INTEGER, 
+    FUN, 
+    CFUN,        
+    CPTR    
 };
 
 enum CODEFROM{
