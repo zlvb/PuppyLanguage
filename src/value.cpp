@@ -34,24 +34,101 @@
 
 const __pu_var &__pu_var::operator +=(const __pu_var &x)
 {
-    *this = *this + x;
+    if (type() == INTEGER && x.type() == INTEGER)
+    {
+        intVal() += x.intVal();
+    }
+    else if (type() == INTEGER && x.type() == NUM)
+    {
+        numVal() = intVal() + x.numVal();
+    }
+    else if (type() == NUM && x.type() == INTEGER)
+    {
+        numVal() += x.intVal();
+    }
+    else if (type() == NUM && x.type() == NUM)
+    {
+        numVal() += x.numVal();
+    }
+    else
+    {
+        *this = *this + x;
+    }
+    
     return *this;
 }
 
 const __pu_var &__pu_var::operator -=(const __pu_var &x)
 {
-    *this = *this - x;
+    if (type() == INTEGER && x.type() == INTEGER)
+    {
+        intVal() -= x.intVal();
+    }
+    else if (type() == INTEGER && x.type() == NUM)
+    {
+        numVal() = intVal() - x.numVal();
+    }
+    else if (type() == NUM && x.type() == INTEGER)
+    {
+        numVal() -= x.intVal();
+    }
+    else if (type() == NUM && x.type() == NUM)
+    {
+        numVal() -= x.numVal();
+    }
+    else
+    {
+        *this = *this - x;
+    }
     return *this;
 }
 
 const __pu_var &__pu_var::operator *=(const __pu_var &x)
 {
-    *this = *this * x;
+    if (type() == INTEGER && x.type() == INTEGER)
+    {
+        intVal() *= x.intVal();
+    }
+    else if (type() == INTEGER && x.type() == NUM)
+    {
+        numVal() = intVal() * x.numVal();
+    }
+    else if (type() == NUM && x.type() == INTEGER)
+    {
+        numVal() *= x.intVal();
+    }
+    else if (type() == NUM && x.type() == NUM)
+    {
+        numVal() *= x.numVal();
+    }
+    else
+    {
+        *this = *this * x;
+    }
     return *this;
 }
 const __pu_var &__pu_var::operator /=(const __pu_var &x)
 {
-    *this = *this / x;
+    if (type() == INTEGER && x.type() == INTEGER)
+    {
+        intVal() /= x.intVal();
+    }
+    else if (type() == INTEGER && x.type() == NUM)
+    {
+        numVal() = (PU_NUMBER)intVal() / x.numVal();
+    }
+    else if (type() == NUM && x.type() == INTEGER)
+    {
+        numVal() /= (PU_NUMBER)x.intVal();
+    }
+    else if (type() == NUM && x.type() == NUM)
+    {
+        numVal() /= x.numVal();
+    }
+    else
+    {
+        *this = *this / x;
+    }
     return *this;
 }
 
