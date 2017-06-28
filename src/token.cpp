@@ -64,7 +64,7 @@ void append_token(Pu *L, Token &t)
 {
     L->tokens.push_back(t);
 
-    if (t.type == KW_IF || t.type == KW_WHILE || t.type == KW_FUNCTION)
+    if (t.type == KW_IF || t.type == KW_WHILE || t.type == KW_FUNCTION || t.type == KW_FOR)
     {
         int startpos = L->tokens.size()-1;
         L->jumpstack.push(startpos);
@@ -631,7 +631,7 @@ bool check_complete(Pu *L)
     for (;TOKEN.type != FINISH;)
     {    
         PuType tp = TOKEN.type;
-        if (tp == KW_WHILE || tp == KW_IF || tp == KW_FUNCTION)
+        if (tp == KW_WHILE || tp == KW_IF || tp == KW_FUNCTION || tp == KW_FOR)
         {
             ++whh;
         }

@@ -69,6 +69,7 @@ static const char *errtable[] = {
 "can not return while out of function",//33
 "count of function arguments is invalid",//34
 "number division by zero",//35
+"the type is not iterable",//36
 };
 
 

@@ -1205,7 +1205,9 @@ static void for_in_arr_str(Pu *L, const __pu_var *t, __pu_var *v, __pu_var *k, i
     {
         v->SetType(STR);
     }
-    for (int i = 0; i < t->arr().size(); i++)
+
+    bool breaked = false;
+    for (int i = 0; !breaked && i < t->arr().size(); i++)
     {
         k->intVal() = i;
         if (t->type() == ARRAY)
@@ -1230,21 +1232,24 @@ static void for_in_arr_str(Pu *L, const __pu_var *t, __pu_var *v, __pu_var *k, i
         {
         case KW_END:
         case KW_CONTINUE:
-            L->cur_token = for_begin;
+            SET_TOKEN(for_begin);
             continue;
         case KW_BREAK:
-            L->cur_token = for_end;
-            NEXT_TOKEN_N(2);
+            breaked = true;
+            break;
         default:
             break;
         }
-        return;
     }
+
+    L->cur_token = for_end;
+    NEXT_TOKEN_N(2);
 }
 
 static void for_in_map(Pu *L, const __pu_var *t, __pu_var *v, __pu_var *k, int for_begin, int for_end)
 {
-    for (auto it = t->map().begin(); it != t->map().end(); ++it)
+    bool breaked = false;
+    for (auto it = t->map().begin(); !breaked && it != t->map().end(); ++it)
     {
         *k = it->first;
         *v = it->second;
@@ -1260,55 +1265,55 @@ static void for_in_map(Pu *L, const __pu_var *t, __pu_var *v, __pu_var *k, int f
         {
         case KW_END:
         case KW_CONTINUE:
-            L->cur_token = for_begin;
+            SET_TOKEN(for_begin);
             continue;
         case KW_BREAK:
-            L->cur_token = for_end;
-            NEXT_TOKEN_N(2);
+            breaked = true;
+            break;
         default:
             break;
         }
-        return;
     }
+
+    L->cur_token = for_end;
+    NEXT_TOKEN_N(2);
 }
 
 // for
 /*
 for k,v in exp
-for seg exp exp
 */
 static void for_stage(Pu *L, Token *ptoken)
 {
-    int for_begin = L->cur_token;
     int for_end = ptoken->endpos;
     NEXT_TOKEN_N(4);
-    if (TOKEN.type == KW_IN)
+    if (TOKEN.type != KW_IN)
     {
-        PREV_TOKEN(2);
-        __pu_var *k = regvar(L, TOKEN.name);
-        k->SetType(INTEGER);
-        NEXT_TOKEN;
-        __pu_var *v = regvar(L, TOKEN.name);
-        NEXT_TOKEN_N(2);
-        const __pu_var *t = exp(L);
-        CHECK_EXP(t);
-        if (t->type() == ARRAY || t->type() == STR)
-        {
-            for_in_arr_str(L, t, v, k, for_begin, for_end);
-        }
-        else if (t->type() == MAP)
-        {
-            for_in_map(L, t, v, k, for_begin, for_end);
-        }
-        else
-        {
-            // error
-        }
+        error(L, 29);
+        return;
+    }
+    
+    PREV_TOKEN_N(3);
+    __pu_var *k = regvar(L, TOKEN.name);
+    k->SetType(INTEGER);
+    NEXT_TOKEN_N(2);
+    __pu_var *v = regvar(L, TOKEN.name);
+    NEXT_TOKEN_N(2);
+    const __pu_var *t = exp(L);
+    CHECK_EXP(t);
+
+    int for_begin = L->cur_token;
+    if (t->type() == ARRAY || t->type() == STR)
+    {
+        for_in_arr_str(L, t, v, k, for_begin, for_end);
+    }
+    else if (t->type() == MAP)
+    {
+        for_in_map(L, t, v, k, for_begin, for_end);
     }
     else
     {
-        PREV_TOKEN;
-        vm(L);
+        error(L, 36);
     }
 }
 
@@ -1414,21 +1419,21 @@ int vm(Pu *L)
 				error(L, 33);
 				break;
 			}
-             L->isreturn.top() = L->cur_token - 1;
-             Token *return_token = &L->tokens[L->cur_token - 1];
+            L->isreturn.top() = L->cur_token - 1;
+            Token *return_token = &L->tokens[L->cur_token - 1];
             NEXT_TOKEN;                  
-             if (return_token->exp_end == -1)
-             {
+            if (return_token->exp_end == -1)
+            {
                 Token *old_token = L->token;
-                 int old = L->cur_token;                        
-                 exp_control_flow_analyze(L);    
+                int old = L->cur_token;                        
+                exp_control_flow_analyze(L);    
                 return_token->control_flow = L->control_flow;
                 L->control_flow = nullptr;
-                 int exp_end = L->cur_token;
-                 L->cur_token = old;
-                 return_token->exp_end = exp_end;
+                int exp_end = L->cur_token;
+                L->cur_token = old;
+                return_token->exp_end = exp_end;
                 L->token = old_token;
-             }
+            }
             const __pu_var *expresult = exp(L);
             CHECK_EXP_CONTINUE(expresult);
             if (L->tail_optimize)

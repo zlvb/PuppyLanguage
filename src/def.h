@@ -55,7 +55,7 @@ typedef void (*OutputHandle)(const char *str);
 #define NEXT_TOKEN_N(n)        assert(n!=0);{L->token = &(L->tokens[L->cur_token+n-1]);L->cur_token+=n;}
 #define PREV_TOKEN            {L->cur_token-=2;NEXT_TOKEN;}
 #define PREV_TOKEN_N(n)        {L->cur_token-=1+n;NEXT_TOKEN;}
-
+#define SET_TOKEN(pos)      {L->cur_token=pos-1; NEXT_TOKEN;}
 // 操作结果
 typedef enum PURESULT {
     PU_FAILED = -1,// 失败
