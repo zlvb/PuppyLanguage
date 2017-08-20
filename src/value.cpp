@@ -212,22 +212,22 @@ void __pu_var::build()
 __pu_var __pu_var::operator +(const __pu_var &x)
 {
     __pu_var n(L);
-    if (type() == INTEGER || x.type() == INTEGER)
+    if (type() == INTEGER && x.type() == INTEGER)
     {
         n.SetType(INTEGER);
         n.intVal() = intVal() + x.intVal();
     }
-    else if (type() == INTEGER || x.type() == NUM)
+    else if (type() == INTEGER && x.type() == NUM)
     {
         n.SetType(NUM);
         n.numVal() = intVal() + x.numVal();
     }
-    else if (type() == NUM || x.type() == INTEGER)
+    else if (type() == NUM && x.type() == INTEGER)
     {
         n.SetType(NUM);
         n.numVal() = numVal() + x.intVal();
     }
-    else if (type() == NUM || x.type() == NUM)
+    else if (type() == NUM && x.type() == NUM)
     {
         n.SetType(NUM);
         n.numVal() = numVal() + x.numVal();
@@ -316,22 +316,22 @@ __pu_var __pu_var::operator +(const __pu_var &x)
 __pu_var __pu_var::operator -(const __pu_var &x)
 {
     __pu_var n(L);
-    if(type() == INTEGER || x.type() == INTEGER)
+    if(type() == INTEGER && x.type() == INTEGER)
     {
         n.SetType(INTEGER);
         n.intVal() = intVal() - x.intVal();
     }
-    else if(type() == NUM || x.type() == NUM)
+    else if(type() == NUM && x.type() == NUM)
     {
         n.SetType(NUM);
         n.numVal() = numVal() - x.numVal();
     }
-    else if(type() == INTEGER || x.type() == NUM)
+    else if(type() == INTEGER && x.type() == NUM)
     {
         n.SetType(NUM);
         n.numVal() = intVal() - x.numVal();
     }
-    else if(type() == NUM || x.type() == INTEGER)
+    else if(type() == NUM && x.type() == INTEGER)
     {
         n.SetType(NUM);
         n.numVal() = numVal() - x.intVal();
@@ -364,22 +364,22 @@ __pu_var __pu_var::operator /(const __pu_var &x)
         }
     }
 
-    if (type() == INTEGER || x.type() == INTEGER)
+    if (type() == INTEGER && x.type() == INTEGER)
     {
         n.SetType(INTEGER);
         n.intVal() = intVal() / x.intVal();
     }
-    else if (type() == NUM || x.type() == NUM)
+    else if (type() == NUM && x.type() == NUM)
     {
         n.SetType(NUM);
         n.numVal() = numVal() / x.numVal();
     }
-    else if (type() == INTEGER || x.type() == NUM)
+    else if (type() == INTEGER && x.type() == NUM)
     {
         n.SetType(NUM);
         n.numVal() = (PU_NUMBER)intVal() / x.numVal();
     }
-    else if (type() == NUM || x.type() == INTEGER)
+    else if (type() == NUM && x.type() == INTEGER)
     {
         n.SetType(NUM);
         n.numVal() = numVal() / (PU_NUMBER)x.intVal();
@@ -411,22 +411,22 @@ __pu_var __pu_var::operator %(const __pu_var &x)
 __pu_var __pu_var::operator *(const __pu_var &x)
 {
     __pu_var n(L);
-    if (type() == INTEGER || x.type() == INTEGER)
+    if (type() == INTEGER && x.type() == INTEGER)
     {
         n.SetType(INTEGER);
         n.intVal() = intVal() * x.intVal();
     }
-    else if (type() == NUM || x.type() == NUM)
+    else if (type() == NUM && x.type() == NUM)
     {
         n.SetType(NUM);
         n.numVal() = numVal() * x.numVal();
     }
-    else if (type() == INTEGER || x.type() == NUM)
+    else if (type() == INTEGER && x.type() == NUM)
     {
         n.SetType(NUM);
         n.numVal() = intVal() * x.numVal();
     }
-    else if (type() == NUM || x.type() == INTEGER)
+    else if (type() == NUM && x.type() == INTEGER)
     {
         n.SetType(NUM);
         n.numVal() = numVal() * x.intVal();
@@ -451,15 +451,15 @@ __pu_var __pu_var::operator *(const __pu_var &x)
 
 int __pu_var::operator <(const __pu_var &x) const
 {
-    if (type() == INTEGER || x.type() == INTEGER)
+    if (type() == INTEGER && x.type() == INTEGER)
     {
         return (intVal() < x.intVal())? 1 : 0;
     }
-    else if (type() == INTEGER || x.type() == NUM)
+    else if (type() == INTEGER && x.type() == NUM)
     {
         return (intVal() < x.numVal())? 1 : 0;
     }
-    else if (type() == NUM || x.type() == INTEGER)
+    else if (type() == NUM && x.type() == INTEGER)
     {
         return (numVal() < x.intVal())? 1 : 0;
     }
