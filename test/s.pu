@@ -1,6 +1,14 @@
 
-a = [9,8,7,6,5,4,3,2,1]
-
+a = [10,9,8,7,6,5,4,3,2,1]
+sum = 0
 for i,v in a
-    write(a[i] + '==' + v + '\n')
+    sum += v
 end
+
+writeln(sum)
+
+for i,v in 10
+	sum += v
+end
+
+writeln(sum)

@@ -60,6 +60,12 @@ static PuType check_token_type(const std::string &identifier)
     return VAR;
 }
 
+#define CHECK_MATCH(stack) \
+    if (stack.size() == 0) { \
+        error(L, 37, L->line); \
+        return;\
+    }
+
 void append_token(Pu *L, Token &t)
 {
     L->tokens.push_back(t);
@@ -71,6 +77,7 @@ void append_token(Pu *L, Token &t)
     }
     else if (t.type == KW_ELIF || t.type == KW_ELSE)
     {
+        CHECK_MATCH(L->jumpstack);
         int startpos = L->jumpstack.top();
         L->tokens[startpos].endpos = L->tokens.size()-1;
         L->jumpstack.pop();
@@ -79,12 +86,14 @@ void append_token(Pu *L, Token &t)
     }
     else if (t.type == KW_END)
     {    
+        CHECK_MATCH(L->jumpstack);
         int startpos = L->jumpstack.top();
         Token &p = L->tokens[startpos];
         if (p.type != KW_FUNCTION)
         {
             p.endpos = L->tokens.size()-1;
         }
+        CHECK_MATCH(L->jumpstack);
         L->jumpstack.pop();
     }
 }

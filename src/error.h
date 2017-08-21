@@ -70,6 +70,7 @@ static const char *errtable[] = {
 "count of function arguments is invalid",//34
 "number division by zero",//35
 "the type is not iterable",//36
+"for/function/while/end is not matched correctly",//37
 };
 
 

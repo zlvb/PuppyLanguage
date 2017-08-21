@@ -1198,6 +1198,38 @@ static void procop(Pu *L)
         return;
     }
 }
+static void for_in_integer(Pu *L, const __pu_var *t, __pu_var *v, __pu_var *k, int for_begin, int for_end)
+{
+    bool breaked = false;
+    for (int i = 0; !breaked && i < t->intVal(); i++)
+    {
+        k->intVal() = i;
+        *v = *k;
+
+        vm(L);
+        if ((!L->isreturn.empty() && L->isreturn.top()) || L->isquit || L->isyield)
+        {
+            return;
+        }
+
+        PuType putp = TOKEN.type;
+        switch (putp)
+        {
+        case KW_END:
+        case KW_CONTINUE:
+            SET_TOKEN(for_begin);
+            continue;
+        case KW_BREAK:
+            breaked = true;
+            break;
+        default:
+            break;
+        }
+    }
+
+    L->cur_token = for_end;
+    NEXT_TOKEN_N(2);
+}
 
 static void for_in_arr_str(Pu *L, const __pu_var *t, __pu_var *v, __pu_var *k, int for_begin, int for_end)
 {
@@ -1310,6 +1342,10 @@ static void for_stage(Pu *L, Token *ptoken)
     else if (t->type() == MAP)
     {
         for_in_map(L, t, v, k, for_begin, for_end);
+    }
+    else if (t->type() == INTEGER)
+    {
+        for_in_integer(L, t, v, k, for_begin, for_end);
     }
     else
     {

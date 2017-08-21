@@ -377,6 +377,51 @@ void bi_write(Pu *L, int argc, pu_var *v)
     bi_return_null;
 }
 
+void bi_writeln(Pu *L, int argc, pu_var *v)
+{
+    if (v == 0)
+    {
+        bi_return_null;
+    }
+
+    if (v[0]->type() == FILEHANDLE)
+    {
+        writefilehandle(L, argc, v);
+    }
+    else
+    {
+        for (int i = 0; i < argc; ++i)
+        {
+            if (v[i]->type() == INTEGER)
+            {
+                WRITE_INT(v[i]);
+            }
+            else if (v[i]->type() == NUM)
+            {
+                WRITE_NUM(v[i]);
+            }
+            else if (v[i]->type() == STR)
+            {
+                WRITE_STR(v[i]);
+            }
+            else if (v[i]->type() == ARRAY)
+            {
+                write_arr(*v[i]);
+            }
+            else if (v[i]->type() == BOOLEANT)
+            {
+                printf((v[i]->intVal() != 0) ? "true" : "false");
+            }
+            else
+            {
+                printf("%s", get_typestr(*v[i]));
+            }
+        }
+    }
+    putchar('\n');
+    bi_return_null;
+}
+
 
 void bi_get_var(Pu *L, int argn, pu_var *v)
 {

@@ -40,6 +40,7 @@ extern void bi_date(Pu *L, int ,pu_var*);
 extern void bi_time(Pu *L, int, pu_var*);
 extern void bi_get_value_len(Pu *L, int, pu_var *v);
 extern void bi_write(Pu *L, int ,pu_var *v);
+extern void bi_writeln(Pu *L, int, pu_var *v);
 extern void bi_read(Pu *L, int ,pu_var *v);
 extern void bi_rand(Pu *L, int ,pu_var *v);
 extern void bi_sleep(Pu *L, int, pu_var *v);
@@ -131,6 +132,7 @@ void regbuiltin(Pu *L)
     L->builtinreg = true;
     pu_reg_func(L, "len", bi_get_value_len);
     pu_reg_func(L, "write", bi_write);
+    pu_reg_func(L, "writeln", bi_writeln);
     pu_reg_func(L, "read", bi_read);
     pu_reg_func(L, "rand", bi_rand);
     pu_reg_func(L, "date", bi_date);
@@ -144,7 +146,6 @@ void regbuiltin(Pu *L)
     pu_reg_func(L, "coro_resume", bi_coro_resume);
     pu_reg_func(L, "coro_yield", bi_coro_yield);
     pu_reg_func(L, "open", bi_open);
-    pu_reg_func(L, "read", bi_read);
     pu_reg_func(L, "close", bi_close);
     pu_reg_func(L, "str", bi_str);
     pu_reg_func(L, "num", bi_num);
