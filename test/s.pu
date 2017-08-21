@@ -12,3 +12,11 @@ for i,v in 10
 end
 
 writeln(sum)
+
+a = {1:2, 2:9, 3:10}
+
+for i,v in a
+	sum += v
+end
+
+writeln(sum)
